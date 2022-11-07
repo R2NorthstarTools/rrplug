@@ -27,8 +27,8 @@ fn main() {
 
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=Cargo.lock");
-    println!("cargo:rerun-if-changed=headers/dllmain.h");
+    // println!("cargo:rerun-if-changed=headers/dllmain.h");
     println!("cargo:rerun-if-changed=headers/plugin_abi.h");
     println!("cargo:rerun-if-changed=Cargo.lock");
-    println!("cargo:rerun-if-changed=headers\\Resource.rc");
+    println!("cargo:rerun-if-changed=headers/Resource.rc");
 }
