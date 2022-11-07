@@ -1,18 +1,15 @@
 #[macro_export]
 macro_rules! entry {
     ( $func:ty ) => {
-        static PLUGIN: $crate::once::Once<($func)> = $crate::once::Once::new();
-
         use $crate::bindings::*;
 
         #[no_mangle]
-        extern "C" fn initializePlugin( getPluginData_external: ::std::os::raw::c_void ) { // std::ffi::c_void
+        extern "C" fn initializePlugin(get_plugin_data_external: &std::ffi::c_void) {
+            let mut plugin: $func = $crate::plugin::Plugin::new();
 
+            plugin.initialize(get_plugin_data_external);
 
-            PLUGIN.call_once(|| $crate::plugin::Plugin::new());
-            PLUGIN.wait().initialize( getPluginData_external );
-
-            std::thread::spawn(|| PLUGIN.wait().main());
+            std::thread::spawn(move || plugin.main());
         }
     };
 }
