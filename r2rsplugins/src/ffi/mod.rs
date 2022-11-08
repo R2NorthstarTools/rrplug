@@ -2,16 +2,18 @@ use crate::bindings::*;
 use std::ffi::c_void;
 
 pub mod error;
-mod utils;
+pub mod utils;
 
 use error::PluginError;
 
 pub type UnsafeGameState = crate::bindings::GameState;
 
-type GetPluginGameState = unsafe extern "C" fn(*const PluginObject) -> &'static UnsafeGameState;
-type GetPluginServerInfo = unsafe extern "C" fn(*const PluginObject) -> &'static ServerInfo;
-type GetPluginPlayerInfo = unsafe extern "C" fn(*const PluginObject) -> &'static PlayerInfo;
+pub type GetPluginGameState = unsafe extern "C" fn(*const PluginObject) -> UnsafeGameState;
+pub type GetPluginServerInfo = unsafe extern "C" fn(*const PluginObject) -> ServerInfo;
+pub type GetPluginPlayerInfo = unsafe extern "C" fn(*const PluginObject) -> PlayerInfo;
 
+/// Used to wrap unsafe c_void into a **safe** struct
+#[derive(Debug)]
 pub struct ExternalPluginData {
     function: &'static c_void,
 }
@@ -20,7 +22,6 @@ pub struct ExternalPluginData {
 // so I suppose the &c_void sould be a Option<&c_void>
 // or I might be wrong :(
 
-/// Used to wrap unsafe c_void into a **safe** struct
 impl ExternalPluginData {
     pub fn new<'a>(function: &'static c_void) -> Self {
         Self { function }
@@ -31,43 +32,59 @@ impl ExternalPluginData {
         self.function
     }
 
-    pub fn get_game_state_struct(&self) -> GameState {
-        unsafe {
-            let get_plugin_object: &GetPluginGameState = std::mem::transmute(self.function);
-            let game_state = get_plugin_object(PluginObject_GAMESTATE as *const i32);
-            return GameState::new(game_state);
-        }
-    }
+    // pub fn get_game_state_struct(&self) -> Option<GameState> {
+    //     unsafe {
+    //         println!("transmuting");
+    //         // let get_plugin_object: &GetPluginGameState = std::mem::transmute(self.function);
+    //         let get_plugin_object: &Option<GetPluginGameState> = std::mem::transmute(self.function);
 
-    pub fn get_server_info_struct<'a>(&self) -> &'a ServerInfo {
-        unsafe {
-            let get_plugin_object: &GetPluginServerInfo = std::mem::transmute(self.function);
-            let server_info = get_plugin_object(PluginObject_SERVERINFO as *const i32);
-            return server_info;
-        }
-    }
+    //         println!("got {:?}", get_plugin_object);
 
-    pub fn get_player_info_struct<'a>(&self) -> &'a PlayerInfo {
-        unsafe {
-            let get_plugin_object: &GetPluginPlayerInfo = std::mem::transmute(self.function);
-            let player_info = get_plugin_object(PluginObject_PLAYERINFO as *const i32);
-            return player_info;
-        }
-    }
+    //         match get_plugin_object {
+    //             None => return None,
+    //             Some(func) => {
+    //                 let game_state: &'static UnsafeGameState =
+    //                     func(PluginObject_GAMESTATE as *const i32);
+    //                 return Some(GameState::new(game_state));
+    //             }
+    //         }
+    //     }
+    // }
+
+    // pub fn get_server_info_struct<'a>(&self) -> &'a ServerInfo {
+    //     unsafe {
+    //         let get_plugin_object: &GetPluginServerInfo = std::mem::transmute(self.function);
+    //         let server_info: &'static ServerInfo =
+    //             get_plugin_object(PluginObject_SERVERINFO as *const i32);
+    //         return server_info;
+    //     }
+    // }
+
+    // pub fn get_player_info_struct<'a>(&self) -> &'a PlayerInfo {
+    //     unsafe {
+    //         let get_plugin_object: &GetPluginPlayerInfo = std::mem::transmute(self.function);
+    //         let player_info: &'static PlayerInfo =
+    //             get_plugin_object(PluginObject_PLAYERINFO as *const i32);
+    //         return player_info;
+    //     }
+    // }
 }
 
 impl Clone for ExternalPluginData {
     fn clone(&self) -> Self {
-        Self { function: self.function }
+        Self {
+            function: self.function,
+        }
     }
 }
 
+#[derive(Debug)]
 pub struct GameState<'a> {
     gamestate_struct: &'a UnsafeGameState,
 }
 
 impl GameState<'_> {
-    pub(crate) fn new<'a>(gamestate_struct: &'a UnsafeGameState) -> GameState {
+    pub fn new<'a>(gamestate_struct: &'a UnsafeGameState) -> GameState {
         GameState { gamestate_struct }
     }
 
@@ -150,52 +167,90 @@ impl GameState<'_> {
 
     pub fn get_players(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(GameStateInfoType_players)
-    }    
+    }
 
     fn get_int_value<'a>(&self, gamestate_type: i32) -> Result<Option<i32>, PluginError> {
-        let func = match self.gamestate_struct.getGameStateInt {
-            None => return Ok(None),
-            Some(func) => func,
-        };
-
-        let mut int = Box::new(0);
-        let ptr = int.as_mut();
-
-        unsafe {
-            let result = func(ptr, gamestate_type);
-
-            if result != 0 {
-                return Err(PluginError::Failed(result));
-            }
+        match self.gamestate_struct.getGameStateInt {
+            None => Ok(None),
+            Some(func) => utils::use_get_int_value_func(func, gamestate_type),
         }
-
-        Ok(Some(*ptr))
     }
 
     fn get_bool_value<'a>(&self, gamestate_type: i32) -> Result<Option<bool>, PluginError> {
-        let func = match self.gamestate_struct.getGameStateBool {
-            None => return Ok(None),
-            Some(func) => func,
-        };
-
-        let mut boolean = Box::new(false);
-        let ptr = boolean.as_mut();
-
-        unsafe {
-            let result = func(ptr, gamestate_type);
-
-            if result != 0 {
-                return Err(PluginError::Failed(result));
-            }
+        match self.gamestate_struct.getGameStateBool {
+            None => Ok(None),
+            Some(func) => utils::use_get_bool_value_func(func, gamestate_type),
         }
-
-        Ok(Some(*ptr))
     }
 
     fn get_char_value<'a>(&self, gamestate_type: i32) -> Result<Option<Box<[i8]>>, PluginError> {
         match self.gamestate_struct.getGameStateChar {
             None => Ok(None),
-            Some(func) => utils::use_get_char_value_func(&func, gamestate_type),
+            Some(func) => utils::use_get_char_value_func(func, gamestate_type),
         }
     }
 }
+
+#[derive(Debug)]
+pub enum Return {
+    GameState(UnsafeGameState),
+    PlayerInfo(PlayerInfo),
+    ServerInfo(ServerInfo),
+}
+
+pub fn test(get_plugin_data_external: Option<unsafe extern "C" fn(*const PluginObject) -> Return>) {
+    println!("got {:?}", get_plugin_data_external);
+
+    // wait(3000);
+
+    unsafe {
+        let game_state = get_plugin_data_external.unwrap()(
+            crate::bindings::PluginObject_GAMESTATE as *const i32,
+        );
+
+        println!("gamestate struct: {:?}", game_state);
+
+        match game_state {
+            Return::ServerInfo(game_state) => {
+                let thing = utils::use_get_int_value_func(
+                    game_state.getServerInfoInt.unwrap(),
+                    ServerInfoType_maxPlayers,
+                );
+
+                println!("{:?}", thing);
+            }
+            Return::GameState(game_state) => {
+                println!("oh no");
+            }
+            Return::PlayerInfo(game_state) => {
+                println!("oh no");
+            }
+        };
+
+        let player_info = get_plugin_data_external.unwrap()(
+            crate::bindings::PluginObject_PLAYERINFO as *const i32,
+        );
+
+        println!("player_info struct: {:?}", player_info);
+
+        let server_info = get_plugin_data_external.unwrap()(
+            crate::bindings::PluginObject_SERVERINFO as *const i32,
+        );
+
+        println!("server_info struct: {:?}", server_info);
+
+        // let thing = game_state as *const UnsafeGameState;
+
+        // test_2(thing);
+
+        // wait(3000);
+
+        // let thing = utils::use_get_int_value_func( game_state.getGameStateInt.unwrap(), GameStateInfoType_ourScore );
+
+        // println!( "{:?}", thing );
+    }
+}
+
+// fn test_2(game_state: Option<UnsafeGameState>) {
+//     println!("gamestate struct: {:?}", game_state);
+// }

@@ -1,31 +1,38 @@
 use r2rsplugins::prelude::*;
-struct HelloWorld<'a> {
-    gamestate: Option<GameState<'a>>,
+struct HelloWorld {
+    // gamestate: Option<GameState<'a>>,
 }
 
-impl Plugin for HelloWorld<'_> {
+impl Plugin for HelloWorld {
     fn new() -> Self {
         Self {
-            gamestate: None,
+            // gamestate: None,
         }
     }
 
-    fn initialize(&mut self) {
+    fn initialize(&mut self, external_plugin_data: ExternalPluginData) {
         println!("rust plugin initialized");
 
-        self.gamestate = Some(EPD.wait().get_game_state_struct());
+
+        // println!("{:?}", external_plugin_data.get_game_state_struct());
+
+        // self.gamestate = Some(PluginData.wait().get_game_state_struct());
     }
 
     fn main(&self) {
         println!("hello world from rust");
 
-        let gamestate = self.gamestate.as_ref().unwrap();
+        wait(1000);
 
-        loop {
-            println!( "our score: {}", gamestate.our_score() );
+        // println!("{:?}", PluginData.wait().get_game_state_struct());
 
-            wait(3000)
-        }
+        // let gamestate = self.gamestate.as_ref().unwrap();
+
+        // loop {
+        //     println!( "our score: {}", gamestate.our_score() );
+
+        //     wait(3000)
+        // }
     }
 }
 
