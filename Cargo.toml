@@ -1,15 +1,14 @@
 [package]
-name = "r2plugins-test"
+name = "r2rsplugins"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-r2rsplugins = { path = "./r2rsplugins" }
+spin = "0.9.4"
+thiserror = "1.0.37"
 
 [build-dependencies]
-windres = "0.2.2"
-
-[lib]
-crate-type = ["cdylib"]
+bindgen = "0.61.0"
+cc ="1.0.73"

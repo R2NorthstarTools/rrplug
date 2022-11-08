@@ -1,6 +1,6 @@
 use super::error::PluginError;
 
-pub fn use_get_int_value_func(
+pub(crate) fn use_get_int_value_func(
     func: unsafe extern "C" fn(*mut i32, i32) -> i32,
     gamestate_type: i32,
 ) -> Result<Option<i32>, PluginError> {
@@ -39,20 +39,22 @@ pub(crate) fn use_get_bool_value_func(
 pub(crate) fn use_get_char_value_func(
     func: unsafe extern "C" fn(*mut i8, usize, i32) -> i32,
     gamestate_type: i32,
-) -> Result<Option<Box<[i8]>>, PluginError> {
-    let mut charvec: Box<Vec<i8>> = Box::new(Vec::new());
+) -> Result<Option<Vec<i8>>, PluginError> {
+    let mut charvec: Box<Vec<i8>> = Box::new(Vec::with_capacity(128));
     unsafe {
-        charvec.set_len(128_usize);
-        let mut slice = charvec.into_boxed_slice();
-        let len = slice.len();
-        let ptr = slice.as_mut_ptr();
+        // let mut slice = charvec.into_boxed_slice();
+        let len = charvec.len();
+        let capacity = charvec.capacity();
+        let ptr = charvec.as_mut_ptr();
 
-        let result = func(ptr, len, gamestate_type);
+        std::mem::forget(charvec);
+
+        let result = func(ptr, capacity, gamestate_type);
 
         if result != 0 {
             return Err(PluginError::Failed(result));
         }
 
-        Ok(Some(slice))
+        Ok(Some(Vec::from_raw_parts(ptr, len, capacity)))
     }
 }

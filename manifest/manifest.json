@@ -1,9 +1,0 @@
-{
-	"name": "r2discord-rpc-rs",
-	"displayname": "r2discord-rpc-rs",
-	"description": "r2discord-rpc-rs",
-	"api_version": "1",
-	"version": "1.0",
-	"run_on_server": true,
-	"run_on_client": false
-}
