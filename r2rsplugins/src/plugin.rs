@@ -1,10 +1,9 @@
-use crate::bindings::*;
-use std::ffi::c_void;
+use crate::prelude::ExternalPluginData;
 
 pub trait Plugin {
     fn new() -> Self;
 
-    fn initialize(&mut self, get_plugin_data_external: &c_void);
+    fn initialize(&mut self); // external_plugin_data: ExternalPluginData
 
     fn main(&self);
 }
