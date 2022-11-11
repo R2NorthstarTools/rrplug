@@ -134,35 +134,35 @@ impl GameState {
         self.get_bool_value(GameStateInfoType_loading)
     }
 
-    pub fn map(&self) -> Vec<i8> {
+    pub fn map(&self) -> String {
         self.get_map().unwrap().unwrap()
     }
 
-    pub fn get_map(&self) -> Result<Option<Vec<i8>>, PluginError> {
+    pub fn get_map(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(GameStateInfoType_map)
     }
 
-    pub fn map_display_name(&self) -> Vec<i8> {
+    pub fn map_display_name(&self) -> String {
         self.get_map_display_name().unwrap().unwrap()
     }
 
-    pub fn get_map_display_name(&self) -> Result<Option<Vec<i8>>, PluginError> {
+    pub fn get_map_display_name(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(GameStateInfoType_mapDisplayName)
     }
 
-    pub fn playlist(&self) -> Vec<i8> {
+    pub fn playlist(&self) -> String {
         self.get_playlist().unwrap().unwrap()
     }
 
-    pub fn get_playlist(&self) -> Result<Option<Vec<i8>>, PluginError> {
+    pub fn get_playlist(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(GameStateInfoType_playlist)
     }
 
-    pub fn playlist_display_name(&self) -> Vec<i8> {
+    pub fn playlist_display_name(&self) -> String {
         self.get_playlist_display_name().unwrap().unwrap()
     }
 
-    pub fn get_playlist_display_name(&self) -> Result<Option<Vec<i8>>, PluginError> {
+    pub fn get_playlist_display_name(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(GameStateInfoType_playlistDisplayName)
     }
 
@@ -174,21 +174,21 @@ impl GameState {
         self.get_int_value(GameStateInfoType_players)
     }
 
-    fn get_int_value<'a>(&self, gamestate_type: i32) -> Result<Option<i32>, PluginError> {
+    fn get_int_value(&self, gamestate_type: i32) -> Result<Option<i32>, PluginError> {
         match self.gamestate_struct.getGameStateInt {
             None => Ok(None),
             Some(func) => utils::use_get_int_value_func(func, gamestate_type),
         }
     }
 
-    fn get_bool_value<'a>(&self, gamestate_type: i32) -> Result<Option<bool>, PluginError> {
+    fn get_bool_value(&self, gamestate_type: i32) -> Result<Option<bool>, PluginError> {
         match self.gamestate_struct.getGameStateBool {
             None => Ok(None),
             Some(func) => utils::use_get_bool_value_func(func, gamestate_type),
         }
     }
 
-    fn get_char_value<'a>(&self, gamestate_type: i32) -> Result<Option<Vec<i8>>, PluginError> {
+    fn get_char_value(&self, gamestate_type: i32) -> Result<Option<String>, PluginError> {
         match self.gamestate_struct.getGameStateChar {
             None => Ok(None),
             Some(func) => utils::use_get_char_value_func(func, gamestate_type),
@@ -218,27 +218,27 @@ impl ServerInfo {
         self.get_int_value(ServerEnum::EndTime.int())
     }
 
-    pub fn description(&self) -> Vec<i8> {
+    pub fn description(&self) -> String {
         self.get_description().unwrap().unwrap()
     }
 
-    pub fn get_description(&self) -> Result<Option<Vec<i8>>, PluginError> {
+    pub fn get_description(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(ServerEnum::Description.int())
     }
 
-    pub fn name(&self) -> Vec<i8> {
+    pub fn name(&self) -> String {
         self.get_name().unwrap().unwrap()
     }
 
-    pub fn get_name(&self) -> Result<Option<Vec<i8>>, PluginError> {
+    pub fn get_name(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(ServerEnum::Name.int())
     }
 
-    pub fn password(&self) -> Vec<i8> {
+    pub fn password(&self) -> String {
         self.get_password().unwrap().unwrap()
     }
 
-    pub fn get_password(&self) -> Result<Option<Vec<i8>>, PluginError> {
+    pub fn get_password(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(ServerEnum::Password.int())
     }
 
@@ -281,14 +281,14 @@ impl ServerInfo {
         }
     }
 
-    fn get_bool_value<'a>(&self, gamestate_type: i32) -> Result<Option<bool>, PluginError> {
+    fn get_bool_value(&self, gamestate_type: i32) -> Result<Option<bool>, PluginError> {
         match self.serverinfo_struct.getServerInfoBool {
             None => Ok(None),
             Some(func) => utils::use_get_bool_value_func(func, gamestate_type),
         }
     }
 
-    fn get_char_value<'a>(&self, gamestate_type: i32) -> Result<Option<Vec<i8>>, PluginError> {
+    fn get_char_value(&self, gamestate_type: i32) -> Result<Option<String>, PluginError> {
         match self.serverinfo_struct.getServerInfoChar {
             None => Ok(None),
             Some(func) => utils::use_get_char_value_func(func, gamestate_type),
