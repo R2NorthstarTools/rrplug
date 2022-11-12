@@ -1,12 +1,11 @@
 [package]
-name = "r2rsplugins"
+name = "rrplug"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-spin = "0.9.4"
 thiserror = "1.0.37"
 
 [build-dependencies]
