@@ -1,3 +1,5 @@
+//! contains wrappers to unsafe northstar function generate by bindgen from headers
+
 use crate::bindings::*;
 use std::ffi::c_void;
 
@@ -6,20 +8,21 @@ mod utils;
 
 pub use error::PluginError;
 
-pub type GetPluginObject = unsafe extern "C" fn(*const CPluginObject) -> *const c_void;
+type GetPluginObject = unsafe extern "C" fn(*const CPluginObject) -> *const c_void;
 
-/// Used to wrap a unsafe c_void into a **safe** struct
+/// Used to get [`GameState`], [`PlayerInfo`] and [`ServerInfo`]
+/// 
+/// ## example
+/// ```
+/// let game_state = external_plugin_data.get_game_state_struct();
+/// ```
 #[derive(Debug)]
 pub struct ExternalPluginData {
     function: GetPluginObject,
 }
 
-// TODO: reading from the a rust book about ffi s I learned that (*)(int) is c++ for Some(int)
-// so I suppose the &c_void sould be a Option<&c_void>
-// or I might be wrong :(
-
 impl ExternalPluginData {
-    pub fn new<'a>(function: *const c_void) -> Self {
+    pub fn new(function: *const c_void) -> Self {
         unsafe {
             Self {
                 function: std::mem::transmute(function),
@@ -27,13 +30,7 @@ impl ExternalPluginData {
         }
     }
 
-    /// use this if you know magic I guess
-    pub unsafe fn get_external_function(&self) -> GetPluginObject {
-        self.function
-    }
-
-    /// ## get_game_state_struct
-    /// returns the GameState struct
+    /// returns the [`GameState`] struct in a option in case the derefence operation fails
     pub fn get_game_state_struct(&self) -> Option<GameState> {
         unsafe {
             let func = self.function;
@@ -48,7 +45,8 @@ impl ExternalPluginData {
             }
         }
     }
-
+    
+    /// returns the [`ServerInfo`] struct in a option in case the derefence operation fails
     pub fn get_server_info_struct(&self) -> Option<ServerInfo> {
         unsafe {
             let func = self.function;
@@ -63,7 +61,8 @@ impl ExternalPluginData {
             }
         }
     }
-
+    
+    /// returns the [`PlayerInfo`] struct in a option in case the derefence operation fails
     pub fn get_player_info_struct(&self) -> Option<PlayerInfo> {
         unsafe {
             let func = self.function;
@@ -88,6 +87,7 @@ impl Clone for ExternalPluginData {
     }
 }
 
+/// used to get game states from northstar
 #[derive(Debug)]
 pub struct GameState {
     gamestate_struct: UnsafeGameState,
@@ -97,67 +97,154 @@ impl GameState {
     pub fn new(gamestate_struct: UnsafeGameState) -> Self {
         Self { gamestate_struct }
     }
-
-    pub unsafe fn get_internal_struct(&self) -> UnsafeGameState {
-        self.gamestate_struct
-    }
-
+    
+    /// retuns the frendly's team score
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn our_score(&self) -> i32 {
         self.get_our_score().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the our score
+    ///
+    /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_our_score(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(GameStateInfoType_ourScore)
     }
-
+    
+    /// retuns the second highest score
+    /// 
+    /// can either be the enemies's tema or frendly's team score
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn second_highest_score(&self) -> i32 {
         self.get_second_highest_score().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the second highest score
+    ///
+    /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_second_highest_score(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(GameStateInfoType_ourScore)
     }
-
+    
+    /// retuns the highest score
+    /// 
+    /// can either be the enemies's tema or frendly's team score
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn highest_score(&self) -> i32 {
         self.get_highest_score().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the highest score
+    ///
+    /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_highest_score(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(GameStateInfoType_highestScore)
     }
-
+    
+    /// checks if we are in a loading sreen
+    /// 
+    /// NOTE: doesn't seam to work
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn loading(&self) -> bool {
         self.get_loading().unwrap().unwrap()
     }
-
+    
+    /// safe way to check if the game is loading
+    ///
+    /// returns a result type with [`Option<bool>`] and [`PluginError`]
     pub fn get_loading(&self) -> Result<Option<bool>, PluginError> {
         self.get_bool_value(GameStateInfoType_loading)
     }
-
+    
+    /// returns the map 
+    /// 
+    /// eg: mp_box
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn map(&self) -> String {
         self.get_map().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the map
+    ///
+    /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_map(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(GameStateInfoType_map)
     }
-
+    
+    /// returns the map's name
+    /// 
+    /// eg: mp_box -> Box
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn map_display_name(&self) -> String {
         self.get_map_display_name().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the map's name
+    ///
+    /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_map_display_name(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(GameStateInfoType_mapDisplayName)
     }
-
+    
+    /// returns the current playlist 
+    /// 
+    /// eg: tdm
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn playlist(&self) -> String {
         self.get_playlist().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the current playlist 
+    ///
+    /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_playlist(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(GameStateInfoType_playlist)
     }
-
+    
+    /// returns the playlist's name 
+    /// 
+    /// eg: tdm -> Skirmish
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn playlist_display_name(&self) -> String {
         self.get_playlist_display_name().unwrap().unwrap()
     }
@@ -165,11 +252,21 @@ impl GameState {
     pub fn get_playlist_display_name(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(GameStateInfoType_playlistDisplayName)
     }
-
+    
+    /// returns the amount of players present in the game
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn players(&self) -> i32 {
         self.get_players().unwrap().unwrap()
     }
-
+    
+    /// safe way to get amount of players
+    ///
+    /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_players(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(GameStateInfoType_players)
     }
@@ -196,6 +293,7 @@ impl GameState {
     }
 }
 
+/// used to get server info from northstar
 #[derive(Debug)]
 pub struct ServerInfo {
     serverinfo_struct: UnsafeServerInfo,
@@ -205,71 +303,145 @@ impl ServerInfo {
     pub fn new(serverinfo_struct: UnsafeServerInfo) -> Self {
         Self { serverinfo_struct }
     }
-
-    pub unsafe fn get_internal_struct(&self) -> UnsafeServerInfo {
-        self.serverinfo_struct
-    }
-
+    
+    /// returns the game's end time
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn end_time(&self) -> i32 {
         self.get_end_time().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the game's end time
+    ///
+    /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_end_time(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(ServerEnum::EndTime.int())
     }
-
+    
+    /// returns the server's description
+    /// 
+    /// NOTE: doesn't seam to work
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn description(&self) -> String {
         self.get_description().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the server's description
+    ///
+    /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_description(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(ServerEnum::Description.int())
     }
-
+    
+    /// returns the server's name
+    /// 
+    /// NOTE: doesn't seam to work
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn name(&self) -> String {
         self.get_name().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the the server's name
+    ///
+    /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_name(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(ServerEnum::Name.int())
     }
-
+    
+    /// returns the server's password
+    /// 
+    /// NOTE: doesn't seam to work
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn password(&self) -> String {
         self.get_password().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the server's password
+    ///
+    /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_password(&self) -> Result<Option<String>, PluginError> {
         self.get_char_value(ServerEnum::Password.int())
     }
-
+    
+    /// calling this function would imidialty crash northstar
     pub fn id(&self) -> i32 {
         self.get_id().unwrap().unwrap()
     }
-
+    
+    /// calling this function would imidialty crash northstar
     pub fn get_id(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(ServerEnum::Id.int())
     }
-
+    
+    /// returns max players
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn max_players(&self) -> i32 {
         self.get_max_players().unwrap().unwrap()
     }
-
+    
+    /// safe way to get max players
+    ///
+    /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_max_players(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(ServerEnum::MaxPlayers.int())
     }
-
+    
+    /// returns the score limit
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn score_limit(&self) -> i32 {
         self.get_score_limit().unwrap().unwrap()
     }
-
+    
+    /// safe way of getting the score limit
+    ///
+    /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_score_limit(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(ServerEnum::ScoreLimit.int())
     }
-
+    
+    /// check for round_based.
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn round_based(&self) -> bool {
         self.get_round_based().unwrap().unwrap()
     }
-
+    
+    /// safe way to check if the server is round_based.
+    ///
+    /// returns a result type with [`Option<bool>`] and [`PluginError`]
     pub fn get_round_based(&self) -> Result<Option<bool>, PluginError> {
         self.get_bool_value(ServerEnum::RoundBased.int())
     }
@@ -296,6 +468,7 @@ impl ServerInfo {
     }
 }
 
+/// Used to the uid from northstar
 #[derive(Debug)]
 pub struct PlayerInfo {
     playerinfo_struct: UnsafePlayerInfo,
@@ -305,11 +478,21 @@ impl PlayerInfo {
     pub fn new(playerinfo_struct: UnsafePlayerInfo) -> Self {
         Self { playerinfo_struct }
     }
-
+    
+    /// returns the uid of the player
+    /// 
+    /// ## Panics
+    /// panics if 
+    /// the internal function is missing, 
+    /// northstar returned a error code or
+    /// couldn't get back the value
     pub fn uid(&self) -> i32 {
         self.get_uid().unwrap().unwrap()
     }
-
+    
+    /// safe way to get the uid of the player
+    ///
+    /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_uid(&self) -> Result<Option<i32>, PluginError> {
         self.get_int_value(PlayerEnum::Uid.int())
     }
