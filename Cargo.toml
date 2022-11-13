@@ -1,6 +1,11 @@
 [package]
 name = "rrplug"
 version = "0.1.0"
+authors = ["catornot"]
+description = "safe wrappers and functions for R2Northstar plugins"
+repository = "https://github.com/catornot/rrplug"
+license = "MIT"
+keywords = ["plugin", "northstar", "titanfall"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
