@@ -16,3 +16,7 @@ thiserror = "1.0.37"
 [build-dependencies]
 bindgen = "0.61.0"
 cc ="1.0.73"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
+targets = ["x86_64-pc-windows-msvc"]
