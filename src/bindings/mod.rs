@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 #[allow(unused)]
 mod bindings;
 
@@ -79,10 +81,6 @@ impl GameStateEnum {
             Self::MapDisplayName => GameStateInfoType_mapDisplayName,
         }
     }
-
-    pub fn ptr_int(&self) -> *const i32 {
-        self.int() as *const i32
-    }
 }
 
 pub use bindings::ServerInfoType;
@@ -120,10 +118,6 @@ impl ServerEnum {
             Self::ScoreLimit => ServerInfoType_scoreLimit,
         }
     }
-    
-    pub fn ptr_int(&self) -> *const i32 {
-        self.int() as *const i32
-    }
 }
 
 pub use bindings::PlayerInfoType;
@@ -139,9 +133,5 @@ impl PlayerEnum {
         match self {
             Self::Uid => PlayerInfoType_uid,
         }
-    }
-
-    pub fn ptr_int(&self) -> *const i32 {
-        self.int() as *const i32
     }
 }

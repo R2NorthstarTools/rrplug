@@ -113,7 +113,7 @@ impl GameState {
     ///
     /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_our_score(&self) -> Result<Option<i32>, PluginError> {
-        self.get_int_value(GameStateInfoType_ourScore)
+        self.get_int_value(GameStateEnum::OurScore.int())
     }
     
     /// retuns the second highest score
@@ -133,7 +133,7 @@ impl GameState {
     ///
     /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_second_highest_score(&self) -> Result<Option<i32>, PluginError> {
-        self.get_int_value(GameStateInfoType_ourScore)
+        self.get_int_value(GameStateEnum::SecondHighestScore.int())
     }
     
     /// retuns the highest score
@@ -153,7 +153,7 @@ impl GameState {
     ///
     /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_highest_score(&self) -> Result<Option<i32>, PluginError> {
-        self.get_int_value(GameStateInfoType_highestScore)
+        self.get_int_value(GameStateEnum::HighestScore.int())
     }
     
     /// checks if we are in a loading sreen
@@ -173,7 +173,7 @@ impl GameState {
     ///
     /// returns a result type with [`Option<bool>`] and [`PluginError`]
     pub fn get_loading(&self) -> Result<Option<bool>, PluginError> {
-        self.get_bool_value(GameStateInfoType_loading)
+        self.get_bool_value(GameStateEnum::Loading.int())
     }
     
     /// returns the map 
@@ -193,7 +193,7 @@ impl GameState {
     ///
     /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_map(&self) -> Result<Option<String>, PluginError> {
-        self.get_char_value(GameStateInfoType_map)
+        self.get_char_value(GameStateEnum::Map.int())
     }
     
     /// returns the map's name
@@ -213,7 +213,7 @@ impl GameState {
     ///
     /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_map_display_name(&self) -> Result<Option<String>, PluginError> {
-        self.get_char_value(GameStateInfoType_mapDisplayName)
+        self.get_char_value(GameStateEnum::MapDisplayName.int())
     }
     
     /// returns the current playlist 
@@ -233,7 +233,7 @@ impl GameState {
     ///
     /// returns a result type with [`Option<String>`] and [`PluginError`]
     pub fn get_playlist(&self) -> Result<Option<String>, PluginError> {
-        self.get_char_value(GameStateInfoType_playlist)
+        self.get_char_value(GameStateEnum::Playlist.int())
     }
     
     /// returns the playlist's name 
@@ -250,7 +250,7 @@ impl GameState {
     }
 
     pub fn get_playlist_display_name(&self) -> Result<Option<String>, PluginError> {
-        self.get_char_value(GameStateInfoType_playlistDisplayName)
+        self.get_char_value(GameStateEnum::PlaylistDisplayName.int())
     }
     
     /// returns the amount of players present in the game
@@ -268,7 +268,7 @@ impl GameState {
     ///
     /// returns a result type with [`Option<i32>`] and [`PluginError`]
     pub fn get_players(&self) -> Result<Option<i32>, PluginError> {
-        self.get_int_value(GameStateInfoType_players)
+        self.get_int_value(GameStateEnum::Players.int())
     }
 
     fn get_int_value(&self, gamestate_type: i32) -> Result<Option<i32>, PluginError> {
