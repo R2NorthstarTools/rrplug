@@ -1,5 +1,5 @@
 use std::ffi::CString;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH,Duration};
 use crate::bindings::plugin_abi::{loggerfunc_t, LogMsg, MessageSource};
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 
@@ -44,9 +44,9 @@ impl log::Log for NorthstarLogger {
             return;
         }
 
-        let msg = to_cstring(record.args().as_str());
-        let file = to_cstring(record.module_path());
-        let func = to_cstring(record.file());
+        let msg = to_cstring(record.args().to_string());
+        let file = to_cstring(record.module_path().unwrap_or(" "));
+        let func = to_cstring(record.file().unwrap_or(" "));
         let line = record.line().unwrap_or(0) as i32;
 
         let source = MessageSource {
@@ -57,12 +57,12 @@ impl log::Log for NorthstarLogger {
 
         let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or(Duration::ZERO)
         .as_millis();
 
         let mut logs = LogMsg {
             level: level_to_int( record.metadata().level() ),
-            timestamp: timestamp.try_into().unwrap_or(0),
+            timestamp: timestamp.try_into().unwrap_or(0), // lmao cpp logs use u64
             msg: msg.as_ptr(),
             source,
             pluginHandle: self.plugin_handle,
@@ -74,8 +74,12 @@ impl log::Log for NorthstarLogger {
     fn flush(&self) {}
 }
 
-fn to_cstring(string: Option<&str>) -> CString {
-    CString::new(string.unwrap_or(" ")).unwrap_or_else(|_| CString::new(" ").unwrap())
+fn to_cstring<T>(string: T) -> CString 
+where
+    T: ToString
+    {
+    // CString::new(string.unwrap_or(" ")).unwrap_or_else(|_| CString::new(" ").unwrap())
+    CString::new(string.to_string()).unwrap()
 }
 
 fn level_to_int( level: Level ) -> i32 {

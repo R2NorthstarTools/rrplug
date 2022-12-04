@@ -86,3 +86,4 @@ pub mod macros;
 pub mod plugin;
 pub mod prelude;
 pub mod nslog;
+pub mod wrappers;
