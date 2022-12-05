@@ -1,7 +1,7 @@
-use std::ffi::CString;
-use std::time::{SystemTime, UNIX_EPOCH,Duration};
 use crate::bindings::plugin_abi::{loggerfunc_t, LogMsg, MessageSource};
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
+use std::ffi::CString;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 static mut LOGGER: NorthstarLogger = NorthstarLogger {
     logger: None,
@@ -16,7 +16,7 @@ pub fn try_init(logger: loggerfunc_t, plugin_handle: i32) -> Result<(), SetLogge
     }
 }
 
-pub fn init( logger: loggerfunc_t, plugin_handle: i32 ) {
+pub fn init(logger: loggerfunc_t, plugin_handle: i32) {
     try_init(logger, plugin_handle).unwrap();
 }
 
@@ -44,7 +44,7 @@ impl log::Log for NorthstarLogger {
             return;
         }
 
-        let msg = to_cstring(record.args().to_string());
+        let msg = to_cstring(record.args());
         let file = to_cstring(record.module_path().unwrap_or(" "));
         let func = to_cstring(record.file().unwrap_or(" "));
         let line = record.line().unwrap_or(0) as i32;
@@ -56,12 +56,12 @@ impl log::Log for NorthstarLogger {
         };
 
         let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or(Duration::ZERO)
-        .as_millis();
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or(Duration::ZERO)
+            .as_millis();
 
         let mut logs = LogMsg {
-            level: level_to_int( record.metadata().level() ),
+            level: level_to_int(record.metadata().level()),
             timestamp: timestamp.try_into().unwrap_or(0), // lmao cpp logs use u64
             msg: msg.as_ptr(),
             source,
@@ -74,15 +74,15 @@ impl log::Log for NorthstarLogger {
     fn flush(&self) {}
 }
 
-fn to_cstring<T>(string: T) -> CString 
+fn to_cstring<T>(string: T) -> CString
 where
-    T: ToString
-    {
+    T: ToString,
+{
     // CString::new(string.unwrap_or(" ")).unwrap_or_else(|_| CString::new(" ").unwrap())
     CString::new(string.to_string()).unwrap()
 }
 
-fn level_to_int( level: Level ) -> i32 {
+fn level_to_int(level: Level) -> i32 {
     match level {
         Level::Error => 4,
         Level::Warn => 3,
