@@ -5,5 +5,7 @@ pub trait Plugin {
 
     fn initialize(&mut self, plugin_data: &PluginData);  
 
-    fn main(&self);
+    fn main(&self) {
+        super::prelude::wait_forever();
+    }
 }

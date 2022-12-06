@@ -7,6 +7,7 @@ macro_rules! entry {
         use $crate::bindings::plugin_abi::{PluginInitFuncs, PluginNorthstarData};
 
         static mut ENGINE_CALLBACKS: Option<std::sync::Mutex<$crate::wrappers::engine::EngineCallbacks>> = None;
+        static mut SQVM_CALLBACKS: Option<std::sync::Mutex<$crate::wrappers::squrrielvm::SquirrelVMCallbacks>> = None;
 
         #[no_mangle]
         #[export_name = "PLUGIN_INIT"]
@@ -17,12 +18,14 @@ macro_rules! entry {
             let mut plugin: $func = $crate::plugin::Plugin::new();
 
             unsafe { ENGINE_CALLBACKS = Some(std::sync::Mutex::new($crate::wrappers::engine::EngineCallbacks::default())) }
+            unsafe { SQVM_CALLBACKS = Some(std::sync::Mutex::new($crate::wrappers::squrrielvm::SquirrelVMCallbacks::default())) }
 
             let plugin_data = unsafe {
                 $crate::wrappers::northstar::PluginData::new(
                     plugin_init_funcs,
                     plugin_northstar_data,
-                    &mut ENGINE_CALLBACKS
+                    &mut ENGINE_CALLBACKS,
+                    &mut SQVM_CALLBACKS
                 )
             };
 
@@ -35,6 +38,28 @@ macro_rules! entry {
 
             std::thread::spawn(move || plugin.main());
         }
+        
+        #[no_mangle]
+        #[export_name = "PLUGIN_INIT_SQVM_CLIENT"]
+        fn plugin_init_sqvm_client( funcs: *const $crate::bindings::plugin_abi::SquirrelFunctions ) {
+            let funcs = $crate::wrappers::squrrielvm::SqFunctions::Client(unsafe {*funcs});
+
+            match unsafe {SQVM_CALLBACKS.as_ref().unwrap().try_lock()} {
+                Ok(sqvm_callbacks) => sqvm_callbacks.call_callbacks_init( funcs ),
+                Err(err) => log::error!("calling sqvm client init callbacks failed: {err:?}")
+            }
+        }
+        
+        #[no_mangle]
+        #[export_name = "PLUGIN_INIT_SQVM_SERVER"]
+        fn plugin_init_sqvm_server(funcs: *const $crate::bindings::plugin_abi::SquirrelFunctions) {
+            let funcs = $crate::wrappers::squrrielvm::SqFunctions::Server(unsafe {*funcs});
+
+            match unsafe {SQVM_CALLBACKS.as_ref().unwrap().try_lock()} {
+                Ok(sqvm_callbacks) => sqvm_callbacks.call_callbacks_init( funcs ),
+                Err(err) => log::error!("calling sqvm server init callbacks failed: {err:?}")
+            }
+        }
 
         #[no_mangle]
         #[export_name = "PLUGIN_INFORM_SQVM_CREATED"]
@@ -42,25 +67,43 @@ macro_rules! entry {
             context: $crate::bindings::squirrelclasstypes::ScriptContext,
             sqvm: *const $crate::bindings::squirrelclasstypes::CSquirrelVM,
         ) {
-            match context {
-                $crate::bindings::squirrelclasstypes::ScriptContext_SERVER => unsafe {
+            log::warn!("PLUGIN_INFORM_SQVM_CREATED called");
+            let sqvm = match context {
+                $crate::bindings::squirrelclasstypes::ScriptContext_SERVER => {
+                    let sqvm = unsafe {*sqvm};
                     log::warn!(
                         "PLUGIN_INFORM_SQVM_CREATED got SERVER ScriptContext {:?}",
-                        *sqvm
-                    )
+                        sqvm
+                    );
+
+                    $crate::wrappers::squrrielvm::ScriptVm::Server(unsafe {*sqvm.sqvm})
                 },
-                $crate::bindings::squirrelclasstypes::ScriptContext_CLIENT => unsafe {
+                $crate::bindings::squirrelclasstypes::ScriptContext_CLIENT => {
+                    let sqvm = unsafe {*sqvm};
                     log::warn!(
                         "PLUGIN_INFORM_SQVM_CREATED got CLIENT ScriptContext {:?}",
-                        *sqvm
-                    )
+                        sqvm
+                    );
+
+                    $crate::wrappers::squrrielvm::ScriptVm::Client(unsafe {*sqvm.sqvm})
                 },
-                $crate::bindings::squirrelclasstypes::ScriptContext_UI => unsafe {
-                    log::warn!("PLUGIN_INFORM_SQVM_CREATED got UI ScriptContext {:?}", *sqvm)
+                $crate::bindings::squirrelclasstypes::ScriptContext_UI => {
+                    let sqvm = unsafe {*sqvm};
+                    log::warn!(
+                        "PLUGIN_INFORM_SQVM_CREATED got UI ScriptContext {:?}",
+                        sqvm
+                    );
+
+                    $crate::wrappers::squrrielvm::ScriptVm::Ui(unsafe {*sqvm.sqvm})
                 },
-                _ => log::warn!(
+                _ => {log::warn!(
                     "PLUGIN_INFORM_SQVM_CREATED called with unknown ScriptContext {context}"
-                ),
+                ); return;},
+            };
+
+            match unsafe {SQVM_CALLBACKS.as_ref().unwrap().try_lock()} {
+                Ok(sqvm_callbacks) => sqvm_callbacks.call_callbacks_created( sqvm ),
+                Err(err) => log::error!("calling sqvm created callbacks failed: {err:?}")
             }
         }
 
@@ -77,8 +120,9 @@ macro_rules! entry {
                     let engine_dll = *engine_dll;
                     log::debug!("PLUGIN_INFORM_DLL_LOAD got a engine dll with data: {:?}", engine_dll);
 
-                    if let Ok(engine_callbacks) = ENGINE_CALLBACKS.as_ref().unwrap().try_lock() {
-                        engine_callbacks.call_callbacks( engine_dll );
+                    match ENGINE_CALLBACKS.as_ref().unwrap().try_lock() {
+                        Ok(engine_callbacks) => engine_callbacks.call_callbacks( engine_dll ),
+                        Err(err) => log::error!("calling dll load callbacks failed: {err:?}")
                     }
                 },
                 _ => log::warn!(
