@@ -78,7 +78,6 @@ fn to_cstring<T>(string: T) -> CString
 where
     T: ToString,
 {
-    // CString::new(string.unwrap_or(" ")).unwrap_or_else(|_| CString::new(" ").unwrap())
     CString::new(string.to_string()).unwrap()
 }
 

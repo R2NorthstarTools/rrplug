@@ -1,10 +1,23 @@
-use crate::bindings::squirreldatatypes::HSquirrelVM;
 use crate::bindings::plugin_abi::SquirrelFunctions;
+use crate::bindings::squirreldatatypes::CSquirrelVM;
+
+use super::northstar::ScriptVmType;
+use super::squrriel::SquirrelBuilder;
 
 pub enum ScriptVm {
-    Server(HSquirrelVM),
-    Client(HSquirrelVM),
-    Ui(HSquirrelVM),
+    Server(CSquirrelVM),
+    Client(CSquirrelVM),
+    Ui(CSquirrelVM),
+}
+
+impl From<ScriptVm> for ScriptVmType {
+    fn from(val: ScriptVm) -> Self {
+        match val {
+            ScriptVm::Server(_) => ScriptVmType::Server,
+            ScriptVm::Client(_) => ScriptVmType::Client,
+            ScriptVm::Ui(_) => ScriptVmType::Ui,
+        }
+    }
 }
 
 /// Client [`SquirrelFunctions`] can be used for Ui too
@@ -14,11 +27,11 @@ pub enum SqFunctions {
 }
 
 pub struct SquirrelVMCallbacks {
-    callback_functions_server: Vec<Box<dyn Fn(HSquirrelVM)>>,
-    callback_functions_client: Vec<Box<dyn Fn(HSquirrelVM)>>,
-    callback_functions_ui: Vec<Box<dyn Fn(HSquirrelVM)>>,
-    callback_functions_server_init: Vec<Box<dyn Fn(SquirrelFunctions)>>,
-    callback_functions_client_init: Vec<Box<dyn Fn(SquirrelFunctions)>>,
+    callback_functions_server: Vec<Box<dyn Fn(SquirrelBuilder)>>,
+    callback_functions_client: Vec<Box<dyn Fn(SquirrelBuilder)>>,
+    callback_functions_ui: Vec<Box<dyn Fn(SquirrelBuilder)>>,
+    callback_functions_server_init: Vec<Box<dyn Fn(SquirrelBuilder)>>,
+    callback_functions_client_init: Vec<Box<dyn Fn(SquirrelBuilder)>>,
 }
 
 impl SquirrelVMCallbacks {
@@ -31,52 +44,67 @@ impl SquirrelVMCallbacks {
             callback_functions_client_init: Vec::new(),
         }
     }
-    
+
     /// from https://github.com/R2Northstar/NorthstarDiscordRPC/blob/0364829e70ac64189452bcfe6d7cd6804c665276/DiscordRPCV2/lib/loader.cpp#L34
-    pub(crate) fn add_callback_server(&mut self, callback: Box<dyn Fn(HSquirrelVM)>) {
+    pub(crate) fn add_callback_server(&mut self, callback: Box<dyn Fn(SquirrelBuilder)>) {
         self.callback_functions_server.push(callback);
     }
-    
+
     /// from https://github.com/R2Northstar/NorthstarDiscordRPC/blob/0364829e70ac64189452bcfe6d7cd6804c665276/DiscordRPCV2/lib/loader.cpp#L34
-    pub(crate) fn add_callback_client(&mut self, callback: Box<dyn Fn(HSquirrelVM)>) {
+    pub(crate) fn add_callback_client(&mut self, callback: Box<dyn Fn(SquirrelBuilder)>) {
         self.callback_functions_client.push(callback);
     }
-    
+
     /// from https://github.com/R2Northstar/NorthstarDiscordRPC/blob/0364829e70ac64189452bcfe6d7cd6804c665276/DiscordRPCV2/lib/loader.cpp#L34
-    pub(crate) fn add_callback_ui(&mut self, callback: Box<dyn Fn(HSquirrelVM)>) {
+    pub(crate) fn add_callback_ui(&mut self, callback: Box<dyn Fn(SquirrelBuilder)>) {
+
         self.callback_functions_ui.push(callback);
     }
-    
+
     // from https://github.com/R2Northstar/NorthstarDiscordRPC/blob/0364829e70ac64189452bcfe6d7cd6804c665276/DiscordRPCV2/lib/loader.cpp#L30
-    pub(crate) fn add_callback_server_init(&mut self, callback: Box<dyn Fn(SquirrelFunctions)>) {
+    pub(crate) fn add_callback_server_init(&mut self, callback: Box<dyn Fn(SquirrelBuilder)>) {
         self.callback_functions_server_init.push(callback);
     }
-    
+
     /// from https://github.com/R2Northstar/NorthstarDiscordRPC/blob/0364829e70ac64189452bcfe6d7cd6804c665276/DiscordRPCV2/lib/loader.cpp#L26
-    pub(crate) fn add_callback_client_init(&mut self, callback: Box<dyn Fn(SquirrelFunctions)>) {
+    pub(crate) fn add_callback_client_init(&mut self, callback: Box<dyn Fn(SquirrelBuilder)>) {
         self.callback_functions_client_init.push(callback);
     }
 
-    pub fn call_callbacks_created(&self, sqvm: ScriptVm) {
-        let (specific_callbacks,sqvm) = match sqvm {
-            ScriptVm::Server(sqvm) => (&self.callback_functions_server,sqvm),
-            ScriptVm::Client(sqvm) => (&self.callback_functions_client,sqvm),
-            ScriptVm::Ui(sqvm) => (&self.callback_functions_ui,sqvm),
+    pub fn call_callbacks_created(&self, sqvm_type: ScriptVm) {
+        let (specific_callbacks, sqvm) = match sqvm_type {
+            ScriptVm::Server(sqvm) => (&self.callback_functions_server, sqvm),
+            ScriptVm::Client(sqvm) => (&self.callback_functions_client, sqvm),
+            ScriptVm::Ui(sqvm) => (&self.callback_functions_ui, sqvm),
         };
 
+        let mut sqbuilder = SquirrelBuilder::new();
+        sqbuilder.set_sqtype(sqvm_type.into()).set_sqvm_cs(sqvm);
+
         for callback in specific_callbacks {
-            callback(sqvm);
+            callback(sqbuilder);
         }
     }
 
     pub fn call_callbacks_init(&self, functions: SqFunctions) {
-        let (specific_callbacks,functions) = match functions {
-            SqFunctions::Server(functions) => (&self.callback_functions_server_init,functions),
-            SqFunctions::Client(functions) => (&self.callback_functions_client_init,functions),
+        let (specific_callbacks, functions, sqtype) = match functions {
+            SqFunctions::Server(functions) => (
+                &self.callback_functions_server_init,
+                functions,
+                ScriptVmType::Server,
+            ),
+            SqFunctions::Client(functions) => (
+                &self.callback_functions_client_init,
+                functions,
+                ScriptVmType::Client,
+            ),
         };
 
+        let mut sqbuilder = SquirrelBuilder::new();
+        sqbuilder.set_sqtype(sqtype).set_sqvm_sqfunctions(functions);
+
         for callback in specific_callbacks {
-            callback(functions);
+            callback(sqbuilder);
         }
     }
 }

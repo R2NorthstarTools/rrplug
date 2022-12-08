@@ -2,7 +2,7 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
-use super::squirrelclasstypes::*;
+use super::{squirrelclasstypes::*, squirreldatatypes::CSquirrelVM};
 
 pub const ABI_VERSION: u32 = 1;
 pub type PluginObject = ::std::os::raw::c_int;

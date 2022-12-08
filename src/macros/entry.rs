@@ -38,7 +38,7 @@ macro_rules! entry {
 
             std::thread::spawn(move || plugin.main());
         }
-        
+
         #[no_mangle]
         #[export_name = "PLUGIN_INIT_SQVM_CLIENT"]
         fn plugin_init_sqvm_client( funcs: *const $crate::bindings::plugin_abi::SquirrelFunctions ) {
@@ -49,7 +49,7 @@ macro_rules! entry {
                 Err(err) => log::error!("calling sqvm client init callbacks failed: {err:?}")
             }
         }
-        
+
         #[no_mangle]
         #[export_name = "PLUGIN_INIT_SQVM_SERVER"]
         fn plugin_init_sqvm_server(funcs: *const $crate::bindings::plugin_abi::SquirrelFunctions) {
@@ -65,7 +65,7 @@ macro_rules! entry {
         #[export_name = "PLUGIN_INFORM_SQVM_CREATED"]
         extern "C" fn plugin_inform_sqvm_created(
             context: $crate::bindings::squirrelclasstypes::ScriptContext,
-            sqvm: *const $crate::bindings::squirrelclasstypes::CSquirrelVM,
+            sqvm: *const $crate::bindings::squirreldatatypes::CSquirrelVM,
         ) {
             log::warn!("PLUGIN_INFORM_SQVM_CREATED called");
             let sqvm = match context {
@@ -76,7 +76,7 @@ macro_rules! entry {
                         sqvm
                     );
 
-                    $crate::wrappers::squrrielvm::ScriptVm::Server(unsafe {*sqvm.sqvm})
+                    $crate::wrappers::squrrielvm::ScriptVm::Server(sqvm)
                 },
                 $crate::bindings::squirrelclasstypes::ScriptContext_CLIENT => {
                     let sqvm = unsafe {*sqvm};
@@ -85,7 +85,7 @@ macro_rules! entry {
                         sqvm
                     );
 
-                    $crate::wrappers::squrrielvm::ScriptVm::Client(unsafe {*sqvm.sqvm})
+                    $crate::wrappers::squrrielvm::ScriptVm::Client(sqvm)
                 },
                 $crate::bindings::squirrelclasstypes::ScriptContext_UI => {
                     let sqvm = unsafe {*sqvm};
@@ -94,7 +94,7 @@ macro_rules! entry {
                         sqvm
                     );
 
-                    $crate::wrappers::squrrielvm::ScriptVm::Ui(unsafe {*sqvm.sqvm})
+                    $crate::wrappers::squrrielvm::ScriptVm::Ui(sqvm)
                 },
                 _ => {log::warn!(
                     "PLUGIN_INFORM_SQVM_CREATED called with unknown ScriptContext {context}"

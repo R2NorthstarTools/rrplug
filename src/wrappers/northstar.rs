@@ -1,20 +1,39 @@
 //! wrappers for structs that are passed to the plugin
 
 use log::SetLoggerError;
+use std::fmt::Display;
 use std::sync::Mutex;
 
 use super::engine::EngineCallbacks;
+use super::squrriel::SquirrelBuilder;
 use super::squrrielvm::SquirrelVMCallbacks;
-use crate::bindings::plugin_abi::{
-    PluginEngineData, PluginInitFuncs, PluginNorthstarData, SquirrelFunctions,
+use crate::bindings::plugin_abi::{PluginEngineData, PluginInitFuncs, PluginNorthstarData};
+use crate::bindings::squirrelclasstypes::{
+    ScriptContext_CLIENT, ScriptContext_SERVER, ScriptContext_UI,
 };
-use crate::bindings::squirreldatatypes::HSquirrelVM;
 use crate::nslog;
 
+#[derive(Debug, Clone, Copy,PartialEq)]
 pub enum ScriptVmType {
     Server,
     Client,
     Ui,
+}
+
+impl Display for ScriptVmType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({self:?})")
+    }
+}
+
+impl ScriptVmType {
+    pub fn to_int(&self) -> i32 {
+        match self {
+            ScriptVmType::Server => ScriptContext_SERVER,
+            ScriptVmType::Client => ScriptContext_CLIENT,
+            ScriptVmType::Ui => ScriptContext_UI,
+        }
+    }
 }
 
 pub struct PluginData {
@@ -75,7 +94,7 @@ impl PluginData {
     pub fn add_sqvm_created_callback(
         &self,
         sqvm_type: ScriptVmType,
-        callback: Box<dyn Fn(HSquirrelVM)>,
+        callback: Box<dyn Fn(SquirrelBuilder)>,
     ) {
         let mut sqvm_callbacks = match self.sqvm_callbacks.as_ref().unwrap().try_lock() {
             Ok(sqvm_callbacks) => sqvm_callbacks,
@@ -95,7 +114,7 @@ impl PluginData {
     pub fn add_sqvm_init_callback(
         &self,
         sqvm_type: ScriptVmType,
-        callback: Box<dyn Fn(SquirrelFunctions)>,
+        callback: Box<dyn Fn(SquirrelBuilder)>,
     ) {
         let mut sqvm_callbacks = match self.sqvm_callbacks.as_ref().unwrap().try_lock() {
             Ok(sqvm_callbacks) => sqvm_callbacks,
