@@ -16,3 +16,9 @@ pub enum PluginCreationError {
     #[error("missing ScriptVmType when attempting a merge")]
     NoScriptVmType,
 }
+
+#[derive(Error, Debug)]
+pub enum SquirrelGetError {
+    #[error("some else has the lock on this ref to CSquirrelVM")]
+    LockedCSquirrelVM
+}

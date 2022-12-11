@@ -1508,7 +1508,7 @@ fn bindgen_test_layout_SQArray() {
     );
 }
 #[repr(C)]
-#[derive(Copy, Clone)]
+// #[derive(Copy, Clone)]
 pub struct HSquirrelVM {
     pub vftable: *mut ::std::os::raw::c_void,
     pub uiRef: ::std::os::raw::c_int,
@@ -3658,7 +3658,7 @@ fn bindgen_test_layout_SQCompiler() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug,Clone,Copy)]
 pub struct CSquirrelVM {
     pub gap_0: [::std::os::raw::c_uchar; 8usize],
     pub sqvm: *mut HSquirrelVM,

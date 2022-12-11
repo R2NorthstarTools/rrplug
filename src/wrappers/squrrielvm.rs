@@ -5,9 +5,9 @@ use super::northstar::ScriptVmType;
 use super::squrriel::SquirrelBuilder;
 
 pub enum ScriptVm {
-    Server(CSquirrelVM),
-    Client(CSquirrelVM),
-    Ui(CSquirrelVM),
+    Server(&'static mut CSquirrelVM),
+    Client(&'static mut CSquirrelVM),
+    Ui(&'static mut CSquirrelVM),
 }
 
 impl From<ScriptVm> for ScriptVmType {
@@ -22,8 +22,8 @@ impl From<ScriptVm> for ScriptVmType {
 
 /// Client [`SquirrelFunctions`] can be used for Ui too
 pub enum SqFunctions {
-    Server(SquirrelFunctions),
-    Client(SquirrelFunctions),
+    Server(&'static SquirrelFunctions),
+    Client(&'static SquirrelFunctions),
 }
 
 pub struct SquirrelVMCallbacks {
@@ -72,17 +72,17 @@ impl SquirrelVMCallbacks {
     }
 
     pub fn call_callbacks_created(&self, sqvm_type: ScriptVm) {
-        let (specific_callbacks, sqvm) = match sqvm_type {
-            ScriptVm::Server(sqvm) => (&self.callback_functions_server, sqvm),
-            ScriptVm::Client(sqvm) => (&self.callback_functions_client, sqvm),
-            ScriptVm::Ui(sqvm) => (&self.callback_functions_ui, sqvm),
+        let (specific_callbacks, sqvm, sqvm_type) = match sqvm_type {
+            ScriptVm::Server(sqvm) => (&self.callback_functions_server, sqvm, ScriptVmType::UiClient),
+            ScriptVm::Client(sqvm) => (&self.callback_functions_client, sqvm, ScriptVmType::Client),
+            ScriptVm::Ui(sqvm) => (&self.callback_functions_ui, sqvm, ScriptVmType::UiClient),
         };
 
         let mut sqbuilder = SquirrelBuilder::new();
-        sqbuilder.set_sqtype(sqvm_type.into()).set_sqvm_cs(sqvm);
+        sqbuilder.set_sqtype(sqvm_type).set_sqvm_cs(sqvm);
 
         for callback in specific_callbacks {
-            callback(sqbuilder);
+            callback(sqbuilder.clone());
         }
     }
 
@@ -96,7 +96,7 @@ impl SquirrelVMCallbacks {
             SqFunctions::Client(functions) => (
                 &self.callback_functions_client_init,
                 functions,
-                ScriptVmType::Client,
+                ScriptVmType::UiClient,
             ),
         };
 
@@ -104,7 +104,7 @@ impl SquirrelVMCallbacks {
         sqbuilder.set_sqtype(sqtype).set_sqvm_sqfunctions(functions);
 
         for callback in specific_callbacks {
-            callback(sqbuilder);
+            callback(sqbuilder.clone());
         }
     }
 }

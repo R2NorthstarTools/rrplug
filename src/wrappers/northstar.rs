@@ -18,6 +18,7 @@ pub enum ScriptVmType {
     Server,
     Client,
     Ui,
+    UiClient
 }
 
 impl Display for ScriptVmType {
@@ -29,9 +30,10 @@ impl Display for ScriptVmType {
 impl ScriptVmType {
     pub fn to_int(&self) -> i32 {
         match self {
-            ScriptVmType::Server => ScriptContext_SERVER,
-            ScriptVmType::Client => ScriptContext_CLIENT,
-            ScriptVmType::Ui => ScriptContext_UI,
+            Self::Server => ScriptContext_SERVER,
+            Self::Client => ScriptContext_CLIENT,
+            Self::Ui => ScriptContext_UI,
+            Self::UiClient => ScriptContext_UI,
         }
     }
 }
@@ -108,6 +110,7 @@ impl PluginData {
             ScriptVmType::Server => sqvm_callbacks.add_callback_server(callback),
             ScriptVmType::Client => sqvm_callbacks.add_callback_client(callback),
             ScriptVmType::Ui => sqvm_callbacks.add_callback_ui(callback),
+            ScriptVmType::UiClient => {},
         }
     }
 
@@ -127,7 +130,7 @@ impl PluginData {
         match sqvm_type {
             ScriptVmType::Server => sqvm_callbacks.add_callback_server_init(callback),
             ScriptVmType::Client => sqvm_callbacks.add_callback_client_init(callback),
-            ScriptVmType::Ui => {
+            _ => {
                 log::warn!("UI functions and Client functions are the same");
                 sqvm_callbacks.add_callback_client_init(callback);
             }
