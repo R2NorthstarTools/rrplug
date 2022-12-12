@@ -4,20 +4,17 @@ use crate::{
     bindings::{
         plugin_abi::{PluginEngineData, PluginLoadDLL, PluginLoadDLL_ENGINE, SquirrelFunctions},
         squirrelclasstypes::{
-            ScriptContext, ScriptContext_CLIENT, ScriptContext_SERVER, ScriptContext_UI,
+            ScriptContext, ScriptContext_CLIENT, ScriptContext_SERVER, ScriptContext_UI, SQFuncRegistration,
         },
         squirreldatatypes::CSquirrelVM,
-    },
-    wrappers::squrrielvm::ScriptVm,
+    }, wrappers::squrriel::FUNCTION_SQ_REGISTER,
 };
 
 use super::{
-    engine::EngineCallbacks,
-    squrrielvm::{SqFunctions, SquirrelVMCallbacks},
+    engine::EngineCallbacks, squrriel::SQFUNCTIONS
 };
 
 pub static mut ENGINE_CALLBACKS: Option<std::sync::Mutex<EngineCallbacks>> = None;
-pub static mut SQVM_CALLBACKS: Option<std::sync::Mutex<SquirrelVMCallbacks>> = None;
 
 #[no_mangle]
 #[export_name = "PLUGIN_INIT_SQVM_CLIENT"]
@@ -29,11 +26,10 @@ fn plugin_init_sqvm_client(funcs: *const SquirrelFunctions) {
             return;
         }
     };
-    let funcs = SqFunctions::Client(funcs);
 
-    match unsafe { SQVM_CALLBACKS.as_ref().unwrap().try_lock() } {
-        Ok(sqvm_callbacks) => sqvm_callbacks.call_callbacks_init(funcs),
-        Err(err) => log::error!("calling sqvm client init callbacks failed: {err:?}"),
+    match unsafe { SQFUNCTIONS.try_lock() } {
+        Ok(mut sqfuntions) => sqfuntions.client = Some(funcs),
+        Err(err) => log::error!("failed to add client sq functions to SQFUNCTIONS: {err:?}"),
     }
 }
 
@@ -47,71 +43,47 @@ fn plugin_init_sqvm_server(funcs: *const SquirrelFunctions) {
             return;
         }
     };
-    let funcs = SqFunctions::Server( funcs );
 
-    match unsafe { SQVM_CALLBACKS.as_ref().unwrap().try_lock() } {
-        Ok(sqvm_callbacks) => sqvm_callbacks.call_callbacks_init(funcs),
-        Err(err) => log::error!("calling sqvm server init callbacks failed: {err:?}"),
+    match unsafe { SQFUNCTIONS.try_lock() } {
+        Ok(mut sqfuntions) => sqfuntions.server = Some(funcs),
+        Err(err) => log::error!("failed to add server sq functions to SQFUNCTIONS: {err:?}"),
     }
 }
 
 #[no_mangle]
 #[export_name = "PLUGIN_INFORM_SQVM_CREATED"]
 extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *const CSquirrelVM) {
-    log::warn!("PLUGIN_INFORM_SQVM_CREATED called");
-    let sqvm = match context {
-        ScriptContext_SERVER => {
-            let sqvm = match unsafe { sqvm.cast_mut().as_mut() } {
-                Some(funcs) => funcs,
-                None => {
-                    log::error!("failed to get CSquirrelVM from ptr in PLUGIN_INFORM_SQVM_CREATED SERVER");
-                    return;
-                }
-            };
-            log::debug!(
-                "PLUGIN_INFORM_SQVM_CREATED got SERVER ScriptContext {:?}",
-                sqvm
-            );
+    log::info!("PLUGIN_INFORM_SQVM_CREATED called");
+    
+    let mut locked_register_functions = loop { match unsafe {FUNCTION_SQ_REGISTER.try_lock()} {
+        Ok(locked_sq_functions) => break locked_sq_functions,
+        Err(err) => log::error!("failed to get functions marked for REGISTER: {err:?}; retrying in a bit"),
+    }};
 
-            ScriptVm::Server(sqvm)
-        }
-        ScriptContext_CLIENT => {
-            let sqvm = match unsafe { sqvm.cast_mut().as_mut() } {
-                Some(funcs) => funcs,
-                None => {
-                    log::error!("failed to get CSquirrelVM from ptr in PLUGIN_INFORM_SQVM_CREATED CLIENT");
-                    return;
-                }
-            };
-            log::debug!(
-                "PLUGIN_INFORM_SQVM_CREATED got CLIENT ScriptContext {:?}",
-                sqvm
-            );
+    let locked_sq_functions = loop { match unsafe {SQFUNCTIONS.try_lock()} {
+        Ok(locked_sq_functions) => break locked_sq_functions,
+        Err(err) => log::error!("failed to add server sq functions to SQFUNCTIONS: {err:?}; retrying in a bit"),
+    }};
+    
 
-            ScriptVm::Client(sqvm)
-        }
-        ScriptContext_UI => {
-            let sqvm = match unsafe { sqvm.cast_mut().as_mut() } {
-                Some(funcs) => funcs,
-                None => {
-                    log::error!("failed to get CSquirrelVM from ptr in PLUGIN_INFORM_SQVM_CREATED UI");
-                    return;
-                }
-            };
-            log::debug!("PLUGIN_INFORM_SQVM_CREATED got UI ScriptContext {:?}", sqvm);
-
-            ScriptVm::Ui(sqvm)
-        }
-        _ => {
-            log::warn!("PLUGIN_INFORM_SQVM_CREATED called with unknown ScriptContext {context}");
-            return;
-        }
+    let sq_functions = match context {
+        ScriptContext_SERVER => locked_sq_functions.server.unwrap(),
+        ScriptContext_CLIENT => locked_sq_functions.client.unwrap(),
+        ScriptContext_UI => locked_sq_functions.client.unwrap(),
+        _ => {log::error!("invalid ScriptContext"); return;}
     };
 
-    match unsafe { SQVM_CALLBACKS.as_ref().unwrap().try_lock() } {
-        Ok(sqvm_callbacks) => sqvm_callbacks.call_callbacks_created(sqvm),
-        Err(err) => log::error!("calling sqvm created callbacks failed: {err:?}"),
+    let sq_register_func = match sq_functions.RegisterSquirrelFunc {
+        Some(sq_register_func) => sq_register_func,
+        None => {log::error!("RegisterSquirrelFunc is None"); return;},
+    };
+
+    let sqvm = sqvm.cast_mut();
+
+    for func in locked_register_functions.iter_mut() {
+        unsafe { sq_register_func(sqvm, func as *mut SQFuncRegistration, 0 ); }
     }
+    
 }
 
 #[no_mangle]

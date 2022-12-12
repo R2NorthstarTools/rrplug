@@ -1,24 +1,26 @@
 //! wrappers for structs that are passed to the plugin
 
 use log::SetLoggerError;
+use std::ffi::CString;
 use std::fmt::Display;
 use std::sync::Mutex;
 
 use super::engine::EngineCallbacks;
-use super::squrriel::SquirrelBuilder;
-use super::squrrielvm::SquirrelVMCallbacks;
+use super::errors::SqFunctionError;
+use super::squrriel::FUNCTION_SQ_REGISTER;
 use crate::bindings::plugin_abi::{PluginEngineData, PluginInitFuncs, PluginNorthstarData};
 use crate::bindings::squirrelclasstypes::{
-    ScriptContext_CLIENT, ScriptContext_SERVER, ScriptContext_UI,
+    eSQReturnType_Boolean, SQFuncRegistration, SQFunction, ScriptContext_CLIENT,
+    ScriptContext_SERVER, ScriptContext_UI,
 };
 use crate::nslog;
 
-#[derive(Debug, Clone, Copy,PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ScriptVmType {
     Server,
     Client,
     Ui,
-    UiClient
+    UiClient,
 }
 
 impl Display for ScriptVmType {
@@ -42,7 +44,6 @@ pub struct PluginData {
     plugin_init_funcs: PluginInitFuncs,
     plugin_northstar_data: PluginNorthstarData,
     engine_callbacks: &'static mut Option<Mutex<EngineCallbacks>>,
-    sqvm_callbacks: &'static mut Option<Mutex<SquirrelVMCallbacks>>,
 }
 
 impl PluginData {
@@ -51,13 +52,11 @@ impl PluginData {
         plugin_init_funcs: *const PluginInitFuncs,
         plugin_northstar_data: *const PluginNorthstarData,
         engine_callbacks: &'static mut Option<Mutex<EngineCallbacks>>,
-        sqvm_callbacks: &'static mut Option<Mutex<SquirrelVMCallbacks>>,
     ) -> Self {
         Self {
             plugin_init_funcs: *plugin_init_funcs,
             plugin_northstar_data: *plugin_northstar_data,
             engine_callbacks,
-            sqvm_callbacks,
         }
     }
 
@@ -93,47 +92,37 @@ impl PluginData {
         engine_callbacks.add_callback(callback);
     }
 
-    pub fn add_sqvm_created_callback(
-        &self,
-        sqvm_type: ScriptVmType,
-        callback: Box<dyn Fn(SquirrelBuilder)>,
-    ) {
-        let mut sqvm_callbacks = match self.sqvm_callbacks.as_ref().unwrap().try_lock() {
-            Ok(sqvm_callbacks) => sqvm_callbacks,
-            Err(err) => {
-                log::error!("failed to add engine callbacks because of {err:?}");
-                return;
-            }
+    pub fn register_sq_functions(&self, func: SQFunction) -> Result<(), SqFunctionError> {
+        let to_cstring = |s: &str| CString::new(s).unwrap();
+
+        let mut buffer = Box::new(vec![0_u32; 1000]);
+        let capacity = buffer.capacity();
+        let ptr = buffer.as_mut_ptr();
+
+        let sqfunction = SQFuncRegistration {
+            squirrelFuncName: to_cstring("rrplug_test").as_ptr(),
+            cppFuncName: to_cstring("rrplug_test").as_ptr(),
+            helpText: to_cstring("rrplug_test").as_ptr(),
+            returnTypeString: to_cstring("bool").as_ptr(),
+            argTypes: to_cstring("bool").as_ptr(),
+            unknown1: 0,
+            devLevel: 0,
+            shortNameMaybe: to_cstring("rrplug_test").as_ptr(),
+            unknown2: 0,
+            returnType: eSQReturnType_Boolean,
+            externalBufferPointer: ptr,
+            externalBufferSize: capacity.try_into().unwrap(),
+            unknown3: 0,
+            unknown4: 0,
+            funcPtr: func,
         };
 
-        match sqvm_type {
-            ScriptVmType::Server => sqvm_callbacks.add_callback_server(callback),
-            ScriptVmType::Client => sqvm_callbacks.add_callback_client(callback),
-            ScriptVmType::Ui => sqvm_callbacks.add_callback_ui(callback),
-            ScriptVmType::UiClient => {},
-        }
-    }
-
-    pub fn add_sqvm_init_callback(
-        &self,
-        sqvm_type: ScriptVmType,
-        callback: Box<dyn Fn(SquirrelBuilder)>,
-    ) {
-        let mut sqvm_callbacks = match self.sqvm_callbacks.as_ref().unwrap().try_lock() {
-            Ok(sqvm_callbacks) => sqvm_callbacks,
-            Err(err) => {
-                log::error!("failed to add engine callbacks because of {err:?}");
-                return;
+        match unsafe { FUNCTION_SQ_REGISTER.try_lock() } {
+            Ok(mut sq_function_vec) => {
+                sq_function_vec.push(sqfunction);
+                Ok(())
             }
-        };
-
-        match sqvm_type {
-            ScriptVmType::Server => sqvm_callbacks.add_callback_server_init(callback),
-            ScriptVmType::Client => sqvm_callbacks.add_callback_client_init(callback),
-            _ => {
-                log::warn!("UI functions and Client functions are the same");
-                sqvm_callbacks.add_callback_client_init(callback);
-            }
+            Err(_) => Err(SqFunctionError::LockedSqFunctionVec),
         }
     }
 }

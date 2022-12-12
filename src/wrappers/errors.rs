@@ -3,6 +3,12 @@ use thiserror::Error;
 use super::northstar::ScriptVmType;
 
 #[derive(Error, Debug)]
+pub enum SqFunctionError {
+    #[error("the vector storing SqFunction s is locked some where else")]
+    LockedSqFunctionVec
+}
+
+#[derive(Error, Debug)]
 pub enum PluginCreationError {
     #[error("A function was actually a nullptr")]
     NoneFunction,

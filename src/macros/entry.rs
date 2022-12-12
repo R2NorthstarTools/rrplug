@@ -15,14 +15,12 @@ macro_rules! entry {
             let mut plugin: $func = $crate::plugin::Plugin::new();
 
             unsafe { $crate::wrappers::loader::ENGINE_CALLBACKS = Some(std::sync::Mutex::new($crate::wrappers::engine::EngineCallbacks::default())) }
-            unsafe { $crate::wrappers::loader::SQVM_CALLBACKS = Some(std::sync::Mutex::new($crate::wrappers::squrrielvm::SquirrelVMCallbacks::default())) }
 
             let plugin_data = unsafe {
                 $crate::wrappers::northstar::PluginData::new(
                     plugin_init_funcs,
                     plugin_northstar_data,
                     &mut $crate::wrappers::loader::ENGINE_CALLBACKS,
-                    &mut $crate::wrappers::loader::SQVM_CALLBACKS
                 )
             };
 
