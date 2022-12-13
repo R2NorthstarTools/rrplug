@@ -13,6 +13,7 @@ edition = "2021"
 [dependencies]
 thiserror = "1.0.37"
 log = "0.4.17"
+rrplug_proc = {path = "./rrplug_proc" }
 
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"
