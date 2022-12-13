@@ -103,7 +103,7 @@ impl PluginData {
             squirrelFuncName: to_cstring("rrplug_test").as_ptr(),
             cppFuncName: to_cstring("rrplug_test").as_ptr(),
             helpText: to_cstring("rrplug_test").as_ptr(),
-            returnTypeString: to_cstring("bool").as_ptr(),
+            returnTypeString: to_cstring("void").as_ptr(),
             argTypes: to_cstring("bool").as_ptr(),
             unknown1: 0,
             devLevel: 0,

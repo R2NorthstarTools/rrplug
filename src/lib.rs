@@ -87,3 +87,5 @@ pub mod plugin;
 pub mod prelude;
 pub mod nslog;
 pub mod wrappers;
+
+pub use rrplug_proc::sqfunction;
