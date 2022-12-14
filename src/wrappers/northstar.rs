@@ -10,10 +10,12 @@ use super::errors::SqFunctionError;
 use super::squrriel::FUNCTION_SQ_REGISTER;
 use crate::bindings::plugin_abi::{PluginEngineData, PluginInitFuncs, PluginNorthstarData};
 use crate::bindings::squirrelclasstypes::{
-    eSQReturnType_Boolean, SQFuncRegistration, SQFunction, ScriptContext_CLIENT,
-    ScriptContext_SERVER, ScriptContext_UI,
+     eSQReturnType_Default, SQFuncRegistration, SQFunction,
+    ScriptContext_CLIENT, ScriptContext_SERVER, ScriptContext_UI,
 };
 use crate::nslog;
+
+pub type SQFunc = fn() -> (&'static str, &'static str, SQFunction);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ScriptVmType {
@@ -92,24 +94,28 @@ impl PluginData {
         engine_callbacks.add_callback(callback);
     }
 
-    pub fn register_sq_functions(&self, func: SQFunction) -> Result<(), SqFunctionError> {
+    pub fn register_sq_functions(&self, get_info_func: SQFunc) -> Result<(), SqFunctionError> {
         let to_cstring = |s: &str| CString::new(s).unwrap();
 
         let mut buffer = Box::new(vec![0_u32; 1000]);
         let capacity = buffer.capacity();
         let ptr = buffer.as_mut_ptr();
 
-        let sqfunction = SQFuncRegistration {
-            squirrelFuncName: to_cstring("rrplug_test").as_ptr(),
-            cppFuncName: to_cstring("rrplug_test").as_ptr(),
-            helpText: to_cstring("rrplug_test").as_ptr(),
+        let (func_name, types, func) = get_info_func();
+
+        log::warn!("registing function {func_name} with {types}");
+
+        let sqfunction_registration = SQFuncRegistration {
+            squirrelFuncName: to_cstring(func_name).as_ptr(),
+            cppFuncName: to_cstring(func_name).as_ptr(),
+            helpText: to_cstring(func_name).as_ptr(),
             returnTypeString: to_cstring("void").as_ptr(),
-            argTypes: to_cstring("bool").as_ptr(),
+            argTypes: to_cstring(types).as_ptr(),
             unknown1: 0,
             devLevel: 0,
-            shortNameMaybe: to_cstring("rrplug_test").as_ptr(),
+            shortNameMaybe: to_cstring(func_name).as_ptr(),
             unknown2: 0,
-            returnType: eSQReturnType_Boolean,
+            returnType: eSQReturnType_Default,
             externalBufferPointer: ptr,
             externalBufferSize: capacity.try_into().unwrap(),
             unknown3: 0,
@@ -119,7 +125,7 @@ impl PluginData {
 
         match unsafe { FUNCTION_SQ_REGISTER.try_lock() } {
             Ok(mut sq_function_vec) => {
-                sq_function_vec.push(sqfunction);
+                sq_function_vec.push(sqfunction_registration);
                 Ok(())
             }
             Err(_) => Err(SqFunctionError::LockedSqFunctionVec),

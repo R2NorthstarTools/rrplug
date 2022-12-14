@@ -2,10 +2,10 @@
 
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
+use proc_macro::{TokenStream, Span};
 use quote::{quote, ToTokens};
 use syn;
-use syn::{parse_macro_input, FnArg, ItemFn, Stmt, Type};
+use syn::{parse_macro_input, FnArg, ItemFn, Stmt, Type, Ident};
 
 #[proc_macro_attribute]
 pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -15,14 +15,19 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
     let ItemFn {
-        attrs,
+        attrs: _,
         vis: _,
         sig,
         block,
     } = input;
     let mut stmts = block.stmts;
+    let mut sqtypes = String::new();
     let ident = &sig.ident;
     let input = &sig.inputs;
+    let str_func_name = format!( "sq_{}", ident.to_string() );
+    let sq_ident = Ident::new(&str_func_name.clone()[..], Span::call_site().into());
+
+    println!( "last stmt: {}", stmts.last().to_token_stream().to_string() );
 
     for i in input.iter() {
         match i.to_owned() {
@@ -31,15 +36,18 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
             FnArg::Typed(t) => match &*t.ty {
                 Type::Path(type_path)
-                    if type_path.clone().into_token_stream().to_string() == "bool" =>
+                    if type_path.to_token_stream().to_string() == "bool" =>
                 {
-                    let new_stmt: TokenStream = quote! {
-                        let test = 0;
+                    let name = t.clone().pat.to_token_stream();
+                    if !sqtypes.is_empty() {
+                        sqtypes.push(',');
                     }
-                    .into();
-                    let new_stmt = parse_macro_input!(new_stmt as Stmt);
+                    sqtypes.push_str("bool");
+                    sqtypes.push(' ');
+                    sqtypes.push_str(&name.to_string()[..]);
+                    let tk = quote! {let #name = 0;}.into();
+                    let new_stmt = parse_macro_input!( tk as Stmt);
                     stmts.insert(0, new_stmt);
-                    // Ident::new(&format!("let test = 0;"), Span::call_site())
                 }
 
                 // soon
@@ -66,8 +74,16 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
+    let func_info = quote!(
+        fn #ident () -> (&'static str, &'static str, rrplug::bindings::squirrelclasstypes::SQFunction) {
+            (#str_func_name, #sqtypes, #sq_ident )
+        }
+    );
+
     let out: TokenStream = quote! {
-        #(#attrs)* unsafe extern "C" fn #ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
+        #func_info
+        
+        unsafe extern "C" fn #sq_ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
             #(#stmts)*
         }
     }.into();
