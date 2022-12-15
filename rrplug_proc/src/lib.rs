@@ -24,8 +24,9 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sqtypes = String::new();
     let ident = &sig.ident;
     let input = &sig.inputs;
-    let str_func_name = format!( "sq_{}", ident.to_string() );
-    let sq_ident = Ident::new(&str_func_name.clone()[..], Span::call_site().into());
+    let cpp_func_name = format!( "sq_{}", ident.to_string() );
+    let sq_func_name = ident.to_string();
+    let sq_ident = Ident::new(&cpp_func_name.clone()[..], Span::call_site().into());
 
     println!( "last stmt: {}", stmts.last().to_token_stream().to_string() );
 
@@ -75,8 +76,8 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     let func_info = quote!(
-        fn #ident () -> (&'static str, &'static str, rrplug::bindings::squirrelclasstypes::SQFunction) {
-            (#str_func_name, #sqtypes, #sq_ident )
+        const fn #ident () -> (&'static str, &'static str, &'static str, rrplug::bindings::squirrelclasstypes::SQFunction) {
+            (#cpp_func_name, #sq_func_name, #sqtypes, #sq_ident ) // todo add name for sq since sq_ is confusing
         }
     );
 

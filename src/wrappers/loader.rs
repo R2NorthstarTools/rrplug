@@ -27,10 +27,7 @@ fn plugin_init_sqvm_client(funcs: *const SquirrelFunctions) {
         }
     };
 
-    match unsafe { SQFUNCTIONS.try_lock() } {
-        Ok(mut sqfuntions) => sqfuntions.client = Some(funcs),
-        Err(err) => log::error!("failed to add client sq functions to SQFUNCTIONS: {err:?}"),
-    }
+    unsafe { SQFUNCTIONS.client = Some(funcs.into()) }
 }
 
 #[no_mangle]
@@ -44,10 +41,7 @@ fn plugin_init_sqvm_server(funcs: *const SquirrelFunctions) {
         }
     };
 
-    match unsafe { SQFUNCTIONS.try_lock() } {
-        Ok(mut sqfuntions) => sqfuntions.server = Some(funcs),
-        Err(err) => log::error!("failed to add server sq functions to SQFUNCTIONS: {err:?}"),
-    }
+    unsafe { SQFUNCTIONS.server = Some(funcs.into()) }
 }
 
 #[no_mangle]
@@ -64,32 +58,19 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *const CS
         }
     };
 
-    let locked_sq_functions = loop {
-        match unsafe { SQFUNCTIONS.try_lock() } {
-            Ok(locked_sq_functions) => break locked_sq_functions,
-            Err(err) => log::error!(
-                "failed to add server sq functions to SQFUNCTIONS: {err:?}; retrying in a bit"
-            ),
+    let sq_functions = unsafe {
+        match context {
+            ScriptContext_SERVER => SQFUNCTIONS.server.as_ref().unwrap(),
+            ScriptContext_CLIENT => SQFUNCTIONS.client.as_ref().unwrap(),
+            ScriptContext_UI => SQFUNCTIONS.client.as_ref().unwrap(),
+            _ => {
+                log::error!("invalid ScriptContext");
+                return;
+            }
         }
     };
 
-    let sq_functions = match context {
-        ScriptContext_SERVER => locked_sq_functions.server.unwrap(),
-        ScriptContext_CLIENT => locked_sq_functions.client.unwrap(),
-        ScriptContext_UI => locked_sq_functions.client.unwrap(),
-        _ => {
-            log::error!("invalid ScriptContext");
-            return;
-        }
-    };
-
-    let sq_register_func = match sq_functions.RegisterSquirrelFunc {
-        Some(sq_register_func) => sq_register_func,
-        None => {
-            log::error!("RegisterSquirrelFunc is None");
-            return;
-        }
-    };
+    let sq_register_func = sq_functions.register_squirrel_func;
 
     let sqvm = sqvm.cast_mut();
 
