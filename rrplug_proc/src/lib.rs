@@ -11,6 +11,26 @@ use syn::{parse_macro_input, FnArg, ItemFn, Stmt, Type, Ident};
 pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     println!("attr: \"{}\"", attr.to_string());
     println!("item: \"{}\"", item.to_string());
+    
+    // otherwise the proc marco is blind :skull:
+    macro_rules! push_type {
+        ($var:ident, $sqtype:expr, $name:expr) => {
+            if !$var.is_empty() {
+                $var.push(',');
+                $var.push(' ');
+            }
+            $var.push_str($sqtype);
+            $var.push(' ');
+            $var.push_str($name);
+        };
+    }
+
+    macro_rules! push_stmts {
+        ($stmts:ident, $tk:ident) => {
+            let new_stmt = parse_macro_input!( $tk as Stmt);
+            $stmts.insert(0, new_stmt);
+        };
+    }
 
     let input = parse_macro_input!(item as ItemFn);
 
@@ -28,7 +48,8 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let sq_func_name = ident.to_string();
     let sq_ident = Ident::new(&cpp_func_name.clone()[..], Span::call_site().into());
 
-    println!( "last stmt: {}", stmts.last().to_token_stream().to_string() );
+    let mut sq_stack_pos = 1;
+    let mut sq_gets_stmts = Vec::new();
 
     for i in input.iter() {
         match i.to_owned() {
@@ -40,15 +61,21 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     if type_path.to_token_stream().to_string() == "bool" =>
                 {
                     let name = t.clone().pat.to_token_stream();
-                    if !sqtypes.is_empty() {
-                        sqtypes.push(',');
-                    }
-                    sqtypes.push_str("bool");
-                    sqtypes.push(' ');
-                    sqtypes.push_str(&name.to_string()[..]);
-                    let tk = quote! {let #name = 0;}.into();
-                    let new_stmt = parse_macro_input!( tk as Stmt);
-                    stmts.insert(0, new_stmt);
+                    push_type!(sqtypes, "bool", &name.to_string()[..]);
+                    let tk = quote! {let #name = (sq_functions.sq_getbool)(sqvm, #sq_stack_pos) == 1;}.into();
+                    push_stmts!( sq_gets_stmts, tk );
+
+                    sq_stack_pos += 1;
+                },
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string() == "i32" =>
+                {
+                    let name = t.clone().pat.to_token_stream();
+                    push_type!(sqtypes, "int", &name.to_string()[..]);
+                    let tk = quote! {let #name = (sq_functions.sq_getinteger)(sqvm, #sq_stack_pos) as i32;}.into();
+                    push_stmts!( sq_gets_stmts, tk );
+
+                    sq_stack_pos += 1;
                 }
 
                 // soon
@@ -74,6 +101,14 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             },
         }
     }
+    
+    sq_gets_stmts.reverse();
+    for s in sq_gets_stmts {
+        stmts.insert( 0, s);
+    }
+
+    let tk = quote! {let sq_functions = SQFUNCTIONS.client.as_ref().unwrap();}.into();
+    push_stmts!( stmts, tk );
 
     let func_info = quote!(
         const fn #ident () -> (&'static str, &'static str, &'static str, rrplug::bindings::squirrelclasstypes::SQFunction) {

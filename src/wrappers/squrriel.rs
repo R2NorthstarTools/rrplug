@@ -14,7 +14,7 @@ use crate::bindings::{
 };
 
 pub(crate) static mut FUNCTION_SQ_REGISTER: Mutex<Vec<SQFuncRegistration>> = Mutex::new(Vec::new());
-pub(crate) static mut SQFUNCTIONS: SqFunctions = SqFunctions {
+pub static mut SQFUNCTIONS: SqFunctions = SqFunctions {
     client: None,
     server: None,
 };
@@ -141,9 +141,9 @@ pub struct SquirrelFunctionsUnwraped {
     pub sq_schedule_call_external: &'static sq_schedule_call_externalType_ref,
 }
 
-pub(crate) struct SqFunctions {
-    pub(crate) client: Option<SquirrelFunctionsUnwraped>,
-    pub(crate) server: Option<SquirrelFunctionsUnwraped>,
+pub struct SqFunctions {
+    pub client: Option<SquirrelFunctionsUnwraped>,
+    pub server: Option<SquirrelFunctionsUnwraped>,
 }
 
 impl From<&'static SquirrelFunctions> for SquirrelFunctionsUnwraped {
