@@ -62,7 +62,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 {
                     let name = t.clone().pat.to_token_stream();
                     push_type!(sqtypes, "bool", &name.to_string()[..]);
-                    let tk = quote! {let #name = (sq_functions.sq_getbool)(sqvm, #sq_stack_pos) == 1;}.into();
+                    let tk = quote! {let #name = unsafe { (sq_functions.sq_getbool)(sqvm, #sq_stack_pos) } == 1;}.into();
                     push_stmts!( sq_gets_stmts, tk );
 
                     sq_stack_pos += 1;
@@ -72,7 +72,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 {
                     let name = t.clone().pat.to_token_stream();
                     push_type!(sqtypes, "int", &name.to_string()[..]);
-                    let tk = quote! {let #name = (sq_functions.sq_getinteger)(sqvm, #sq_stack_pos) as i32;}.into();
+                    let tk = quote! {let #name = unsafe { (sq_functions.sq_getinteger)(sqvm, #sq_stack_pos) } as i32;}.into();
                     push_stmts!( sq_gets_stmts, tk );
 
                     sq_stack_pos += 1;
@@ -107,19 +107,16 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         stmts.insert( 0, s);
     }
 
-    let tk = quote! {let sq_functions = SQFUNCTIONS.client.as_ref().unwrap();}.into();
+    let tk = quote! {let sq_functions = unsafe { SQFUNCTIONS.client.as_ref().unwrap() } ;}.into();
     push_stmts!( stmts, tk );
 
-    let func_info = quote!(
+    let out: TokenStream = quote! {
         const fn #ident () -> (&'static str, &'static str, &'static str, rrplug::bindings::squirrelclasstypes::SQFunction) {
             (#cpp_func_name, #sq_func_name, #sqtypes, #sq_ident ) // todo add name for sq since sq_ is confusing
         }
-    );
-
-    let out: TokenStream = quote! {
-        #func_info
         
-        unsafe extern "C" fn #sq_ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
+        #[no_mangle]
+        extern "C" fn #sq_ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
             #(#stmts)*
         }
     }.into();

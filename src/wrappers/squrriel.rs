@@ -13,7 +13,9 @@ use crate::bindings::{
     },
 };
 
-pub(crate) static mut FUNCTION_SQ_REGISTER: Mutex<Vec<SQFuncRegistration>> = Mutex::new(Vec::new());
+use super::northstar::SQFuncInfo;
+
+pub(crate) static mut FUNCTION_SQ_REGISTER: Mutex<Vec<SQFuncInfo>> = Mutex::new(Vec::new());
 pub static mut SQFUNCTIONS: SqFunctions = SqFunctions {
     client: None,
     server: None,
