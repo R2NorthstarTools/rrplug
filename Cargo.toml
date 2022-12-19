@@ -1,6 +1,6 @@
 [package]
 name = "rrplug"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["catornot"]
 description = "safe wrappers and functions for R2Northstar plugins"
 repository = "https://github.com/catornot/rrplug"

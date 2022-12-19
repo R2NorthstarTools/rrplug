@@ -330,6 +330,7 @@ fn bindgen_test_layout_SQObject() {
     );
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Debug, Copy, Clone)]
 pub struct SQString {
     pub vftable: *mut ::std::os::raw::c_void,
@@ -448,6 +449,7 @@ fn bindgen_test_layout_SQString() {
     );
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Debug, Copy, Clone)]
 pub struct SQTable {
     pub vftable: *mut ::std::os::raw::c_void,
@@ -643,6 +645,7 @@ fn bindgen_test_layout_SQTable() {
     );
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub struct SQClosure {
     pub vftable: *mut ::std::os::raw::c_void,
@@ -816,6 +819,7 @@ fn bindgen_test_layout_SQClosure() {
     );
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub struct SQFunctionProto {
     pub vftable: *mut ::std::os::raw::c_void,
@@ -1195,6 +1199,7 @@ fn bindgen_test_layout_SQStructDef() {
     );
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Debug, Copy, Clone)]
 pub struct SQNativeClosure {
     pub vftable: *mut ::std::os::raw::c_void,
@@ -1508,6 +1513,7 @@ fn bindgen_test_layout_SQArray() {
     );
 }
 #[repr(C)]
+#[repr(align(8))]
 // #[derive(Copy, Clone)]
 pub struct HSquirrelVM {
     pub vftable: *mut ::std::os::raw::c_void,
@@ -3225,6 +3231,7 @@ fn bindgen_test_layout_tableNode() {
     );
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Copy, Clone)]
 pub struct CallInfo {
     pub ip: ::std::os::raw::c_longlong,
@@ -3395,6 +3402,7 @@ fn bindgen_test_layout_StringTable() {
     );
 }
 #[repr(C)]
+#[repr(align(8))]
 #[derive(Debug, Copy, Clone)]
 pub struct SQStackInfos {
     pub _name: *mut ::std::os::raw::c_char,
@@ -3447,6 +3455,7 @@ fn bindgen_test_layout_SQStackInfos() {
     );
 }
 #[repr(C)]
+#[repr(align(4))]
 #[derive(Debug, Copy, Clone)]
 pub struct SQInstruction {
     pub op: ::std::os::raw::c_int,
