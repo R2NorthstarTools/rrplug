@@ -13,7 +13,7 @@ use crate::{
     wrappers::squrriel::FUNCTION_SQ_REGISTER,
 };
 use once_cell::sync::Lazy;
-use std::{ffi::CString, mem, ptr::addr_of_mut};
+use std::ffi::{CStr, CString};
 
 pub static mut ENGINE_CALLBACKS: Lazy<std::sync::Mutex<EngineCallbacks>> =
     Lazy::new(|| std::sync::Mutex::new(EngineCallbacks::default()));
@@ -29,7 +29,7 @@ fn plugin_init_sqvm_client(funcs: *const SquirrelFunctions) {
         }
     };
 
-    unsafe { SQFUNCTIONS.client = Some(funcs.into()) }
+    unsafe { SQFUNCTIONS.client = Some((*funcs).into()) }
 }
 
 #[no_mangle]
@@ -43,7 +43,7 @@ fn plugin_init_sqvm_server(funcs: *const SquirrelFunctions) {
         }
     };
 
-    unsafe { SQFUNCTIONS.server = Some(funcs.into()) }
+    unsafe { SQFUNCTIONS.server = Some((*funcs).into()) }
 }
 
 #[no_mangle]
@@ -74,8 +74,6 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
 
     let sq_register_func = sq_functions.register_squirrel_func;
 
-    let to_cstring = |s: &str| CString::new(s).unwrap();
-
     for get_info_func in locked_register_functions.iter_mut() {
         let (cpp_func_name, sq_func_name, types, func) = dbg!(get_info_func());
 
@@ -93,26 +91,51 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
             "array" => squirrelclasstypes::eSQReturnType_Arrays,
             "asset" => squirrelclasstypes::eSQReturnType_Asset,
             "table" => squirrelclasstypes::eSQReturnType_Table,
+            "void" => squirrelclasstypes::eSQReturnType_Default,
             _ => {
                 log::info!("undefined return type choosing eSQReturnType_Default");
                 squirrelclasstypes::eSQReturnType_Default
             }
         };
+        
+        // shouldn't be unwraping here but I will say : why did you name your function like this?
+        let sq_func_name = Box::new(CString::new(sq_func_name).unwrap());
+        let help_test = Box::new(CString::new("what help").unwrap());
+        let cpp_func_name = Box::new(CString::new(cpp_func_name).unwrap());
+        let returntype = Box::new(CString::new(returntype).unwrap());
+        let types = Box::new(CString::new(types).unwrap());
 
-        let sq_func_name = to_cstring(sq_func_name);
-        let help_test = to_cstring("what help");
-        let cpp_func_name = to_cstring(cpp_func_name);
-        let returntype = to_cstring(returntype);
-        let types = to_cstring(types);
+        let sq_func_name_ptr = Box::leak(sq_func_name).as_ptr();
+        let cpp_func_name_ptr = Box::leak(cpp_func_name).as_ptr();
+        let help_test_ptr = Box::leak(help_test).as_ptr();
+        let returntype_ptr = Box::leak(returntype).as_ptr();
+        let types_ptr = Box::leak(types).as_ptr();
 
-        let sq_func_name_ptr = sq_func_name.as_ptr();
-        let cpp_func_name_ptr = cpp_func_name.as_ptr();
-        let help_test_ptr = help_test.as_ptr();
-        let returntype_ptr = returntype.as_ptr();
-        let types_ptr = types.as_ptr();
+        debug_assert!(!sq_func_name_ptr.is_null());
+        debug_assert!(!cpp_func_name_ptr.is_null());
+        debug_assert!(!help_test_ptr.is_null());
+        debug_assert!(!returntype_ptr.is_null());
+        debug_assert!(!types_ptr.is_null());
+        debug_assert!(!sqvm.is_null());
 
-        let mut un_init = Box::new(mem::MaybeUninit::<SQFuncRegistration>::zeroed());
-        let struct_ptr = un_init.as_mut_ptr();
+        let reg = Box::new(SQFuncRegistration {
+            squirrelFuncName: sq_func_name_ptr,
+            cppFuncName: cpp_func_name_ptr,
+            helpText: help_test_ptr,
+            returnTypeString: returntype_ptr,
+            argTypes: types_ptr,
+            unknown1: 0,
+            devLevel: 0,
+            shortNameMaybe: sq_func_name_ptr,
+            unknown2: 0,
+            returnType: esq_returntype,
+            externalBufferPointer: Box::new(vec![0_u32; 10]).leak().as_mut_ptr(),
+            externalBufferSize: 9,
+            unknown3: 0,
+            unknown4: 0,
+            funcPtr: func,
+        });
+        let struct_ptr = Box::into_raw(reg);
 
         debug_assert!(!sq_func_name_ptr.is_null());
         debug_assert!(!cpp_func_name_ptr.is_null());
@@ -121,32 +144,17 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
         debug_assert!(!types_ptr.is_null());
         debug_assert!(!struct_ptr.is_null());
         debug_assert!(!sqvm.is_null());
-
-        unsafe {
-            addr_of_mut!((*struct_ptr).squirrelFuncName).write(sq_func_name_ptr);
-            addr_of_mut!((*struct_ptr).squirrelFuncName).write(sq_func_name_ptr);
-            addr_of_mut!((*struct_ptr).cppFuncName).write(cpp_func_name_ptr);
-            addr_of_mut!((*struct_ptr).helpText).write(help_test_ptr);
-            addr_of_mut!((*struct_ptr).returnTypeString).write(returntype_ptr);
-            addr_of_mut!((*struct_ptr).returnType).write(esq_returntype);
-            addr_of_mut!((*struct_ptr).argTypes).write(types_ptr);
-            addr_of_mut!((*struct_ptr).funcPtr).write(func);
-        };
-
-        debug_assert!(!sq_func_name_ptr.is_null());
-        debug_assert!(!cpp_func_name_ptr.is_null());
-        debug_assert!(!help_test_ptr.is_null());
-        debug_assert!(!returntype_ptr.is_null());
-        debug_assert!(!types_ptr.is_null());
-        debug_assert!(!struct_ptr.is_null());
-        debug_assert!(!sqvm.is_null());
-        debug_assert!(func.is_some());
 
         unsafe {
             sq_register_func(sqvm, struct_ptr, 1);
-        }
 
-        unsafe { un_init.assume_init_drop() }
+            _ = Box::from_raw(struct_ptr);
+            _ = CStr::from_ptr(sq_func_name_ptr);
+            _ = CStr::from_ptr(cpp_func_name_ptr);
+            _ = CStr::from_ptr(help_test_ptr);
+            _ = CStr::from_ptr(returntype_ptr);
+            _ = CStr::from_ptr(types_ptr);
+        }
     }
 }
 

@@ -45,7 +45,7 @@ pub const SQRESULT_SQRESULT_NULL: SQRESULT = 0;
 pub const SQRESULT_SQRESULT_NOTNULL: SQRESULT = 1;
 pub type SQRESULT = ::std::os::raw::c_int;
 pub type SQFunction =
-    Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> SQRESULT>; // this type was inaccurate or maybe not idk
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> SQRESULT; // this type was inaccurate
 pub const eSQReturnType_Float: eSQReturnType = 1;
 pub const eSQReturnType_Vector: eSQReturnType = 3;
 pub const eSQReturnType_Integer: eSQReturnType = 5;
