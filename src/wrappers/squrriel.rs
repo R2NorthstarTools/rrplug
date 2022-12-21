@@ -12,10 +12,9 @@ use crate::bindings::{
         CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObjectType,
     },
 };
+use super::northstar::FuncSQFuncInfo;
 
-use super::northstar::SQFuncInfo;
-
-pub(crate) static mut FUNCTION_SQ_REGISTER: Mutex<Vec<SQFuncInfo>> = Mutex::new(Vec::new());
+pub(crate) static mut FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
 pub static mut SQFUNCTIONS: SqFunctions = SqFunctions {
     client: None,
     server: None,

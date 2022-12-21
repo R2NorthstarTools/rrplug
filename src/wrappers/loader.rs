@@ -3,7 +3,7 @@
 use super::{engine::EngineCallbacks, squrriel::SQFUNCTIONS};
 use crate::{
     bindings::{
-        plugin_abi::{PluginEngineData, PluginLoadDLL, PluginLoadDLL_ENGINE, SquirrelFunctions},
+        plugin_abi::{PluginEngineData, PluginLoadDLL, PluginLoadDLL_ENGINE, SquirrelFunctions, PluginLoadDLL_SERVER, PluginLoadDLL_CLIENT},
         squirrelclasstypes::{
             self, SQFuncRegistration, ScriptContext, ScriptContext_CLIENT, ScriptContext_SERVER,
             ScriptContext_UI,
@@ -13,7 +13,7 @@ use crate::{
     wrappers::squrriel::FUNCTION_SQ_REGISTER,
 };
 use once_cell::sync::Lazy;
-use std::ffi::{CStr, CString};
+use std::{ffi::{CStr, CString}, mem, ptr::addr_of_mut};
 
 pub static mut ENGINE_CALLBACKS: Lazy<std::sync::Mutex<EngineCallbacks>> =
     Lazy::new(|| std::sync::Mutex::new(EngineCallbacks::default()));
@@ -75,11 +75,9 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
     let sq_register_func = sq_functions.register_squirrel_func;
 
     for get_info_func in locked_register_functions.iter_mut() {
-        let (cpp_func_name, sq_func_name, types, func) = dbg!(get_info_func());
+        let (cpp_func_name, sq_func_name, types, returntype, func) = get_info_func();
 
         log::info!("Registering {context} function {sq_func_name} with types: {types}"); // TODO: context int to str
-
-        let returntype = "void";
 
         let esq_returntype = match returntype {
             "bool" => squirrelclasstypes::eSQReturnType_Boolean,
@@ -92,6 +90,7 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
             "asset" => squirrelclasstypes::eSQReturnType_Asset,
             "table" => squirrelclasstypes::eSQReturnType_Table,
             "void" => squirrelclasstypes::eSQReturnType_Default,
+            "var" => squirrelclasstypes::eSQReturnType_Default,
             _ => {
                 log::info!("undefined return type choosing eSQReturnType_Default");
                 squirrelclasstypes::eSQReturnType_Default
@@ -111,31 +110,18 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
         let returntype_ptr = Box::leak(returntype).as_ptr();
         let types_ptr = Box::leak(types).as_ptr();
 
-        debug_assert!(!sq_func_name_ptr.is_null());
-        debug_assert!(!cpp_func_name_ptr.is_null());
-        debug_assert!(!help_test_ptr.is_null());
-        debug_assert!(!returntype_ptr.is_null());
-        debug_assert!(!types_ptr.is_null());
-        debug_assert!(!sqvm.is_null());
+        let reg = Box::new(mem::MaybeUninit::<SQFuncRegistration>::zeroed());
+        let struct_ptr = Box::leak(reg).as_mut_ptr();
 
-        let reg = Box::new(SQFuncRegistration {
-            squirrelFuncName: sq_func_name_ptr,
-            cppFuncName: cpp_func_name_ptr,
-            helpText: help_test_ptr,
-            returnTypeString: returntype_ptr,
-            argTypes: types_ptr,
-            unknown1: 0,
-            devLevel: 0,
-            shortNameMaybe: sq_func_name_ptr,
-            unknown2: 0,
-            returnType: esq_returntype,
-            externalBufferPointer: Box::new(vec![0_u32; 10]).leak().as_mut_ptr(),
-            externalBufferSize: 9,
-            unknown3: 0,
-            unknown4: 0,
-            funcPtr: func,
-        });
-        let struct_ptr = Box::into_raw(reg);
+        unsafe {
+            addr_of_mut!((*struct_ptr).squirrelFuncName).write(sq_func_name_ptr);
+            addr_of_mut!((*struct_ptr).cppFuncName).write(cpp_func_name_ptr);
+            addr_of_mut!((*struct_ptr).helpText).write(help_test_ptr);
+            addr_of_mut!((*struct_ptr).returnTypeString).write(returntype_ptr);
+            addr_of_mut!((*struct_ptr).returnType).write(esq_returntype);
+            addr_of_mut!((*struct_ptr).argTypes).write(types_ptr);
+            addr_of_mut!((*struct_ptr).funcPtr).write(func);
+        };
 
         debug_assert!(!sq_func_name_ptr.is_null());
         debug_assert!(!cpp_func_name_ptr.is_null());
@@ -149,11 +135,11 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
             sq_register_func(sqvm, struct_ptr, 1);
 
             _ = Box::from_raw(struct_ptr);
-            _ = CStr::from_ptr(sq_func_name_ptr);
-            _ = CStr::from_ptr(cpp_func_name_ptr);
-            _ = CStr::from_ptr(help_test_ptr);
-            _ = CStr::from_ptr(returntype_ptr);
-            _ = CStr::from_ptr(types_ptr);
+            _ = *CStr::from_ptr(sq_func_name_ptr);
+            _ = *CStr::from_ptr(cpp_func_name_ptr);
+            _ = *CStr::from_ptr(help_test_ptr);
+            _ = *CStr::from_ptr(returntype_ptr);
+            _ = *CStr::from_ptr(types_ptr);
         }
     }
 }
@@ -175,6 +161,8 @@ extern "C" fn plugin_inform_dll_load(dll: PluginLoadDLL, data: *const ::std::os:
                 Err(err) => log::error!("calling dll load callbacks failed: {err:?}"),
             }
         },
+        PluginLoadDLL_SERVER => {},
+        PluginLoadDLL_CLIENT => {},
         _ => log::warn!("PLUGIN_INFORM_DLL_LOAD called with unknown PluginLoadDLL type {dll}"),
     }
 }

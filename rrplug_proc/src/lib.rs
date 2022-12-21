@@ -44,12 +44,39 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sqtypes = String::new();
     let ident = &sig.ident;
     let input = &sig.inputs;
-    let cpp_func_name = format!( "sq_{}", ident.to_string() );
-    let sq_func_name = ident.to_string();
-    let sq_ident = Ident::new(&cpp_func_name.clone()[..], Span::call_site().into());
+    let output = &sig.output;
+    let func_name = ident.to_string();
+    let cpp_ident = Ident::new(&format!("reflected_{}", func_name.clone())[..], Span::call_site().into());
 
     let mut sq_stack_pos = 1;
     let mut sq_gets_stmts = Vec::new();
+
+    let out = match output {
+        syn::ReturnType::Default => "void",
+        syn::ReturnType::Type(_, ty) => match &**ty {
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string() == "bool" =>
+            {
+                "bool"
+            },
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string() == "i32" =>
+            {
+                "int"
+            },
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string() == "f32" =>
+            {
+                "float"
+            },
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string() == "String" =>
+            {
+                "string"
+            },
+            _ => "var",
+        },
+    };
 
     for i in input.iter() {
         match i.to_owned() {
@@ -76,6 +103,32 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     push_stmts!( sq_gets_stmts, tk );
 
                     sq_stack_pos += 1;
+                },
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string() == "f32" =>
+                {
+                    let name = t.clone().pat.to_token_stream();
+                    push_type!(sqtypes, "float", &name.to_string()[..]);
+                    let tk = quote! {let #name = unsafe { (sq_functions.sq_getfloat)(sqvm, #sq_stack_pos) } as f32;}.into();
+                    push_stmts!( sq_gets_stmts, tk );
+
+                    sq_stack_pos += 1;
+                },
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string() == "String" =>
+                {
+                    let name = t.clone().pat.to_token_stream();
+                    push_type!(sqtypes, "string", &name.to_string()[..]);
+                    let tk = quote! {
+                        let #name = unsafe {
+                            let _sq_str = (sq_functions.sq_getstring)(sqvm, #sq_stack_pos);
+                            let _c_str = std::ffi::CStr::from_ptr(_sq_str);
+                            String::from_utf8_lossy(_c_str.to_bytes()).to_string()
+                        };
+                    }.into();
+                    push_stmts!( sq_gets_stmts, tk );
+
+                    sq_stack_pos += 1;
                 }
 
                 // soon
@@ -97,7 +150,13 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 // Type::TraitObject(_) => todo!(),
                 // Type::Verbatim(_) => todo!(),
                 // Type::Ptr(_) => todo!(),
-                _ => panic!("type isn't supported"),
+                _ => {
+                    let _ty = format!( "{} type isn't supported", t.ty.into_token_stream().to_string() );
+                    let tk = quote! {
+                        compile_error!(#_ty);
+                    }.into();
+                    push_stmts!( sq_gets_stmts, tk ); 
+                }
             },
         }
     }
@@ -111,13 +170,12 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     push_stmts!( stmts, tk );
 
     let out: TokenStream = quote! {
-        const fn #ident () -> (&'static str, &'static str, &'static str, rrplug::bindings::squirrelclasstypes::SQFunction) {
-            (#cpp_func_name, #sq_func_name, #sqtypes, #sq_ident ) // todo add name for sq since sq_ is confusing
-        }
-        
-        #[no_mangle]
-        extern "C" fn #sq_ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
+        extern "C" fn #ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> ::std::os::raw::c_int {
             #(#stmts)*
+        }
+
+        const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
+            (#func_name, #func_name, #sqtypes, #out, #ident ) // todo add name for sq since sq_ is confusing
         }
     }.into();
 

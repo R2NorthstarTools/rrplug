@@ -14,7 +14,9 @@ use crate::bindings::squirrelclasstypes::{
 };
 use crate::nslog;
 
-pub type SQFuncInfo = fn() -> (&'static str, &'static str, &'static str, SQFunction);
+// cpp name, sq name, types, return, func
+pub type FuncSQFuncInfo = fn() -> (&'static str, &'static str, &'static str, &'static str, SQFunction);
+pub type SQFuncInfo = (&'static str, &'static str, &'static str, &'static str, SQFunction);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ScriptVmType {
@@ -93,7 +95,7 @@ impl PluginData {
         engine_callbacks.add_callback(callback);
     }
 
-    pub fn register_sq_functions(&self, get_info_func: SQFuncInfo) -> Result<(), SqFunctionError> {
+    pub fn register_sq_functions(&self, get_info_func: FuncSQFuncInfo) -> Result<(), SqFunctionError> {
         match unsafe { FUNCTION_SQ_REGISTER.try_lock() } {
             Ok(mut sq_function_vec) => {
                 sq_function_vec.push(get_info_func);
