@@ -9,14 +9,19 @@ use super::engine::EngineCallbacks;
 use super::errors::SqFunctionError;
 use super::squrriel::FUNCTION_SQ_REGISTER;
 use crate::bindings::plugin_abi::{PluginEngineData, PluginInitFuncs, PluginNorthstarData};
-use crate::bindings::squirrelclasstypes::{
-    SQFunction, ScriptContext_CLIENT, ScriptContext_SERVER, ScriptContext_UI,
-};
+use crate::bindings::squirrelclasstypes::{SQFunction, ScriptContext};
 use crate::nslog;
 
 // cpp name, sq name, types, return, func
-pub type FuncSQFuncInfo = fn() -> (&'static str, &'static str, &'static str, &'static str, SQFunction);
-pub type SQFuncInfo = (&'static str, &'static str, &'static str, &'static str, SQFunction);
+pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
+pub type SQFuncInfo = (
+    &'static str,
+    &'static str,
+    &'static str,
+    &'static str,
+    ScriptVmType,
+    SQFunction,
+);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ScriptVmType {
@@ -24,6 +29,22 @@ pub enum ScriptVmType {
     Client,
     Ui,
     UiClient,
+    UiServer,
+    ClientServer,
+    All,
+}
+
+// todo find a better way to do this my bain is just melting rn
+impl ScriptVmType {
+    pub fn is_right_vm(&self, other: &Self) -> bool {
+        self == other
+            || (self == &Self::All || other == &Self::All)
+            || (self == &Self::UiClient && (other == &Self::Client || other == &Self::Ui))
+            || (other == &Self::UiClient && (self == &Self::Client || self == &Self::Ui))
+            || (other == &Self::UiServer && (self == &Self::Server || self == &Self::Ui))
+            || (self == &Self::UiServer && (other == &Self::Server || other == &Self::Ui))
+            || (self == &Self::ClientServer && (other == &Self::Server || other == &Self::Client))
+    }
 }
 
 impl Display for ScriptVmType {
@@ -32,13 +53,13 @@ impl Display for ScriptVmType {
     }
 }
 
-impl ScriptVmType {
-    pub fn to_int(&self) -> i32 {
-        match self {
-            Self::Server => ScriptContext_SERVER,
-            Self::Client => ScriptContext_CLIENT,
-            Self::Ui => ScriptContext_UI,
-            Self::UiClient => ScriptContext_UI,
+impl From<ScriptContext> for ScriptVmType {
+    fn from(i: ScriptContext) -> Self {
+        match i {
+            0 => Self::Server,
+            1 => Self::Client,
+            2 => Self::Ui,
+            _ => todo!(),
         }
     }
 }
@@ -95,7 +116,10 @@ impl PluginData {
         engine_callbacks.add_callback(callback);
     }
 
-    pub fn register_sq_functions(&self, get_info_func: FuncSQFuncInfo) -> Result<(), SqFunctionError> {
+    pub fn register_sq_functions(
+        &self,
+        get_info_func: FuncSQFuncInfo,
+    ) -> Result<(), SqFunctionError> {
         match unsafe { FUNCTION_SQ_REGISTER.try_lock() } {
             Ok(mut sq_function_vec) => {
                 sq_function_vec.push(get_info_func);

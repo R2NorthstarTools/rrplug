@@ -6,6 +6,8 @@ macro_rules! entry {
     ( $func:ty ) => {
         use $crate::bindings::plugin_abi::{PluginInitFuncs, PluginNorthstarData};
 
+        pub static PLUGIN: $crate::OnceCell<$func> = $crate::OnceCell::new();
+
         #[no_mangle]
         #[export_name = "PLUGIN_INIT"]
         extern "C" fn plugin_init(
@@ -27,7 +29,10 @@ macro_rules! entry {
 
             plugin.initialize(&plugin_data);
 
-            std::thread::spawn(move || plugin.main());
+            PLUGIN.set(plugin).unwrap(); // causes unsafe erros in rust anylzyer for some reason
+            // also this wouldn't work at all we need a better way
+
+            std::thread::spawn(move || PLUGIN.get().unwrap().main());
         }
     };
 }

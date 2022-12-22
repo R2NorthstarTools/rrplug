@@ -2,16 +2,52 @@
 
 extern crate proc_macro;
 
-use proc_macro::{TokenStream, Span};
-use quote::{quote, ToTokens};
-use syn;
-use syn::{parse_macro_input, FnArg, ItemFn, Stmt, Type, Ident};
+use proc_macro::{TokenStream};
+use quote::{format_ident, quote, ToTokens};
+use syn::parse::{Parse, ParseStream};
+use syn::{self, parse_macro_input, FnArg, Ident, ItemFn, Result, Stmt, Token, Type};
+
+struct Arg {
+    ident: Ident,
+    arg: Ident,
+}
+
+impl Parse for Arg {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let ident = input.parse()?;
+        _ = input.parse::<Token![=]>()?;
+        let arg = input.parse()?;
+        Ok(Self { ident, arg })
+    }
+}
+
+struct Args {
+    args: Vec<Arg>,
+}
+
+impl Parse for Args {
+    fn parse(input: ParseStream) -> Result<Self> {
+        let mut args = Args { args: Vec::new() };
+
+        loop {
+            args.args.push(input.parse::<Arg>()?);
+            if input.peek(Token![,]) {
+                _ = input.parse::<Token![,]>();
+            } else {
+                break;
+            }
+        }
+        Ok(args)
+    }
+}
 
 #[proc_macro_attribute]
 pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
-    println!("attr: \"{}\"", attr.to_string());
-    println!("item: \"{}\"", item.to_string());
-    
+    // println!("attr: \"{}\"", attr.to_string());
+    // println!("item: \"{}\"", item.to_string());
+
+    let args = parse_macro_input!(attr as Args).args;
+
     // otherwise the proc marco is blind :skull:
     macro_rules! push_type {
         ($var:ident, $sqtype:expr, $name:expr) => {
@@ -27,7 +63,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     macro_rules! push_stmts {
         ($stmts:ident, $tk:ident) => {
-            let new_stmt = parse_macro_input!( $tk as Stmt);
+            let new_stmt = parse_macro_input!($tk as Stmt);
             $stmts.insert(0, new_stmt);
         };
     }
@@ -46,7 +82,9 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = &sig.inputs;
     let output = &sig.output;
     let func_name = ident.to_string();
-    let cpp_ident = Ident::new(&format!("reflected_{}", func_name.clone())[..], Span::call_site().into());
+    let cpp_ident = format_ident!(
+        "info_{}", func_name.clone(),
+    );
 
     let mut sq_stack_pos = 1;
     let mut sq_gets_stmts = Vec::new();
@@ -54,26 +92,12 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let out = match output {
         syn::ReturnType::Default => "void",
         syn::ReturnType::Type(_, ty) => match &**ty {
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string() == "bool" =>
-            {
-                "bool"
-            },
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string() == "i32" =>
-            {
-                "int"
-            },
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string() == "f32" =>
-            {
-                "float"
-            },
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string() == "String" =>
-            {
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => "bool",
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => "int",
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => "float",
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
                 "string"
-            },
+            }
             _ => "var",
         },
     };
@@ -81,42 +105,38 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     for i in input.iter() {
         match i.to_owned() {
             FnArg::Receiver(_) => {
-                panic!("wtf are you doing stop this now we don't support methods")
+                let tk = quote! {
+                    compile_error!("wtf are you doing? stop this now! we don't support methods");
+                }
+                .into();
+                push_stmts!(sq_gets_stmts, tk);
             }
             FnArg::Typed(t) => match &*t.ty {
-                Type::Path(type_path)
-                    if type_path.to_token_stream().to_string() == "bool" =>
-                {
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
                     let name = t.clone().pat.to_token_stream();
                     push_type!(sqtypes, "bool", &name.to_string()[..]);
                     let tk = quote! {let #name = unsafe { (sq_functions.sq_getbool)(sqvm, #sq_stack_pos) } == 1;}.into();
-                    push_stmts!( sq_gets_stmts, tk );
+                    push_stmts!(sq_gets_stmts, tk);
 
                     sq_stack_pos += 1;
-                },
-                Type::Path(type_path)
-                    if type_path.to_token_stream().to_string() == "i32" =>
-                {
+                }
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => {
                     let name = t.clone().pat.to_token_stream();
                     push_type!(sqtypes, "int", &name.to_string()[..]);
                     let tk = quote! {let #name = unsafe { (sq_functions.sq_getinteger)(sqvm, #sq_stack_pos) } as i32;}.into();
-                    push_stmts!( sq_gets_stmts, tk );
+                    push_stmts!(sq_gets_stmts, tk);
 
                     sq_stack_pos += 1;
-                },
-                Type::Path(type_path)
-                    if type_path.to_token_stream().to_string() == "f32" =>
-                {
+                }
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => {
                     let name = t.clone().pat.to_token_stream();
                     push_type!(sqtypes, "float", &name.to_string()[..]);
                     let tk = quote! {let #name = unsafe { (sq_functions.sq_getfloat)(sqvm, #sq_stack_pos) } as f32;}.into();
-                    push_stmts!( sq_gets_stmts, tk );
+                    push_stmts!(sq_gets_stmts, tk);
 
                     sq_stack_pos += 1;
-                },
-                Type::Path(type_path)
-                    if type_path.to_token_stream().to_string() == "String" =>
-                {
+                }
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
                     let name = t.clone().pat.to_token_stream();
                     push_type!(sqtypes, "string", &name.to_string()[..]);
                     let tk = quote! {
@@ -125,8 +145,9 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                             let _c_str = std::ffi::CStr::from_ptr(_sq_str);
                             String::from_utf8_lossy(_c_str.to_bytes()).to_string()
                         };
-                    }.into();
-                    push_stmts!( sq_gets_stmts, tk );
+                    }
+                    .into();
+                    push_stmts!(sq_gets_stmts, tk);
 
                     sq_stack_pos += 1;
                 }
@@ -151,23 +172,51 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 // Type::Verbatim(_) => todo!(),
                 // Type::Ptr(_) => todo!(),
                 _ => {
-                    let _ty = format!( "{} type isn't supported", t.ty.into_token_stream().to_string() );
+                    let _ty = format!(
+                        "{} type isn't supported",
+                        t.ty.into_token_stream().to_string()
+                    );
                     let tk = quote! {
                         compile_error!(#_ty);
-                    }.into();
-                    push_stmts!( sq_gets_stmts, tk ); 
+                    }
+                    .into();
+                    push_stmts!(sq_gets_stmts, tk);
                 }
             },
         }
     }
-    
+
     sq_gets_stmts.reverse();
     for s in sq_gets_stmts {
-        stmts.insert( 0, s);
+        stmts.insert(0, s);
     }
 
-    let tk = quote! {let sq_functions = unsafe { SQFUNCTIONS.client.as_ref().unwrap() } ;}.into();
-    push_stmts!( stmts, tk );
+    let mut script_vm_func = "client";
+    let mut script_vm = "client";
+
+    for arg in args {
+        let input = arg.arg.to_string();
+        match &arg.ident.to_string()[..] {
+            "vm" if input.ends_with("Ui") => {script_vm = "Ui"; script_vm_func = "client";},
+            "vm" if input.ends_with("Server") => {script_vm = "Server"; script_vm_func = "server";},
+            "vm" if input.ends_with("Client") => {script_vm = "Client"; script_vm_func = "client";},
+            _ => {
+                let fmt = format!("wrong arg {} or arg {}", input, arg.ident.to_string());
+                let tk = quote! {
+                    compile_error!(#fmt);
+                }
+                .into();
+                push_stmts!(stmts, tk);
+            }
+        }
+    }
+    let script_vm_type = format_ident!(
+        "{script_vm}" 
+    );
+    let script_vm_func = format_ident!("{}", script_vm_func);
+
+    let tk = quote! {let sq_functions = unsafe {SQFUNCTIONS.#script_vm_func.as_ref().unwrap()};}.into();
+    push_stmts!(stmts, tk);
 
     let out: TokenStream = quote! {
         extern "C" fn #ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> ::std::os::raw::c_int {
@@ -175,10 +224,11 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
-            (#func_name, #func_name, #sqtypes, #out, #ident ) // todo add name for sq since sq_ is confusing
+            
+            (#func_name, #func_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, #ident )
         }
     }.into();
 
-    println!("out: \"{}\"", out.to_string());
+    // println!("out: \"{}\"", out.to_string());
     out
 }

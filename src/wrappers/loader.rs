@@ -1,19 +1,23 @@
 #![allow(non_upper_case_globals)]
 
-use super::{engine::EngineCallbacks, squrriel::SQFUNCTIONS};
-use crate::{
-    bindings::{
-        plugin_abi::{PluginEngineData, PluginLoadDLL, PluginLoadDLL_ENGINE, SquirrelFunctions, PluginLoadDLL_SERVER, PluginLoadDLL_CLIENT},
-        squirrelclasstypes::{
-            self, SQFuncRegistration, ScriptContext, ScriptContext_CLIENT, ScriptContext_SERVER,
-            ScriptContext_UI,
-        },
-        squirreldatatypes::CSquirrelVM,
+use super::{
+    engine::EngineCallbacks, northstar::ScriptVmType, squrriel::FUNCTION_SQ_REGISTER,
+    squrriel::SQFUNCTIONS,
+};
+use crate::bindings::{
+    plugin_abi::{
+        PluginEngineData, PluginLoadDLL, PluginLoadDLL_CLIENT, PluginLoadDLL_ENGINE,
+        PluginLoadDLL_SERVER, SquirrelFunctions,
     },
-    wrappers::squrriel::FUNCTION_SQ_REGISTER,
+    squirrelclasstypes::{self, SQFuncRegistration, ScriptContext},
+    squirreldatatypes::CSquirrelVM,
 };
 use once_cell::sync::Lazy;
-use std::{ffi::{CStr, CString}, mem, ptr::addr_of_mut};
+use std::{
+    ffi::{CStr, CString},
+    mem,
+    ptr::addr_of_mut,
+};
 
 pub static mut ENGINE_CALLBACKS: Lazy<std::sync::Mutex<EngineCallbacks>> =
     Lazy::new(|| std::sync::Mutex::new(EngineCallbacks::default()));
@@ -49,6 +53,7 @@ fn plugin_init_sqvm_server(funcs: *const SquirrelFunctions) {
 #[no_mangle]
 #[export_name = "PLUGIN_INFORM_SQVM_CREATED"]
 extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSquirrelVM) {
+    let context = &std::convert::Into::<ScriptVmType>::into(context);
     log::info!("PLUGIN_INFORM_SQVM_CREATED called {}", context);
 
     let mut locked_register_functions = loop {
@@ -62,9 +67,9 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
 
     let sq_functions = unsafe {
         match context {
-            ScriptContext_SERVER => SQFUNCTIONS.server.as_ref().unwrap(),
-            ScriptContext_CLIENT => SQFUNCTIONS.client.as_ref().unwrap(),
-            ScriptContext_UI => SQFUNCTIONS.client.as_ref().unwrap(),
+            ScriptVmType::Server => SQFUNCTIONS.server.as_ref().unwrap(),
+            ScriptVmType::Client => SQFUNCTIONS.client.as_ref().unwrap(),
+            ScriptVmType::Ui => SQFUNCTIONS.client.as_ref().unwrap(),
             _ => {
                 log::error!("invalid ScriptContext");
                 return;
@@ -74,9 +79,11 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
 
     let sq_register_func = sq_functions.register_squirrel_func;
 
-    for get_info_func in locked_register_functions.iter_mut() {
-        let (cpp_func_name, sq_func_name, types, returntype, func) = get_info_func();
-
+    for (cpp_func_name, sq_func_name, types, returntype, _, func) in locked_register_functions
+        .iter_mut()
+        .map(|f| f())
+        .filter(|info| info.4.is_right_vm(context))
+    {
         log::info!("Registering {context} function {sq_func_name} with types: {types}"); // TODO: context int to str
 
         let esq_returntype = match returntype {
@@ -96,7 +103,7 @@ extern "C" fn plugin_inform_sqvm_created(context: ScriptContext, sqvm: *mut CSqu
                 squirrelclasstypes::eSQReturnType_Default
             }
         };
-        
+
         // shouldn't be unwraping here but I will say : why did you name your function like this?
         let sq_func_name = Box::new(CString::new(sq_func_name).unwrap());
         let help_test = Box::new(CString::new("what help").unwrap());
@@ -161,8 +168,8 @@ extern "C" fn plugin_inform_dll_load(dll: PluginLoadDLL, data: *const ::std::os:
                 Err(err) => log::error!("calling dll load callbacks failed: {err:?}"),
             }
         },
-        PluginLoadDLL_SERVER => {},
-        PluginLoadDLL_CLIENT => {},
+        PluginLoadDLL_SERVER => {}
+        PluginLoadDLL_CLIENT => {}
         _ => log::warn!("PLUGIN_INFORM_DLL_LOAD called with unknown PluginLoadDLL type {dll}"),
     }
 }

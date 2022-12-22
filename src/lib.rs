@@ -89,3 +89,5 @@ pub mod nslog;
 pub mod wrappers;
 
 pub use rrplug_proc::sqfunction;
+#[doc(hidden)]
+pub use once_cell::sync::OnceCell;
