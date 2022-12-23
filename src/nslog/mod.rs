@@ -26,10 +26,10 @@ struct NorthstarLogger {
 }
 
 impl NorthstarLogger {
-    fn init(logger: loggerfunc_t, _plugin_handle: i32) -> Self {
+    fn init(logger: loggerfunc_t, plugin_handle: i32) -> Self {
         Self {
             logger,
-            plugin_handle: 0, // TODO: this must be revert once plugin handle is fixed
+            plugin_handle,
         }
     }
 }

@@ -6,6 +6,7 @@
 #[macro_export]
 macro_rules! sq_return_string {
     ($value:expr, $sqvm:expr, $sq_functions:expr) => (
+        // boxing this would be a good idea and leaking
         let cstring = std::ffi::CString::new($value.replace("\0", "").as_bytes()).unwrap();
         // its impossble for it to crash since we replace null with space if it does it must be reported
         unsafe { ($sq_functions.sq_pushstring)($sqvm, cstring.as_ptr(), -1) };

@@ -1,14 +1,11 @@
 //! wrappers for structs that are passed to the plugin
 
 use log::SetLoggerError;
-use once_cell::sync::Lazy;
 use std::fmt::Display;
-use std::sync::Mutex;
 
-use super::engine::EngineCallbacks;
 use super::errors::SqFunctionError;
 use super::squrriel::FUNCTION_SQ_REGISTER;
-use crate::bindings::plugin_abi::{PluginEngineData, PluginInitFuncs, PluginNorthstarData};
+use crate::bindings::plugin_abi::{PluginInitFuncs, PluginNorthstarData, PluginEngineData};
 use crate::bindings::squirrelclasstypes::{SQFunction, ScriptContext};
 use crate::nslog;
 
@@ -49,7 +46,7 @@ impl ScriptVmType {
 
 impl Display for ScriptVmType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({self:?})")
+        write!(f, "{self:?}")
     }
 }
 
@@ -64,10 +61,16 @@ impl From<ScriptContext> for ScriptVmType {
     }
 }
 
+pub enum EngineLoadType {
+    Engine(PluginEngineData),
+    EngineFailed,
+    Server,
+    Client
+}
+
 pub struct PluginData {
     plugin_init_funcs: PluginInitFuncs,
     plugin_northstar_data: PluginNorthstarData,
-    engine_callbacks: &'static mut Lazy<Mutex<EngineCallbacks>>,
 }
 
 impl PluginData {
@@ -75,12 +78,10 @@ impl PluginData {
     pub unsafe fn new(
         plugin_init_funcs: *const PluginInitFuncs,
         plugin_northstar_data: *const PluginNorthstarData,
-        engine_callbacks: &'static mut Lazy<Mutex<EngineCallbacks>>,
     ) -> Self {
         Self {
             plugin_init_funcs: *plugin_init_funcs,
             plugin_northstar_data: *plugin_northstar_data,
-            engine_callbacks,
         }
     }
 
@@ -103,17 +104,6 @@ impl PluginData {
 
     pub fn get_plugin_handle(&self) -> i32 {
         self.plugin_northstar_data.pluginHandle
-    }
-
-    pub fn add_engine_load_callback(&self, callback: Box<dyn Fn(PluginEngineData)>) {
-        let mut engine_callbacks = match self.engine_callbacks.try_lock() {
-            Ok(engine_callbacks) => engine_callbacks,
-            Err(err) => {
-                log::error!("failed to add engine callbacks because of {err:?}");
-                return;
-            }
-        };
-        engine_callbacks.add_callback(callback);
     }
 
     pub fn register_sq_functions(

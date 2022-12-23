@@ -197,9 +197,9 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     for arg in args {
         let input = arg.arg.to_string();
         match &arg.ident.to_string()[..] {
-            "vm" if input.ends_with("Ui") => {script_vm = "Ui"; script_vm_func = "client";},
-            "vm" if input.ends_with("Server") => {script_vm = "Server"; script_vm_func = "server";},
-            "vm" if input.ends_with("Client") => {script_vm = "Client"; script_vm_func = "client";},
+            "VM" if input.to_uppercase().ends_with("UI") => {script_vm = "Ui"; script_vm_func = "client";},
+            "VM" if input.to_uppercase().ends_with("SERVER") => {script_vm = "Server"; script_vm_func = "server";},
+            "VM" if input.to_uppercase().ends_with("CLIENT") => {script_vm = "Client"; script_vm_func = "client";},
             _ => {
                 let fmt = format!("wrong arg {} or arg {}", input, arg.ident.to_string());
                 let tk = quote! {
