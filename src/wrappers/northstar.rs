@@ -46,7 +46,8 @@ impl ScriptVmType {
 
 impl Display for ScriptVmType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
+        let s = format!("{self:?}").to_uppercase();
+        write!(f, "{s}")
     }
 }
 

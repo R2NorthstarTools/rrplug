@@ -2,10 +2,10 @@
 
 extern crate proc_macro;
 
-use proc_macro::{TokenStream};
+use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::parse::{Parse, ParseStream};
-use syn::{self, parse_macro_input, FnArg, Ident, ItemFn, Result, Stmt, Token, Type};
+use syn::{self, parse_macro_input, FnArg, Ident, ItemFn, Result, ReturnType, Stmt, Token, Type};
 
 struct Arg {
     ident: Ident,
@@ -81,10 +81,10 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let ident = &sig.ident;
     let input = &sig.inputs;
     let output = &sig.output;
+    let default_sq_output = "-> ::std::os::raw::c_int";
+    let mut default_sq_output: ReturnType = syn::parse_str(default_sq_output).expect("boom");
     let func_name = ident.to_string();
-    let cpp_ident = format_ident!(
-        "info_{}", func_name.clone(),
-    );
+    let cpp_ident = format_ident!("info_{}", func_name.clone(),);
 
     let mut sq_stack_pos = 1;
     let mut sq_gets_stmts = Vec::new();
@@ -105,11 +105,10 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     for i in input.iter() {
         match i.to_owned() {
             FnArg::Receiver(_) => {
-                let tk = quote! {
+                return quote! {
                     compile_error!("wtf are you doing? stop this now! we don't support methods");
                 }
                 .into();
-                push_stmts!(sq_gets_stmts, tk);
             }
             FnArg::Typed(t) => match &*t.ty {
                 Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
@@ -176,11 +175,10 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                         "{} type isn't supported",
                         t.ty.into_token_stream().to_string()
                     );
-                    let tk = quote! {
+                    return quote! {
                         compile_error!(#_ty);
                     }
                     .into();
-                    push_stmts!(sq_gets_stmts, tk);
                 }
             },
         }
@@ -193,40 +191,65 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let mut script_vm_func = "client";
     let mut script_vm = "client";
+    let mut is_message = false;
 
     for arg in args {
         let input = arg.arg.to_string();
         match &arg.ident.to_string()[..] {
-            "VM" if input.to_uppercase().ends_with("UI") => {script_vm = "Ui"; script_vm_func = "client";},
-            "VM" if input.to_uppercase().ends_with("SERVER") => {script_vm = "Server"; script_vm_func = "server";},
-            "VM" if input.to_uppercase().ends_with("CLIENT") => {script_vm = "Client"; script_vm_func = "client";},
+            "VM" if input.to_uppercase().ends_with("UI") => {
+                script_vm = "Ui";
+                script_vm_func = "client";
+            }
+            "VM" if input.to_uppercase().ends_with("SERVER") => {
+                script_vm = "Server";
+                script_vm_func = "server";
+            }
+            "VM" if input.to_uppercase().ends_with("CLIENT") => {
+                script_vm = "Client";
+                script_vm_func = "client";
+            }
+            "VM" if input.to_uppercase().ends_with("UiClient") => {
+                script_vm = "UiClient";
+                script_vm_func = "client";
+            }
+            "SQMessage" if input == "True" => {
+                is_message = true;
+                default_sq_output = ReturnType::Default;
+            } // this has to be finshed some day, rn asycn fn calls with i32 return don't cause problems
             _ => {
                 let fmt = format!("wrong arg {} or arg {}", input, arg.ident.to_string());
-                let tk = quote! {
+                return quote! {
                     compile_error!(#fmt);
                 }
                 .into();
-                push_stmts!(stmts, tk);
             }
         }
     }
-    let script_vm_type = format_ident!(
-        "{script_vm}" 
-    );
+    let script_vm_type = format_ident!("{script_vm}");
     let script_vm_func = format_ident!("{}", script_vm_func);
 
-    let tk = quote! {let sq_functions = unsafe {SQFUNCTIONS.#script_vm_func.as_ref().unwrap()};}.into();
+    let tk =
+        quote! {let sq_functions = unsafe {SQFUNCTIONS.#script_vm_func.as_ref().unwrap()};}.into();
     push_stmts!(stmts, tk);
 
+    let mut info_func = quote! {
+        const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
+
+            (#func_name, #func_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, #ident )
+        }
+    };
+
+    if is_message {
+        info_func = quote!("");
+    }
+    // let default_sq_output = default_sq_output.into_token_stream();
+
     let out: TokenStream = quote! {
-        extern "C" fn #ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> ::std::os::raw::c_int {
+        extern "C" fn #ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) #default_sq_output {
             #(#stmts)*
         }
 
-        const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
-            
-            (#func_name, #func_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, #ident )
-        }
+        #info_func
     }.into();
 
     // println!("out: \"{}\"", out.to_string());

@@ -14,8 +14,16 @@ edition = "2021"
 thiserror = "1.0.37"
 log = "0.4.17"
 once_cell = "1.16.0"
-rrplug_proc = {path = "./rrplug_proc" }
+cxx = { version="1.0.85", optional = true}
+rrplug_proc = { path = "./rrplug_proc" }
 
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"
 targets = ["x86_64-pc-windows-msvc"]
+
+[features]
+default = ["all"] # only in dev should be removed before release
+function_call = ["cxx"]
+convar = ["cxx"]
+concommand = ["cxx"]
+all = ["function_call", "convar", "concommand"]

@@ -298,7 +298,7 @@ pub const ScriptContext_CLIENT: ScriptContext = 1;
 pub const ScriptContext_UI: ScriptContext = 2;
 pub type ScriptContext = ::std::os::raw::c_int;
 pub type SquirrelMessage_External_Pop =
-    ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM)>;
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> i32; // inacurate might need to remove -> i32 later and add a option to remove it in the proc macro
 pub type sq_schedule_call_externalType = ::std::option::Option<
     unsafe extern "C" fn(
         context: ScriptContext,
@@ -362,7 +362,7 @@ pub type sq_pushassetType = ::std::option::Option<
 pub type sq_pushvectorType =
     ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *const SQFloat)>;
 pub type sq_pushobjectType =
-    ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *mut SQObjectType)>;
+    ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *mut SQObject)>;
 pub type sq_getstringType = ::std::option::Option<
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> *const SQChar,
 >;
@@ -414,7 +414,7 @@ pub type sq_setuserdatatypeidType = ::std::option::Option<
 pub type sq_getentityfrominstanceType = ::std::option::Option<
     unsafe extern "C" fn(
         sqvm: *mut CSquirrelVM,
-        pInstance: *mut SQObjectType,
+        pInstance: *mut SQObject,
         ppEntityConstant: *mut *mut ::std::os::raw::c_char,
     ) -> *mut ::std::os::raw::c_void,
 >;
@@ -424,7 +424,7 @@ pub type sq_getfunctionType = ::std::option::Option<
     unsafe extern "C" fn(
         sqvm: *mut HSquirrelVM,
         name: *const ::std::os::raw::c_char,
-        returnObj: *mut SQObjectType,
+        returnObj: *mut SQObject,
         signature: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int,
 >;

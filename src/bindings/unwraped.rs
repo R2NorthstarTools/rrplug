@@ -7,7 +7,7 @@ use crate::bindings::{
         SQRESULT,
     },
     squirreldatatypes::{
-        CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObjectType,
+        CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObjectType, SQObject
     },
 };
 
@@ -54,7 +54,7 @@ pub type sq_pushassetType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, str_: *const SQChar, iLength: SQInteger);
 pub type sq_pushvectorType_unwraped = unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *const SQFloat);
 pub type sq_pushobjectType_unwraped =
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *mut SQObjectType);
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *mut SQObject);
 pub type sq_getstringType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> *const SQChar;
 pub type sq_getintegerType_unwraped =
@@ -90,14 +90,14 @@ pub type sq_setuserdatatypeidType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger, iTypeId: u64) -> SQRESULT;
 pub type sq_getentityfrominstanceType_unwraped = unsafe extern "C" fn(
     sqvm: *mut CSquirrelVM,
-    pInstance: *mut SQObjectType,
+    pInstance: *mut SQObject,
     ppEntityConstant: *mut *mut ::std::os::raw::c_char,
 ) -> *mut ::std::os::raw::c_void;
 pub type sq_GetEntityConstantType_unwraped = unsafe extern "C" fn() -> *mut *mut ::std::os::raw::c_char;
 pub type sq_getfunctionType_unwraped = unsafe extern "C" fn(
     sqvm: *mut HSquirrelVM,
     name: *const ::std::os::raw::c_char,
-    returnObj: *mut SQObjectType,
+    returnObj: *mut SQObject,
     signature: *const ::std::os::raw::c_char,
 ) -> ::std::os::raw::c_int;
 pub struct SquirrelFunctionsUnwraped {

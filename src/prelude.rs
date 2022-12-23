@@ -1,5 +1,6 @@
 pub use crate::wrappers::squrriel::SQFUNCTIONS;
 pub use crate::plugin::Plugin;
+pub use crate::wrappers::northstar::PluginData;
 pub use crate::entry;
 pub use log;
 
