@@ -84,7 +84,8 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let default_sq_output = "-> ::std::os::raw::c_int";
     let mut default_sq_output: ReturnType = syn::parse_str(default_sq_output).expect("boom");
     let func_name = ident.to_string();
-    let cpp_ident = format_ident!("info_{}", func_name.clone(),);
+    let mut export_name = ident.to_string();
+    let cpp_ident = format_ident!("info_{}", func_name.clone());
 
     let mut sq_stack_pos = 1;
     let mut sq_gets_stmts = Vec::new();
@@ -150,6 +151,22 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 
                     sq_stack_pos += 1;
                 }
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string().ends_with("Vector3") =>
+                {
+                    let name = t.clone().pat.to_token_stream();
+                    push_type!(sqtypes, "vector", &name.to_string()[..]);
+                    let tk = quote! {
+                        let #name = unsafe {
+                            let _temp = unsafe { (sq_functions.sq_getvector)(sqvm, #sq_stack_pos) };
+                            rrplug::wrappers::vector::Vector3::from(_temp)
+                        };
+                    }
+                    .into();
+                    push_stmts!(sq_gets_stmts, tk);
+
+                    sq_stack_pos += 1;
+                }
 
                 // soon
                 // Type::BareFn(_) => todo!(),
@@ -190,7 +207,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     let mut script_vm_func = "client";
-    let mut script_vm = "client";
+    let mut script_vm = "Client";
     let mut is_message = false;
 
     for arg in args {
@@ -204,18 +221,19 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 script_vm = "Server";
                 script_vm_func = "server";
             }
+            "VM" if input.to_uppercase().ends_with("UICLIENT") => {
+                script_vm = "UiClient";
+                script_vm_func = "client";
+            }
             "VM" if input.to_uppercase().ends_with("CLIENT") => {
                 script_vm = "Client";
                 script_vm_func = "client";
             }
-            "VM" if input.to_uppercase().ends_with("UiClient") => {
-                script_vm = "UiClient";
-                script_vm_func = "client";
-            }
-            "SQMessage" if input == "True" => {
+            "SQMessage" => {
                 is_message = true;
                 default_sq_output = ReturnType::Default;
             } // this has to be finshed some day, rn asycn fn calls with i32 return don't cause problems
+            "ExportName" => export_name = input,
             _ => {
                 let fmt = format!("wrong arg {} or arg {}", input, arg.ident.to_string());
                 return quote! {
@@ -235,7 +253,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut info_func = quote! {
         const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
 
-            (#func_name, #func_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, #ident )
+            (#func_name, #export_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, #ident )
         }
     };
 
