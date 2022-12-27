@@ -4,35 +4,31 @@
 
 use super::{squirrelclasstypes::*, squirreldatatypes::CSquirrelVM};
 
-pub const ABI_VERSION: u32 = 1;
-pub type PluginObject = ::std::os::raw::c_int;
-pub const PluginObject_UNSUPPORTED: PluginObject = 0;
-pub const PluginObject_SQUIRREL: PluginObject = 1;
-pub const PluginObject_DUMMY: PluginObject = 65535;
-
-pub type GameState = ::std::os::raw::c_int;
 pub const GameState_LOADING: GameState = 0;
 pub const GameState_MAINMENU: GameState = 1;
 pub const GameState_LOBBY: GameState = 2;
 pub const GameState_INGAME: GameState = 3;
-
-pub type PluginLoadDLL = ::std::os::raw::c_int;
+pub type GameState = ::std::os::raw::c_int;
 pub const PluginLoadDLL_ENGINE: PluginLoadDLL = 0;
 pub const PluginLoadDLL_CLIENT: PluginLoadDLL = 1;
 pub const PluginLoadDLL_SERVER: PluginLoadDLL = 2;
-
+pub type PluginLoadDLL = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SquirrelFunctions {
     pub RegisterSquirrelFunc: RegisterSquirrelFuncType,
     pub __sq_defconst: sq_defconstType,
+    
     pub __sq_compilebuffer: sq_compilebufferType,
     pub __sq_call: sq_callType,
     pub __sq_raiseerror: sq_raiseerrorType,
+
     pub __sq_newarray: sq_newarrayType,
     pub __sq_arrayappend: sq_arrayappendType,
+
     pub __sq_newtable: sq_newtableType,
     pub __sq_newslot: sq_newslotType,
+
     pub __sq_pushroottable: sq_pushroottableType,
     pub __sq_pushstring: sq_pushstringType,
     pub __sq_pushinteger: sq_pushintegerType,
@@ -41,6 +37,11 @@ pub struct SquirrelFunctions {
     pub __sq_pushasset: sq_pushassetType,
     pub __sq_pushvector: sq_pushvectorType,
     pub __sq_pushobject: sq_pushobjectType,
+    pub __sq_getthisentity: sq_getthisentityType,
+    pub __sq_getobject: sq_getobjectType,
+
+    pub __sq_stackinfos: sq_stackinfosType,
+
     pub __sq_getstring: sq_getstringType,
     pub __sq_getinteger: sq_getintegerType,
     pub __sq_getfloat: sq_getfloatType,
@@ -52,7 +53,10 @@ pub struct SquirrelFunctions {
     pub __sq_createuserdata: sq_createuserdataType,
     pub __sq_setuserdatatypeid: sq_setuserdatatypeidType,
     pub __sq_getfunction: sq_getfunctionType,
+
     pub __sq_schedule_call_external: sq_schedule_call_externalType,
+    pub __sq_getentityfrominstance: sq_getentityfrominstanceType,
+    pub __sq_GetEntityConstant_CBaseEntity: sq_GetEntityConstantType,
 }
 #[test]
 fn bindgen_test_layout_SquirrelFunctions() {
@@ -60,7 +64,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<SquirrelFunctions>(),
-        232usize,
+        272usize,
         concat!("Size of: ", stringify!(SquirrelFunctions))
     );
     assert_eq!(
@@ -239,8 +243,38 @@ fn bindgen_test_layout_SquirrelFunctions() {
         )
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).__sq_getstring) as usize - ptr as usize },
+        unsafe { ::std::ptr::addr_of!((*ptr).__sq_getthisentity) as usize - ptr as usize },
         136usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SquirrelFunctions),
+            "::",
+            stringify!(__sq_getthisentity)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).__sq_getobject) as usize - ptr as usize },
+        144usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SquirrelFunctions),
+            "::",
+            stringify!(__sq_getobject)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).__sq_stackinfos) as usize - ptr as usize },
+        152usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SquirrelFunctions),
+            "::",
+            stringify!(__sq_stackinfos)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).__sq_getstring) as usize - ptr as usize },
+        160usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -250,7 +284,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_getinteger) as usize - ptr as usize },
-        144usize,
+        168usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -260,7 +294,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_getfloat) as usize - ptr as usize },
-        152usize,
+        176usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -270,7 +304,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_getbool) as usize - ptr as usize },
-        160usize,
+        184usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -280,7 +314,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_get) as usize - ptr as usize },
-        168usize,
+        192usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -290,7 +324,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_getasset) as usize - ptr as usize },
-        176usize,
+        200usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -300,7 +334,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_getuserdata) as usize - ptr as usize },
-        184usize,
+        208usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -310,7 +344,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_getvector) as usize - ptr as usize },
-        192usize,
+        216usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -320,7 +354,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_createuserdata) as usize - ptr as usize },
-        200usize,
+        224usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -330,7 +364,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_setuserdatatypeid) as usize - ptr as usize },
-        208usize,
+        232usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -340,7 +374,7 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_getfunction) as usize - ptr as usize },
-        216usize,
+        240usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
@@ -350,12 +384,34 @@ fn bindgen_test_layout_SquirrelFunctions() {
     );
     assert_eq!(
         unsafe { ::std::ptr::addr_of!((*ptr).__sq_schedule_call_external) as usize - ptr as usize },
-        224usize,
+        248usize,
         concat!(
             "Offset of field: ",
             stringify!(SquirrelFunctions),
             "::",
             stringify!(__sq_schedule_call_external)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).__sq_getentityfrominstance) as usize - ptr as usize },
+        256usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SquirrelFunctions),
+            "::",
+            stringify!(__sq_getentityfrominstance)
+        )
+    );
+    assert_eq!(
+        unsafe {
+            ::std::ptr::addr_of!((*ptr).__sq_GetEntityConstant_CBaseEntity) as usize - ptr as usize
+        },
+        264usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(SquirrelFunctions),
+            "::",
+            stringify!(__sq_GetEntityConstant_CBaseEntity)
         )
     );
 }

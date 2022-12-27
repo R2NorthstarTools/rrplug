@@ -7,7 +7,8 @@ use crate::bindings::{
         SQRESULT,
     },
     squirreldatatypes::{
-        CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObjectType, SQObject
+        CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObject,
+        SQStackInfos,
     },
 };
 
@@ -38,7 +39,8 @@ pub type sq_callType_unwraped = unsafe extern "C" fn(
 ) -> SQRESULT;
 pub type sq_raiseerrorType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pError: *const SQChar) -> SQInteger;
-pub type sq_newarrayType_unwraped = unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger);
+pub type sq_newarrayType_unwraped =
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger);
 pub type sq_arrayappendType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> SQRESULT;
 pub type sq_newtableType_unwraped = unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> SQRESULT;
@@ -52,7 +54,8 @@ pub type sq_pushfloatType_unwraped = unsafe extern "C" fn(sqvm: *mut HSquirrelVM
 pub type sq_pushboolType_unwraped = unsafe extern "C" fn(sqvm: *mut HSquirrelVM, b: SQBool);
 pub type sq_pushassetType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, str_: *const SQChar, iLength: SQInteger);
-pub type sq_pushvectorType_unwraped = unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *const SQFloat);
+pub type sq_pushvectorType_unwraped =
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *const SQFloat);
 pub type sq_pushobjectType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *mut SQObject);
 pub type sq_getstringType_unwraped =
@@ -83,17 +86,25 @@ pub type sq_getthisentityType_unwraped = unsafe extern "C" fn(
     ppEntity: *mut *mut ::std::os::raw::c_void,
 ) -> SQBool;
 pub type sq_getobjectType_unwraped =
-    unsafe extern "C" fn(arg1: *mut HSquirrelVM, iStackPos: SQInteger, pOutObj: *mut SQObjectType);
+    unsafe extern "C" fn(arg1: *mut HSquirrelVM, iStackPos: SQInteger, pOutObj: *mut SQObject);
+pub type sq_stackinfosType_unwraped = unsafe extern "C" fn(
+    sqvm: *mut HSquirrelVM,
+    iLevel: ::std::os::raw::c_int,
+    pOutObj: *mut SQStackInfos,
+    iCallStackSize: ::std::os::raw::c_int,
+) -> ::std::os::raw::c_longlong;
 pub type sq_createuserdataType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iSize: SQInteger) -> *mut ::std::os::raw::c_void;
 pub type sq_setuserdatatypeidType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger, iTypeId: u64) -> SQRESULT;
-pub type sq_getentityfrominstanceType_unwraped = unsafe extern "C" fn(
-    sqvm: *mut CSquirrelVM,
-    pInstance: *mut SQObject,
-    ppEntityConstant: *mut *mut ::std::os::raw::c_char,
-) -> *mut ::std::os::raw::c_void;
-pub type sq_GetEntityConstantType_unwraped = unsafe extern "C" fn() -> *mut *mut ::std::os::raw::c_char;
+pub type sq_getentityfrominstanceType_unwraped =
+    unsafe extern "C" fn(
+        sqvm: *mut CSquirrelVM,
+        pInstance: *mut SQObject,
+        ppEntityConstant: *mut *mut ::std::os::raw::c_char,
+    ) -> *mut ::std::os::raw::c_void;
+pub type sq_GetEntityConstantType_unwraped =
+    unsafe extern "C" fn() -> *mut *mut ::std::os::raw::c_char;
 pub type sq_getfunctionType_unwraped = unsafe extern "C" fn(
     sqvm: *mut HSquirrelVM,
     name: *const ::std::os::raw::c_char,
@@ -118,6 +129,9 @@ pub struct SquirrelFunctionsUnwraped {
     pub sq_pushasset: sq_pushassetType_unwraped,
     pub sq_pushvector: sq_pushvectorType_unwraped,
     pub sq_pushobject: sq_pushobjectType_unwraped,
+    // pub sq_getthisentity: sq_getthisentityType_unwraped,
+    // pub sq_getobject: sq_getobjectType_unwraped,
+    pub sq_stackinfos: sq_stackinfosType_unwraped,
     pub sq_getstring: sq_getstringType_unwraped,
     pub sq_getinteger: sq_getintegerType_unwraped,
     pub sq_getfloat: sq_getfloatType_unwraped,
@@ -130,6 +144,8 @@ pub struct SquirrelFunctionsUnwraped {
     pub sq_setuserdatatypeid: sq_setuserdatatypeidType_unwraped,
     pub sq_getfunction: sq_getfunctionType_unwraped,
     pub sq_schedule_call_external: sq_schedule_call_externalType_unwraped,
+    pub sq_getentityfrominstance: sq_getentityfrominstanceType_unwraped,
+    pub sq_get_entity_constant_cbase_entity: sq_GetEntityConstantType_unwraped,
 }
 impl From<SquirrelFunctions> for SquirrelFunctionsUnwraped {
     fn from(value: SquirrelFunctions) -> Self {
@@ -163,6 +179,11 @@ impl From<SquirrelFunctions> for SquirrelFunctionsUnwraped {
             sq_setuserdatatypeid: value.__sq_setuserdatatypeid.unwrap(),
             sq_getfunction: value.__sq_getfunction.unwrap(),
             sq_schedule_call_external: value.__sq_schedule_call_external.unwrap(),
+            // sq_getthisentity: value.__sq_getthisentity.unwrap(),
+            // sq_getobject: value.__sq_getobject.unwrap(),
+            sq_stackinfos: value.__sq_stackinfos.unwrap(),
+            sq_getentityfrominstance: value.__sq_getentityfrominstance.unwrap(),
+            sq_get_entity_constant_cbase_entity: value.__sq_GetEntityConstant_CBaseEntity.unwrap(),
         }
     }
 }

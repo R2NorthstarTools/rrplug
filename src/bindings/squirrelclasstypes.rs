@@ -403,7 +403,15 @@ pub type sq_getthisentityType = ::std::option::Option<
     ) -> SQBool,
 >;
 pub type sq_getobjectType = ::std::option::Option<
-    unsafe extern "C" fn(arg1: *mut HSquirrelVM, iStackPos: SQInteger, pOutObj: *mut SQObjectType),
+    unsafe extern "C" fn(arg1: *mut HSquirrelVM, iStackPos: SQInteger, pOutObj: *mut SQObject),
+>;
+pub type sq_stackinfosType = ::std::option::Option<
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        iLevel: ::std::os::raw::c_int,
+        pOutObj: *mut SQStackInfos,
+        iCallStackSize: ::std::os::raw::c_int,
+    ) -> ::std::os::raw::c_longlong,
 >;
 pub type sq_createuserdataType = ::std::option::Option<
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iSize: SQInteger) -> *mut ::std::os::raw::c_void,
