@@ -298,7 +298,7 @@ pub const ScriptContext_CLIENT: ScriptContext = 1;
 pub const ScriptContext_UI: ScriptContext = 2;
 pub type ScriptContext = ::std::os::raw::c_int;
 pub type SquirrelMessage_External_Pop =
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> i32; // inacurate might need to remove -> i32 later and add a option to remove it in the proc macro
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> i32; // we can't have null functions here, what are they for then?
 pub type sq_schedule_call_externalType = ::std::option::Option<
     unsafe extern "C" fn(
         context: ScriptContext,
