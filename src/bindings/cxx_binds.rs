@@ -1,11 +1,13 @@
-
-#[cfg(feature = "function_call")]
+#[cfg(feature = "concommand")]
 #[cxx::bridge]
-mod function_call {
+pub(crate) mod __concommand {
     unsafe extern "C++" {
-        include!("cpp_include/squirrelclasstypes.h");
-
-        type SquirrelMessage;
+        include!("cpp_include/concommand.h");
         
+        #[cxx_name = "ccommand"]
+        type CCommand;
+        
+        fn ArgS(self: &CCommand) -> *const c_char;
+        fn GetCommandString(self: &CCommand) -> *const c_char;        
     }
 }

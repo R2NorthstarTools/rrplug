@@ -23,7 +23,6 @@ targets = ["x86_64-pc-windows-msvc"]
 
 [features]
 default = ["all"] # only in dev should be removed before release
-function_call = ["cxx"]
 convar = ["cxx"]
 concommand = ["cxx"]
-all = ["function_call", "convar", "concommand"]
+all = [ "convar", "concommand"]
