@@ -186,7 +186,9 @@ macro_rules! entry {
                 plugin_abi::PluginLoadDLL_ENGINE => unsafe {
                     let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
                     let engine_dll = match engine_dll.as_ref() {
-                        Some(engine_dll) => northstar::EngineLoadType::Engine(*engine_dll),
+                        Some(engine_dll) => northstar::EngineLoadType::Engine(
+                            $crate::wrappers::engine::EngineData::new(*engine_dll)
+                        ),
                         None => northstar::EngineLoadType::EngineFailed,
                     };
                     PLUGIN.wait().on_engine_load(engine_dll)

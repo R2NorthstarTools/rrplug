@@ -1,6 +1,7 @@
+#[cfg(feature = "concommand")]
 use super::concommands::RegisterConCommands;
 #[cfg(feature = "concommand")]
-pub use crate::bindings::cxx_binds::__concommand::CCommand;
+pub use crate::bindings::command::CCommand;
 use crate::bindings::plugin_abi::PluginEngineData;
 
 pub struct EngineData {
@@ -21,12 +22,15 @@ impl EngineData {
     #[cfg(feature = "concommand")]
     pub fn register_concommand(
         &self,
-        name: String,
-        callback: extern "C" fn(arg1: &CCommand),
-        help_string: String,
+        name: impl Into<String>,
+        callback: extern "C" fn(arg1: *const CCommand),
+        help_string: impl Into<String>,
         flags: i32,
-    ) {
+    ) -> Result<(), super::errors::RegisterError> {
+        let name = name.into();
+        log::info!("Registering ConCommand {}", name);
+
         self.concommands
-            .register_concommand(name, callback, help_string, flags)
+            .register_concommand(name, callback, help_string.into(), flags)
     }
 }

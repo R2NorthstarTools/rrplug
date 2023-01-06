@@ -1,13 +1,17 @@
 //! wrappers for structs that are passed to the plugin
 
 use log::SetLoggerError;
+use once_cell::sync::OnceCell;
 use std::fmt::Display;
 
-use super::errors::SqFunctionError;
+use super::engine::EngineData;
+use super::errors::RegisterError;
 use super::squrriel::FUNCTION_SQ_REGISTER;
-use crate::bindings::plugin_abi::{PluginInitFuncs, PluginNorthstarData, PluginEngineData};
+use crate::bindings::plugin_abi::{CreateObjectFunc, PluginInitFuncs, PluginNorthstarData};
 use crate::bindings::squirrelclasstypes::{SQFunction, ScriptContext};
 use crate::nslog;
+
+pub static CREATE_OBJECT_FUNC: OnceCell<CreateObjectFunc> = OnceCell::new();
 
 // cpp name, sq name, types, return, func
 pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
@@ -63,10 +67,10 @@ impl From<ScriptContext> for ScriptVmType {
 }
 
 pub enum EngineLoadType {
-    Engine(PluginEngineData),
+    Engine(EngineData),
     EngineFailed,
     Server,
-    Client
+    Client,
 }
 
 pub struct PluginData {
@@ -80,8 +84,14 @@ impl PluginData {
         plugin_init_funcs: *const PluginInitFuncs,
         plugin_northstar_data: *const PluginNorthstarData,
     ) -> Self {
+        let plugin_init_funcs = *plugin_init_funcs;
+
+        CREATE_OBJECT_FUNC
+            .set(plugin_init_funcs.createObject)
+            .unwrap_or(log::error!("failed to set CREATE_OBJECT_FUNC"));
+
         Self {
-            plugin_init_funcs: *plugin_init_funcs,
+            plugin_init_funcs,
             plugin_northstar_data: *plugin_northstar_data,
         }
     }
@@ -110,13 +120,13 @@ impl PluginData {
     pub fn register_sq_functions(
         &self,
         get_info_func: FuncSQFuncInfo,
-    ) -> Result<(), SqFunctionError> {
+    ) -> Result<(), RegisterError> {
         match unsafe { FUNCTION_SQ_REGISTER.try_lock() } {
             Ok(mut sq_function_vec) => {
                 sq_function_vec.push(get_info_func);
                 Ok(())
             }
-            Err(_) => Err(SqFunctionError::LockedSqFunctionVec),
+            Err(_) => Err(RegisterError::LockedSqFunctionVec),
         }
     }
 }

@@ -1,51 +1,52 @@
-use cxx::private::c_char;
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
+
+use super::northstar::CREATE_OBJECT_FUNC;
 use std::ffi::CStr;
 use std::os::raw::c_void;
+use std::ptr;
 
-use crate::bindings::cxx_binds::__concommand::CCommand;
+use crate::bindings::command::{CCommand, ConCommand, ConCommandConstructorType};
+use crate::bindings::plugin_abi::ObjectType_CONCOMMANDS;
 use crate::to_sq_string;
 
-// WARNING: this is not the right function, 
-// this is passed instead
-// typedef void (*ConCommandConstructorType)( ConCommand* newCommand, const char* name, FnCommandCallback_t callback, const char* helpString, int flags, void* parent);
-// must be reworked
-// or ask emma to include the function we want
-// or pr it
-// the reason we need it is since in rust there is no way to create a c++ class
-// >:(
-type RegisterConCommandFunction = unsafe extern "C" fn(
-    name: *const c_char,
-    callback: extern "C" fn(arg1: &CCommand), // must be converted to a ptr
-    helpString: *const c_char,
-    flags: i32,
-);
+use super::errors::RegisterError;
 
+#[derive(Debug, Default)]
 pub struct CCommandResult {
-    pub command: String,
     pub args: String,
 }
 
-impl From<&CCommand> for CCommandResult {
-    fn from(value: &CCommand) -> Self {
-        let command = unsafe {
-            CStr::from_ptr(value.GetCommandString())
-                .to_string_lossy()
-                .to_string()
+impl From<*const CCommand> for CCommandResult {
+    fn from(value: *const CCommand) -> Self {
+        let ccommand = match unsafe { value.as_ref() } {
+            Some(c) => c,
+            None => return Self::default(),
+        };
+        let ccommand = *ccommand;
+
+        let args = unsafe {
+
+            log::info!( "ccommand.m_nArgv0Size {}", ccommand.m_nArgv0Size );
+
+            if ccommand.m_nArgv0Size == 0 {
+                "".to_string()
+            } else {
+                let buffer = ccommand.m_pArgSBuffer.to_vec().as_ptr();
+                CStr::from_ptr( buffer ).to_string_lossy().into()
+            }
         };
 
-        let args = unsafe { CStr::from_ptr(value.ArgS()).to_string_lossy().to_string() };
-
-        Self { command, args }
+        Self { args }
     }
 }
 
 pub struct RegisterConCommands {
-    reg_func: RegisterConCommandFunction,
+    reg_func: ConCommandConstructorType,
 }
 
 impl RegisterConCommands {
     pub(crate) unsafe fn new(ptr: *const c_void) -> Self {
-        let reg_func: *const RegisterConCommandFunction = std::mem::transmute(ptr);
+        let reg_func: *const ConCommandConstructorType = std::mem::transmute(ptr);
 
         Self {
             reg_func: *reg_func,
@@ -55,13 +56,36 @@ impl RegisterConCommands {
     pub fn register_concommand(
         &self,
         name: String,
-        callback: extern "C" fn(arg1: &CCommand),
+        callback: extern "C" fn(arg1: *const CCommand),
         help_string: String,
         flags: i32,
-    ) {
+    ) -> Result<(), RegisterError> {
         let name = to_sq_string!(name);
         let help_string = to_sq_string!(help_string);
+        let command: *mut ConCommand = unsafe {
+            let obj = (CREATE_OBJECT_FUNC
+                .wait()
+                .ok_or(RegisterError::NoneFunction)?)(ObjectType_CONCOMMANDS);
 
-        unsafe { (self.reg_func)(name.as_ptr(), callback, help_string.as_ptr(), flags) };
+            std::mem::transmute(obj)
+        };
+
+        let help_string_ptr = help_string.as_ptr();
+        let name_ptr = name.as_ptr();
+
+        let func = (self.reg_func).unwrap();
+
+        unsafe {
+            func(
+                command,
+                name_ptr,
+                Some(callback),
+                help_string_ptr,
+                flags,
+                ptr::null_mut(),
+            )
+        };
+
+        Ok(())
     }
 }

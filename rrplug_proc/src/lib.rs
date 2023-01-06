@@ -273,3 +273,29 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     // println!("out: \"{}\"", out.to_string());
     out
 }
+
+#[proc_macro_attribute]
+pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as ItemFn);
+    let ItemFn {
+        attrs: _,
+        vis: _,
+        sig,
+        block,
+    } = input;
+
+    let mut stmts = block.stmts;
+    let ident = &sig.ident;
+
+    let tk = quote! {let command: rrplug::wrappers::concommands::CCommandResult = command.into();}
+        .into();
+    let new_stmt = parse_macro_input!(tk as Stmt);
+    stmts.insert(0, new_stmt);
+
+    quote! {
+        extern "C" fn #ident (command: *const rrplug::bindings::command::CCommand) {
+            #(#stmts)*
+        }
+    }
+    .into()
+}

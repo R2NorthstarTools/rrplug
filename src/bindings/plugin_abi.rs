@@ -13,6 +13,9 @@ pub const PluginLoadDLL_ENGINE: PluginLoadDLL = 0;
 pub const PluginLoadDLL_CLIENT: PluginLoadDLL = 1;
 pub const PluginLoadDLL_SERVER: PluginLoadDLL = 2;
 pub type PluginLoadDLL = ::std::os::raw::c_int;
+pub const ObjectType_CONCOMMANDS: ObjectType = 0;
+pub const ObjectType_CONVAR: ObjectType = 1;
+pub type ObjectType = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct SquirrelFunctions {
@@ -544,6 +547,8 @@ fn bindgen_test_layout_LogMsg() {
 pub type loggerfunc_t = ::std::option::Option<unsafe extern "C" fn(msg: *mut LogMsg)>;
 pub type PLUGIN_RELAY_INVITE_TYPE =
     ::std::option::Option<unsafe extern "C" fn(invite: *const ::std::os::raw::c_char)>;
+pub type CreateObjectFunc =
+    ::std::option::Option<unsafe extern "C" fn(type_: ObjectType) -> *mut ::std::os::raw::c_void>;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PluginNorthstarData {
@@ -601,6 +606,7 @@ fn bindgen_test_layout_PluginNorthstarData() {
 pub struct PluginInitFuncs {
     pub logger: loggerfunc_t,
     pub relayInviteFunc: PLUGIN_RELAY_INVITE_TYPE,
+    pub createObject: CreateObjectFunc,
 }
 #[test]
 fn bindgen_test_layout_PluginInitFuncs() {
@@ -608,7 +614,7 @@ fn bindgen_test_layout_PluginInitFuncs() {
     let ptr = UNINIT.as_ptr();
     assert_eq!(
         ::std::mem::size_of::<PluginInitFuncs>(),
-        16usize,
+        24usize,
         concat!("Size of: ", stringify!(PluginInitFuncs))
     );
     assert_eq!(
@@ -634,6 +640,16 @@ fn bindgen_test_layout_PluginInitFuncs() {
             stringify!(PluginInitFuncs),
             "::",
             stringify!(relayInviteFunc)
+        )
+    );
+    assert_eq!(
+        unsafe { ::std::ptr::addr_of!((*ptr).createObject) as usize - ptr as usize },
+        16usize,
+        concat!(
+            "Offset of field: ",
+            stringify!(PluginInitFuncs),
+            "::",
+            stringify!(createObject)
         )
     );
 }
