@@ -25,14 +25,13 @@ impl From<*const CCommand> for CCommandResult {
         let ccommand = *ccommand;
 
         let args = unsafe {
-
-            log::info!( "ccommand.m_nArgv0Size {}", ccommand.m_nArgv0Size );
+            log::info!("ccommand.m_nArgv0Size {}", ccommand.m_nArgv0Size);
 
             if ccommand.m_nArgv0Size == 0 {
                 "".to_string()
             } else {
                 let buffer = ccommand.m_pArgSBuffer.to_vec().as_ptr();
-                CStr::from_ptr( buffer ).to_string_lossy().into()
+                CStr::from_ptr(buffer).to_string_lossy().into()
             }
         };
 
@@ -46,11 +45,9 @@ pub struct RegisterConCommands {
 
 impl RegisterConCommands {
     pub(crate) unsafe fn new(ptr: *const c_void) -> Self {
-        let reg_func: *const ConCommandConstructorType = std::mem::transmute(ptr);
+        let reg_func: ConCommandConstructorType = std::mem::transmute(ptr);
 
-        Self {
-            reg_func: *reg_func,
-        }
+        Self { reg_func }
     }
 
     pub fn register_concommand(
@@ -70,17 +67,12 @@ impl RegisterConCommands {
             std::mem::transmute(obj)
         };
 
-        let help_string_ptr = help_string.as_ptr();
-        let name_ptr = name.as_ptr();
-
-        let func = (self.reg_func).unwrap();
-
         unsafe {
-            func(
+            self.reg_func.unwrap()(
                 command,
-                name_ptr,
+                name.as_ptr(),
                 Some(callback),
-                help_string_ptr,
+                help_string.as_ptr(),
                 flags,
                 ptr::null_mut(),
             )
