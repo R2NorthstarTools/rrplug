@@ -42,11 +42,6 @@
 //! 
 //! fn main() {
 //!     Build::new().compile("manifest\\Resource.rc").unwrap();
-//! 
-//!     println!("cargo:rerun-if-changed=build.rs");
-//!     println!("cargo:rerun-if-changed=Cargo.lock");
-//!     println!("cargo:rerun-if-changed=r2rsplugins\\headers\\Resource.rc");
-//!     println!("cargo:rerun-if-changed=r2rsplugins/manifest.json");
 //! }
 //! ```
 //! and add windres as a build dependencie.
@@ -54,30 +49,8 @@
 //! ### basic lib.rs
 //! ```
 //! use rrplug::prelude::*;
-//!
-//! struct HelloWorld {
-//!     gamestate: Option<GameState>,
-//! }
-//!
-//! impl Plugin for HelloWorld {
-//!     fn new() -> Self {
-//!         Self {
-//!             gamestate: None,
-//!         }
-//!     }
-//! 
-//!     fn initialize(&mut self, external_plugin_data: ExternalPluginData) {
-//!         self.gamestate = external_plugin_data.get_game_state_struct();
-//!         println!("rust plugin initialized");
-//!     }
-//! 
-//!     fn main(&self) {
-//!         let gamestate = self.gamestate.as_ref().unwrap();
-//!         println!("hello northstar our score is {}", gamestate.our_score());
-//!     }
-//! }
-//! 
-//! entry!(HelloWorld);
+//! TODO
+//! entry!(TODO);
 //! ```
 
 pub mod bindings;

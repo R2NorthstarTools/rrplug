@@ -6,5 +6,8 @@ pub enum RegisterError {
     LockedSqFunctionVec,
 
     #[error("A core function from c++ is null")]
-    NoneFunction
+    NoneFunction,
+
+    #[error("A builder functin returned None")]
+    NoneResult
 }

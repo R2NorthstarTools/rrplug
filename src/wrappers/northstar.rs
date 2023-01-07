@@ -67,7 +67,7 @@ impl From<ScriptContext> for ScriptVmType {
 }
 
 pub enum EngineLoadType {
-    Engine(EngineData),
+    Engine(&'static EngineData),
     EngineFailed,
     Server,
     Client,

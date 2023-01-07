@@ -9,7 +9,7 @@ macro_rules! to_sq_string {
 /// sq_return abstracts away the return procces of a sq functionv.
 ///
 /// ## expected input
-/// value: [`String`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`String`], sqvm: [`crate::bindings::squirreldatatypes::HSquirrelVM`], sq_functions: [`crate::bindings::unwraped::SquirrelFunctionsUnwraped`]
 #[macro_export]
 macro_rules! sq_return_string {
     ($value:expr, $sqvm:expr, $sq_functions:expr) => (
@@ -25,7 +25,7 @@ macro_rules! sq_return_string {
 /// sq_return abstracts away the return procces of a sq function.
 ///
 /// ## expected input
-/// value: [`bool`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`bool`], sqvm: [`crate::bindings::squirreldatatypes::HSquirrelVM`], sq_functions: [`crate::bindings::unwraped::SquirrelFunctionsUnwraped`]
 #[macro_export]
 macro_rules! sq_return_bool {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
@@ -38,7 +38,7 @@ macro_rules! sq_return_bool {
 /// sq_return abstracts away the return procces of a sq function.
 ///
 /// ## expected input
-/// value: [`Into<i32>`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`Into<i32>`], sqvm: [`crate::bindings::squirreldatatypes::HSquirrelVM`], sq_functions: [`crate::bindings::unwraped::SquirrelFunctionsUnwraped`]
 #[macro_export]
 macro_rules! sq_return_int {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
@@ -51,7 +51,7 @@ macro_rules! sq_return_int {
 /// sq_return abstracts away the return procces of a sq function.
 ///
 /// ## expected input
-/// value: [`Into<f32>`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`Into<f32>`], sqvm: [`crate::bindings::squirreldatatypes::HSquirrelVM`], sq_functions: [`crate::bindings::unwraped::SquirrelFunctionsUnwraped`]
 #[macro_export]
 macro_rules! sq_return_float {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
@@ -75,7 +75,7 @@ macro_rules! sq_return_null {
 /// doesn't work for some reason
 ///
 /// ## expected input
-/// value: [`String`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`String`], sqvm: [`crate::bindings::squirreldatatypes::HSquirrelVM`], sq_functions: [`crate::bindings::unwraped::SquirrelFunctionsUnwraped`]
 #[macro_export]
 macro_rules! sq_raise_error {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {

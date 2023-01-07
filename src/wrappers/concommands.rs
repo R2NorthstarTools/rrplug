@@ -18,6 +18,8 @@ pub struct CCommandResult {
 
 impl From<*const CCommand> for CCommandResult {
     fn from(value: *const CCommand) -> Self {
+        log::info!("CCommandResult");
+
         let ccommand = match unsafe { value.as_ref() } {
             Some(c) => c,
             None => return Self::default(),

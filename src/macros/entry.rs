@@ -185,13 +185,17 @@ macro_rules! entry {
             match dll {
                 plugin_abi::PluginLoadDLL_ENGINE => unsafe {
                     let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
-                    let engine_dll = match engine_dll.as_ref() {
-                        Some(engine_dll) => northstar::EngineLoadType::Engine(
-                            $crate::wrappers::engine::EngineData::new(*engine_dll)
-                        ),
+                    let engine_result = match engine_dll.as_ref() {
+                        Some(engine_dll) => {
+                            match $crate::wrappers::engine::ENGINE_DATA.set( $crate::wrappers::engine::EngineData::new(*engine_dll) ) {
+                                Ok(_) => northstar::EngineLoadType::Engine($crate::wrappers::engine::ENGINE_DATA.wait()),
+                                Err(_) => northstar::EngineLoadType::EngineFailed,
+                            }
+                            
+                        },
                         None => northstar::EngineLoadType::EngineFailed,
                     };
-                    PLUGIN.wait().on_engine_load(engine_dll)
+                    PLUGIN.wait().on_engine_load(engine_result)
                 },
                 plugin_abi::PluginLoadDLL_SERVER => PLUGIN.wait().on_engine_load(northstar::EngineLoadType::Server),
                 plugin_abi::PluginLoadDLL_CLIENT => PLUGIN.wait().on_engine_load(northstar::EngineLoadType::Client),
