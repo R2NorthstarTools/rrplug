@@ -48,7 +48,7 @@ macro_rules! entry {
                 }
             };
 
-            unsafe { squrriel::SQFUNCTIONS.client = Some((*funcs).into()) }
+            _ = unsafe { squrriel::SQFUNCTIONS.client.set((*funcs).into()) }
         }
 
         #[no_mangle]
@@ -62,7 +62,7 @@ macro_rules! entry {
                 }
             };
 
-            unsafe { squrriel::SQFUNCTIONS.server = Some((*funcs).into()) }
+            _ = unsafe { squrriel::SQFUNCTIONS.server.set((*funcs).into()) }
         }
 
         #[no_mangle]

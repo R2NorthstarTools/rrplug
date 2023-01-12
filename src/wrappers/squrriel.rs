@@ -1,20 +1,49 @@
+use once_cell::sync::OnceCell;
 use std::sync::Mutex;
 
-use super::northstar::FuncSQFuncInfo;
-use crate::bindings::{unwraped::SquirrelFunctionsUnwraped, squirreldatatypes::CSquirrelVM};
+use super::northstar::{FuncSQFuncInfo, ScriptVmType};
+use crate::{
+    bindings::{
+        squirreldatatypes::{CSquirrelVM, HSquirrelVM},
+        squirrelclasstypes::SQFunction,
+        unwraped::SquirrelFunctionsUnwraped,
+    },
+    sq_return_null, to_sq_string,
+};
 
 pub static mut FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
-pub static mut SQFUNCTIONS: SqFunctions = SqFunctions {
-    client: None,
-    server: None,
+pub static SQFUNCTIONS: SqFunctions = SqFunctions {
+    client: OnceCell::new(),
+    server: OnceCell::new(),
 };
 
 pub struct SqFunctions {
-    pub client: Option<SquirrelFunctionsUnwraped>,
-    pub server: Option<SquirrelFunctionsUnwraped>,
+    pub client: OnceCell<SquirrelFunctionsUnwraped>,
+    pub server: OnceCell<SquirrelFunctionsUnwraped>,
 }
 
 /// yes unsafe
-unsafe impl Sync for CSquirrelVM {
-    
+unsafe impl Sync for CSquirrelVM {}
+
+/// ## call_sq_function
+/// safely calls any function defined on the sqvm
+/// they would only run when the
+pub fn call_sq_function(contex: ScriptVmType, function_name: String, pop_function: Option<SQFunction>) {
+    let sqfunctions = match contex {
+        ScriptVmType::Server => SQFUNCTIONS.server.wait(),
+        _ => SQFUNCTIONS.client.wait(),
+    };
+
+    let pop_function = match pop_function {
+        Some(callback) => callback,
+        None => __pop_function,
+    };
+
+    let function_name = to_sq_string!(function_name);
+
+    unsafe { (sqfunctions.sq_schedule_call_external)(contex.into(), function_name.as_ptr(), pop_function) }
+}
+
+unsafe extern "C" fn __pop_function(_: *mut HSquirrelVM) -> i32 {
+    sq_return_null!()
 }

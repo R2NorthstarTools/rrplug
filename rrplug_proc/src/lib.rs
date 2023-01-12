@@ -247,7 +247,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let script_vm_func = format_ident!("{}", script_vm_func);
 
     let tk =
-        quote! {let sq_functions = unsafe {SQFUNCTIONS.#script_vm_func.as_ref().unwrap()};}.into();
+        quote! {let sq_functions = SQFUNCTIONS.#script_vm_func.wait();}.into();
     push_stmts!(stmts, tk);
 
     let mut info_func = quote! {

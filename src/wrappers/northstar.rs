@@ -30,21 +30,14 @@ pub enum ScriptVmType {
     Client,
     Ui,
     UiClient,
-    UiServer,
-    ClientServer,
-    All,
 }
 
 // todo find a better way to do this my bain is just melting rn
 impl ScriptVmType {
     pub fn is_right_vm(&self, other: &Self) -> bool {
         self == other
-            || (self == &Self::All || other == &Self::All)
             || (self == &Self::UiClient && (other == &Self::Client || other == &Self::Ui))
             || (other == &Self::UiClient && (self == &Self::Client || self == &Self::Ui))
-            || (other == &Self::UiServer && (self == &Self::Server || self == &Self::Ui))
-            || (self == &Self::UiServer && (other == &Self::Server || other == &Self::Ui))
-            || (self == &Self::ClientServer && (other == &Self::Server || other == &Self::Client))
     }
 }
 
@@ -62,6 +55,22 @@ impl From<ScriptContext> for ScriptVmType {
             1 => Self::Client,
             2 => Self::Ui,
             _ => todo!(),
+        }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<ScriptContext> for ScriptVmType {
+    fn into(self) -> ScriptContext {
+        match self {
+            ScriptVmType::Server => 0,
+            ScriptVmType::Client => 1,
+            ScriptVmType::Ui => 2,
+            ScriptVmType::UiClient => {
+                #[cfg(debug_assertions)]
+                log::warn!("ScriptVmType::UiClient is interpreted as ScriptVmType::Client");
+                1
+            },
         }
     }
 }

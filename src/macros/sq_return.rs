@@ -60,12 +60,25 @@ macro_rules! sq_return_float {
     };
 }
 
+/// # sq_return_vecotr
+/// sq_return abstracts away the return procces of a sq function.
+///
+/// ## expected input
+/// value: [`Vector3`], sqvm: [`crate::bindings::squirreldatatypes::HSquirrelVM`], sq_functions: [`crate::bindings::unwraped::SquirrelFunctionsUnwraped`]
+#[macro_export]
+macro_rules! sq_return_vecotr {
+    ($value:expr, $sqvm:expr, $sq_functions: expr) => {
+        unsafe { ($sq_functions.sq_pushvector)($sqvm, $value.into()) };
+        return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL;
+    };
+}
+
 /// # sq_return_null
 /// just returns null
 #[macro_export]
 macro_rules! sq_return_null {
     () => {
-        return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NULL;
+        return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NULL
     };
 }
 
