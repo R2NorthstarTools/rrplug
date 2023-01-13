@@ -80,15 +80,13 @@ macro_rules! entry {
                 }
             };
 
-            let sq_functions = unsafe {
-                match context {
-                    northstar::ScriptVmType::Server => squrriel::SQFUNCTIONS.server.as_ref().unwrap(),
-                    northstar::ScriptVmType::Client => squrriel::SQFUNCTIONS.client.as_ref().unwrap(),
-                    northstar::ScriptVmType::Ui => squrriel::SQFUNCTIONS.client.as_ref().unwrap(),
-                    _ => {
-                        log::error!("invalid ScriptContext");
-                        return;
-                    }
+            let sq_functions = match context {
+                northstar::ScriptVmType::Server => squrriel::SQFUNCTIONS.server.wait(),
+                northstar::ScriptVmType::Client => squrriel::SQFUNCTIONS.client.wait(),
+                northstar::ScriptVmType::Ui => squrriel::SQFUNCTIONS.client.wait(),
+                _ => {
+                    log::error!("invalid ScriptContext");
+                    return;
                 }
             };
 

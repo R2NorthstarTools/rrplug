@@ -78,8 +78,10 @@ impl ConvarStruct {
 
             addr_of_mut!((*convar).m_ConCommandBase.s_pConCommandBases)
                 .write(convar_classes.iconvar_vtable);
-
-            // (convar_classes.convar_malloc)((*convar).m_pMalloc, 0, 0); // Allocate new memory for ConVar.
+            
+            #[allow(clippy::crosspointer_transmute)] // its what c++ this->convar_malloc is
+            (convar_classes.convar_malloc)(mem::transmute(addr_of_mut!((*convar).m_pMalloc)), 0, 0);
+            // Allocate new memory for ConVar.
             // do we even need this ^ ( it crashes )?
         }
         Self { inner: convar }
