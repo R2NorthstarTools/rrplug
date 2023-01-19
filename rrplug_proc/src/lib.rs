@@ -43,9 +43,6 @@ impl Parse for Args {
 
 #[proc_macro_attribute]
 pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // println!("attr: \"{}\"", attr.to_string());
-    // println!("item: \"{}\"", item.to_string());
-
     let args = parse_macro_input!(attr as Args).args;
 
     // otherwise the proc marco is blind :skull:
@@ -246,8 +243,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let script_vm_type = format_ident!("{script_vm}");
     let script_vm_func = format_ident!("{}", script_vm_func);
 
-    let tk =
-        quote! {let sq_functions = SQFUNCTIONS.#script_vm_func.wait();}.into();
+    let tk = quote! {let sq_functions = SQFUNCTIONS.#script_vm_func.wait();}.into();
     push_stmts!(stmts, tk);
 
     let mut info_func = quote! {
@@ -260,7 +256,6 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     if is_message {
         info_func = quote!("");
     }
-    // let default_sq_output = default_sq_output.into_token_stream();
 
     let out: TokenStream = quote! {
         extern "C" fn #ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) #default_sq_output {
@@ -270,7 +265,6 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         #info_func
     }.into();
 
-    // println!("out: \"{}\"", out.to_string());
     out
 }
 
