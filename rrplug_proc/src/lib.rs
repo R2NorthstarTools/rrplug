@@ -104,7 +104,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         match i.to_owned() {
             FnArg::Receiver(_) => {
                 return quote! {
-                    compile_error!("wtf are you doing? stop this now! we don't support methods");
+                    compile_error!("wtf are you doing? stop this now! rrplug doesn't support methods");
                 }
                 .into();
             }
@@ -112,7 +112,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
                     let name = t.clone().pat.to_token_stream();
                     push_type!(sqtypes, "bool", &name.to_string()[..]);
-                    let tk = quote! {let #name = unsafe { (sq_functions.sq_getbool)(sqvm, #sq_stack_pos) } == 1;}.into();
+                    let tk = quote! {let #name: bool = unsafe { (sq_functions.sq_getbool)(sqvm, #sq_stack_pos) } != 0;}.into();
                     push_stmts!(sq_gets_stmts, tk);
 
                     sq_stack_pos += 1;
@@ -268,6 +268,8 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     out
 }
 
+// TODO: Rewrite concommand and convar to use the user's varible names and maybe types
+
 #[proc_macro_attribute]
 pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
@@ -288,6 +290,45 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     quote! {
         extern "C" fn #ident (command: *const rrplug::bindings::command::CCommand) {
+            #(#stmts)*
+        }
+    }
+    .into()
+}
+
+#[proc_macro_attribute]
+pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as ItemFn);
+    let ItemFn {
+        attrs: _,
+        vis: _,
+        sig,
+        block,
+    } = input;
+
+    let mut stmts = block.stmts;
+    let ident = &sig.ident;
+
+    let tk = quote! {
+        let convar = rrplug::wrappers::convars::ConvarStruct::from(convar);
+    }
+    .into();
+    let new_stmt = parse_macro_input!(tk as Stmt);
+    stmts.insert(0, new_stmt);
+
+    let tk = quote! {
+        let old_value = unsafe { std::ffi::CStr::from_ptr(old_value).to_string_lossy().to_string() };
+    }
+    .into();
+    let new_stmt = parse_macro_input!(tk as Stmt);
+    stmts.insert(0, new_stmt);
+
+    quote! {
+        extern "C" fn #ident (
+            convar: *mut rrplug::bindings::convar::ConVar,
+            old_value: *const ::std::os::raw::c_char,
+            float_old_value: f32
+        ) {
             #(#stmts)*
         }
     }

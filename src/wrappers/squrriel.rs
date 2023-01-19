@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use super::northstar::{FuncSQFuncInfo, ScriptVmType};
 use crate::{
     bindings::{
-        squirreldatatypes::{CSquirrelVM, HSquirrelVM},
+        squirreldatatypes::HSquirrelVM,
         squirrelclasstypes::SQFunction,
         unwraped::SquirrelFunctionsUnwraped,
     },
@@ -21,9 +21,6 @@ pub struct SqFunctions {
     pub client: OnceCell<SquirrelFunctionsUnwraped>,
     pub server: OnceCell<SquirrelFunctionsUnwraped>,
 }
-
-/// yes unsafe
-unsafe impl Sync for CSquirrelVM {}
 
 /// ## call_sq_function
 /// safely calls any function defined on the sqvm

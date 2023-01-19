@@ -63,7 +63,8 @@ pub mod prelude;
 pub mod nslog;
 pub mod wrappers;
 
-pub use rrplug_proc::{sqfunction,concommand};
+// could be changed to sqexternal
+pub use rrplug_proc::{sqfunction,concommand,convar};
 #[doc(hidden)]
 pub use once_cell::sync::OnceCell;
 #[doc(hidden)]

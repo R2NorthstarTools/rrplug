@@ -1,4 +1,4 @@
-use std::{mem, os::raw::c_void, ptr::addr_of_mut};
+use std::{mem, os::raw::c_void, ptr::addr_of_mut, ffi::CStr};
 
 use super::{
     engine::{get_engine_data, EngineData},
@@ -13,6 +13,12 @@ use crate::{
     },
     to_sq_string,
 };
+
+pub struct ConvarValues {
+    pub value: String,
+    pub value_float: f32,
+    pub value_int:i32
+}
 
 pub struct ConvarRegister {
     pub name: String,
@@ -105,18 +111,16 @@ impl ConvarStruct {
         // the following stuff may still leak memory
         // has to be investigated
 
-        let name =
+        let (name_ptr, _, _) =
             Box::new(to_sq_string!(register_info.name).into_bytes_with_nul()).into_raw_parts();
-        let name_ptr = name.0 as *mut i8;
 
-        let default_value =
+        let (default_value_ptr, _, _) =
             Box::new(to_sq_string!(register_info.default_value).into_bytes_with_nul())
                 .into_raw_parts();
-        let default_value_ptr = default_value.0 as *mut i8;
 
-        let help_string = Box::new(to_sq_string!(register_info.help_string).into_bytes_with_nul())
-            .into_raw_parts();
-        let help_string_ptr = help_string.0 as *mut i8;
+        let (help_string_ptr, _, _) =
+            Box::new(to_sq_string!(register_info.help_string).into_bytes_with_nul())
+                .into_raw_parts();
 
         unsafe {
             (engine_data
@@ -124,10 +128,10 @@ impl ConvarStruct {
                 .convar_register
                 .ok_or(RegisterError::NoneFunction)?)(
                 self.inner,
-                name_ptr,
-                default_value_ptr,
+                name_ptr as *mut i8,
+                default_value_ptr as *mut i8,
                 register_info.flags,
-                help_string_ptr,
+                help_string_ptr as *mut i8,
                 register_info.bmin,
                 register_info.fmin,
                 register_info.bmax,
@@ -136,6 +140,40 @@ impl ConvarStruct {
             )
         }
         Ok(())
+    }
+    
+    /// # get_name
+    /// gets the name of the convar
+    /// 
+    /// only really safe on the titanfall thread
+    pub fn get_name(&self) -> String {
+        unsafe {
+            let cstr = CStr::from_ptr( (*self.inner).m_ConCommandBase.m_pszName );
+            cstr.to_string_lossy().to_string()
+        }
+    }
+
+    /// # get_value
+    /// gets the value inside the convar
+    /// 
+    /// only safe on the titanfall thread
+    pub fn get_value(&self) -> ConvarValues {
+        unsafe {
+            let value = (*self.inner).m_Value;
+            let string = CStr::from_ptr(value.m_pszString).to_string_lossy().to_string();
+            
+            ConvarValues {
+                value: string,
+                value_float: value.m_fValue,
+                value_int: value.m_nValue,
+            }
+        }
+    }
+}
+
+impl From<*mut ConVar> for ConvarStruct {
+    fn from(value: *mut ConVar) -> Self {
+        Self { inner: value }
     }
 }
 

@@ -29,7 +29,7 @@ macro_rules! sq_return_string {
 #[macro_export]
 macro_rules! sq_return_bool {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
-        unsafe { ($sq_functions.sq_pushbool)($sqvm, if $value { 1 } else { 0 }) };
+        unsafe { ($sq_functions.sq_pushbool)($sqvm, $value as u32) };
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL;
     };
 }
