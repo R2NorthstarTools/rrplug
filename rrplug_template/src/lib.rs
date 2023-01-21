@@ -70,6 +70,8 @@ fn example(name: String) {
 
     sq_return_null!()
 }
+
+entry!(ExamplePlugin);
 {% else %}use rrplug::prelude::*;
 
 pub struct BasicPlugin;
@@ -85,4 +87,6 @@ impl Plugin for BasicPlugin {
 
     fn main(&self) {}
 }
+
+entry!(BasicPlugin);
 {% endif %}
