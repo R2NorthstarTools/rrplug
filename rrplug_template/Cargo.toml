@@ -1,0 +1,16 @@
+[package]
+name = "{{project-name}}"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rrplug = { git = "https://github.com/catornot/rrplug.git", branch = "v2" }
+log = "0.4.17"
+
+[build-dependencies]
+windres = "0.2.2"
+
+[lib]
+crate-type = ["cdylib"]
