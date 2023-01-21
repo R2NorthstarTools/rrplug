@@ -35,7 +35,7 @@ impl Plugin for ExamplePlugin {
             ..ConvarRegister::mandatory(
                 "basic_convar",
                 "48",
-                FCVAR_CLIENTDLL.try_into().unwrap(),
+                FCVAR_GAMEDLL.try_into().unwrap(),
                 "basic_convar",
             )
         };
@@ -66,7 +66,7 @@ fn basic_convar_changed_callback(convar: ConvarStruct, old_value: String, float_
 
 #[sqfunction(VM=Client,ExportName=BasicExample)]
 fn example(name: String) {
-    log::info("exmaple {name}");
+    log::info!("exmaple {name}");
 
     sq_return_null!()
 }

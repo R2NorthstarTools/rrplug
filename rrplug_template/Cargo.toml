@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 rrplug = { git = "https://github.com/catornot/rrplug.git", branch = "v2" }
-log = "0.4.17"
 
 [build-dependencies]
 windres = "0.2.2"
