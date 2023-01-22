@@ -1,4 +1,4 @@
-#[allow(unused_imports)] // for docs
+#[cfg(doc)]
 use crate::{
     bindings::{squirreldatatypes::HSquirrelVM, unwraped::SquirrelFunctionsUnwraped},
     wrappers::vector::Vector3,
@@ -66,13 +66,13 @@ macro_rules! sq_return_float {
     };
 }
 
-/// # sq_return_vecotr
+/// # sq_return_vector
 /// sq_return abstracts away the return procces of a sq function.
 ///
 /// ## expected input
 /// value: [`Vector3`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
 #[macro_export]
-macro_rules! sq_return_vecotr {
+macro_rules! sq_return_vector {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
         unsafe { ($sq_functions.sq_pushvector)($sqvm, $value.into()) };
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL;

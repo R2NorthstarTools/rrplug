@@ -1,5 +1,6 @@
 #![feature(vec_into_raw_parts)]
 
+#![cfg(not(doctest))]
 //! rrplug is a safe wrapper around the plugin system in [R2Norhtstar](https://northstar.tf/)
 //! 
 //! 
