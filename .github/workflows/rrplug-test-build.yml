@@ -23,7 +23,8 @@ jobs:
         # An explicit key for restoring and saving the cache
         key: whar
     - name: Build
-      run: rustup override set nightly
-      run: cargo build --verbose
+      run: |
+        rustup override set nightly
+        cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
