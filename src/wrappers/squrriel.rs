@@ -25,7 +25,7 @@ pub struct SqFunctions {
 /// ## call_sq_function
 /// safely calls any function defined on the sqvm
 /// they would only run when the
-pub fn call_sq_function(contex: ScriptVmType, function_name: String, pop_function: Option<SQFunction>) {
+pub fn call_sq_function(contex: ScriptVmType, function_name: impl Into<String>, pop_function: Option<SQFunction>) {
     let sqfunctions = match contex {
         ScriptVmType::Server => SQFUNCTIONS.server.wait(),
         _ => SQFUNCTIONS.client.wait(),
@@ -36,7 +36,7 @@ pub fn call_sq_function(contex: ScriptVmType, function_name: String, pop_functio
         None => __pop_function,
     };
 
-    let function_name = to_sq_string!(function_name);
+    let function_name = to_sq_string!(function_name.into());
 
     unsafe { (sqfunctions.sq_schedule_call_external)(contex.into(), function_name.as_ptr(), pop_function) }
 }

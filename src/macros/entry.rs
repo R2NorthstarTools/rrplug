@@ -165,7 +165,7 @@ macro_rules! entry {
             unsafe {
                 match sqvm.as_ref() {
                     Some(sqvm) => PLUGIN.wait().on_sqvm_created(context, sqvm),
-                    None => {}
+                    None => log::warn!("sqvm is a null ptr")
                 }
             }
         }

@@ -13,7 +13,8 @@ use super::errors::RegisterError;
 
 #[derive(Debug, Default)]
 pub struct CCommandResult {
-    pub args: String,
+    pub args: Vec<String>,
+    pub command: String,
 }
 
 impl From<*const CCommand> for CCommandResult {
@@ -24,16 +25,22 @@ impl From<*const CCommand> for CCommandResult {
         };
         let ccommand = *ccommand;
 
-        let args = unsafe {
+        let (args, command) = unsafe {
             if ccommand.m_nArgv0Size == 0 {
-                "".to_string()
+                (Vec::new(), "".to_string())
             } else {
                 let buffer = ccommand.m_pArgSBuffer.to_vec().as_ptr();
-                CStr::from_ptr(buffer).to_string_lossy().into()
+                let whole_command = CStr::from_ptr(buffer).to_string_lossy().to_string();
+                let mut whole_command = whole_command.split_whitespace();
+
+                let command = whole_command.next().unwrap_or_default().into();
+                let args = whole_command.into_iter().map(|a| a.to_string()).collect();
+
+                (args, command)
             }
         };
 
-        Self { args }
+        Self { args, command }
     }
 }
 
@@ -55,13 +62,11 @@ impl RegisterConCommands {
         help_string: String,
         flags: i32,
     ) -> Result<(), RegisterError> {
-        
-        let name = Box::new(to_sq_string!(name).into_bytes_with_nul())
-            .into_raw_parts();
+        let name = Box::new(to_sq_string!(name).into_bytes_with_nul()).into_raw_parts();
         let name_ptr = name.0 as *mut i8;
 
-        let help_string = Box::new(to_sq_string!(help_string).into_bytes_with_nul())
-            .into_raw_parts();
+        let help_string =
+            Box::new(to_sq_string!(help_string).into_bytes_with_nul()).into_raw_parts();
         let help_string_ptr = help_string.0 as *mut i8;
 
         let command: *mut ConCommand = unsafe {
@@ -94,7 +99,10 @@ impl RegisterConCommands {
 unsafe extern "C" fn completion_callback(whar: *const i8, whar2: *mut [i8; 128]) -> i32 {
     log::info!("called completion_callback");
     unsafe {
-        log::info!("whar {}", CStr::from_ptr(whar).to_string_lossy().to_string());
+        log::info!(
+            "whar {}",
+            CStr::from_ptr(whar).to_string_lossy().to_string()
+        );
 
         log::info!("whar2 {:?}", CString::from_raw(mem::transmute_copy(&whar2)));
     }
