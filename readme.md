@@ -2,9 +2,11 @@
 crate that provides function wappers and functions for [R2Northstar](https://github.com/R2Northstar/NorthstarLauncher) plugin creation.
 
 ## Plugin Support
-currently only supports v1 plugins
+the v1 branch is for v1 plugins
 
-v2 plugin support is coming
+the v2 branch is for v2 plugins
+
+the master branch is the newest version
 
 ## Getting Started
 add this to your Cargo.toml so your lib crate compiles into a dll.
