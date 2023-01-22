@@ -270,6 +270,19 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 // TODO: Rewrite concommand and convar to use the user's varible names and maybe types
 
+// NOTES FOR cat_or_not
+// so the convar callback is weird 
+// it returns a weird convar instead of the real one
+// we can travel up the convar list to get ours but we can't get the values only the name
+// since we know the name of the convar we can get it from g_pCVar but thats not exposed to plugins
+// I think v3 plugins should have this :)
+// once it does the convar proc marco should be updated to support it
+// also if we are talking v3 plugins wishlist uwu
+// 1. g_pCVar provided to plugins
+// 2. client.dll, engine.dll and server.dll modules provided to plugins
+// 3. runframe ran on plugins ;)
+// ^ this would allow safe editing of convars and conconmands and also call any sqvm function "safely" :D
+
 #[proc_macro_attribute]
 pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
@@ -310,7 +323,7 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let ident = &sig.ident;
 
     let tk = quote! {
-        let convar = rrplug::wrappers::convars::ConvarStruct::from(convar);
+        let convar: Option<rrplug::wrappers::convars::ConVarStruct> = None;
     }
     .into();
     let new_stmt = parse_macro_input!(tk as Stmt);

@@ -18,8 +18,6 @@ pub struct CCommandResult {
 
 impl From<*const CCommand> for CCommandResult {
     fn from(value: *const CCommand) -> Self {
-        log::info!("CCommandResult");
-
         let ccommand = match unsafe { value.as_ref() } {
             Some(c) => c,
             None => return Self::default(),
@@ -27,8 +25,6 @@ impl From<*const CCommand> for CCommandResult {
         let ccommand = *ccommand;
 
         let args = unsafe {
-            log::info!("ccommand.m_nArgv0Size {}", ccommand.m_nArgv0Size);
-
             if ccommand.m_nArgv0Size == 0 {
                 "".to_string()
             } else {
@@ -98,7 +94,7 @@ impl RegisterConCommands {
 unsafe extern "C" fn completion_callback(whar: *const i8, whar2: *mut [i8; 128]) -> i32 {
     log::info!("called completion_callback");
     unsafe {
-        log::info!("whar {}", *whar);
+        log::info!("whar {}", CStr::from_ptr(whar).to_string_lossy().to_string());
 
         log::info!("whar2 {:?}", CString::from_raw(mem::transmute_copy(&whar2)));
     }

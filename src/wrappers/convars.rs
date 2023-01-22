@@ -1,4 +1,4 @@
-use std::{mem, os::raw::c_void, ptr::addr_of_mut, ffi::CStr};
+use std::{ffi::CStr, mem, os::raw::c_void, ptr::addr_of_mut};
 
 use super::{
     engine::{get_engine_data, EngineData},
@@ -14,13 +14,13 @@ use crate::{
     to_sq_string,
 };
 
-pub struct ConvarValues {
-    pub value: String,
+pub struct ConVarValues {
+    pub value: Option<String>,
     pub value_float: f32,
-    pub value_int:i32
+    pub value_int: i32,
 }
 
-pub struct ConvarRegister {
+pub struct ConVarRegister {
     pub name: String,
     pub default_value: String,
     pub flags: i32,
@@ -32,7 +32,7 @@ pub struct ConvarRegister {
     pub callback: FnChangeCallback_t,
 }
 
-impl ConvarRegister {
+impl ConVarRegister {
     pub fn new(
         name: impl Into<String>,
         default_value: impl Into<String>,
@@ -62,11 +62,20 @@ impl ConvarRegister {
     }
 }
 
-pub struct ConvarStruct {
+/// [`ConVarStruct`] wraps unsafe code in a safe api
+/// 
+/// ### Thread Safety
+/// even thought [`Sync`] and [`Send`] are implemented for this struct
+/// 
+/// it is not safe to call any of its functions outside of titanfall's engine callbacks to plugins
+/// and may result in a crash
+/// 
+/// [`Sync`] and [`Send`] will be removed once plugins v3 will be real
+pub struct ConVarStruct {
     inner: *mut ConVar,
 }
 
-impl ConvarStruct {
+impl ConVarStruct {
     pub fn try_new() -> Option<Self> {
         let obj_func = (*CREATE_OBJECT_FUNC.wait())?;
 
@@ -92,7 +101,7 @@ impl ConvarStruct {
         Self { inner: convar }
     }
 
-    pub fn register(&self, register_info: ConvarRegister) -> Result<(), RegisterError> {
+    pub fn register(&self, register_info: ConVarRegister) -> Result<(), RegisterError> {
         let engine_data = get_engine_data().ok_or(RegisterError::NoneFunction)?;
 
         self.private_register(register_info, engine_data)
@@ -100,7 +109,7 @@ impl ConvarStruct {
 
     pub(crate) fn private_register(
         &self,
-        register_info: ConvarRegister,
+        register_info: ConVarRegister,
         engine_data: &EngineData,
     ) -> Result<(), RegisterError> {
         log::info!("Registering ConVar {}", register_info.name);
@@ -141,41 +150,97 @@ impl ConvarStruct {
         }
         Ok(())
     }
+
     
-    /// # get_name
-    /// gets the name of the convar
-    /// 
+    /// [`get_name`] gets the name of the convar
+    ///
     /// only really safe on the titanfall thread
     pub fn get_name(&self) -> String {
         unsafe {
-            let cstr = CStr::from_ptr( (*self.inner).m_ConCommandBase.m_pszName );
+            let cstr = CStr::from_ptr((*self.inner).m_ConCommandBase.m_pszName);
             cstr.to_string_lossy().to_string()
         }
     }
 
-    /// # get_value
-    /// gets the value inside the convar
-    /// 
+    /// [`get_value`] gets the value inside the convar
+    ///
     /// only safe on the titanfall thread
-    pub fn get_value(&self) -> ConvarValues {
+    pub fn get_value(&self) -> ConVarValues {
         unsafe {
             let value = (*self.inner).m_Value;
-            let string = CStr::from_ptr(value.m_pszString).to_string_lossy().to_string();
-            
-            ConvarValues {
+
+            let string = if value.m_pszString.is_null() {
+                Some(
+                    CStr::from_ptr(value.m_pszString)
+                        .to_string_lossy()
+                        .to_string(),
+                )
+            } else {
+                None
+            };
+
+            ConVarValues {
                 value: string,
                 value_float: value.m_fValue,
                 value_int: value.m_nValue,
             }
         }
     }
+
+    /// fr why would you need this?
+    ///
+    /// only safe on the titanfall thread
+    pub fn get_help_text(&self) -> String {
+        unsafe {
+            let help = (*self.inner).m_ConCommandBase.m_pszHelpString;
+            CStr::from_ptr(help).to_string_lossy().to_string()
+        }
+    }
+
+    /// ## is_registered
+    /// returns [`true`] if the convar is registered
+    ///
+    /// only safe on the titanfall thread
+    pub fn is_registered(&self) -> bool {
+        unsafe { (*self.inner).m_ConCommandBase.m_bRegistered }
+    }
+
+    /// ## has_flag
+    /// returns [`true`] if the given flags are set for this convar
+    ///
+    /// only safe on the titanfall thread
+    pub fn has_flag(&self, flags: i32) -> bool {
+        unsafe { (*self.inner).m_ConCommandBase.m_nFlags & flags != 0 }
+    }
+
+    /// ## add_flags
+    /// adds flags to the convar
+    ///
+    /// only safe on the titanfall thread
+    pub fn add_flags(&mut self, flags: i32) {
+        unsafe { (*self.inner).m_ConCommandBase.m_nFlags |= flags }
+    }
+
+    /// ## remove_flags
+    /// removes flags from the convar
+    ///
+    /// only safe on the titanfall thread
+    pub fn remove_flags(&mut self, flags: i32) {
+        unsafe { (*self.inner).m_ConCommandBase.m_nFlags |= !flags }
+    }
 }
 
-impl From<*mut ConVar> for ConvarStruct {
+impl From<*mut ConVar> for ConVarStruct {
     fn from(value: *mut ConVar) -> Self {
         Self { inner: value }
     }
 }
+
+// this must be revert once plugins v3 is out
+unsafe impl Sync for ConVarStruct {}
+unsafe impl Sync for ConVar {}
+unsafe impl Send for ConVarStruct {}
+unsafe impl Send for ConVar {}
 
 pub(crate) struct ConVarClasses {
     convar_vtable: *mut c_void,

@@ -77,3 +77,13 @@ Compile
 
 Then Enojoy your hello world plugin
 
+## rrplug template
+
+install cargo-generate if you don't have it
+```bash
+cargo install cargo-generate
+```
+
+```bash
+cargo generate -g  https://github.com/catornot/rrplug.git -b v2
+```

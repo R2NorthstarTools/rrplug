@@ -2,7 +2,7 @@
 use rrplug::{
     bindings::convar::FCVAR_GAMEDLL,
     concommand, convar, sq_return_null, sqfunction,
-    wrappers::convars::{ConvarRegister, ConvarStruct},
+    wrappers::convars::{ConVarRegister, ConVarStruct},
     wrappers::northstar::{EngineLoadType, PluginData},
 };
 
@@ -29,10 +29,10 @@ impl Plugin for ExamplePlugin {
             EngineLoadType::Client => return,
         };
 
-        let convar = ConvarStruct::try_new().unwrap();
-        let register_info = ConvarRegister {
+        let convar = ConVarStruct::try_new().unwrap();
+        let register_info = ConVarRegister {
             callback: Some(basic_convar_changed_callback),
-            ..ConvarRegister::mandatory(
+            ..ConVarRegister::mandatory(
                 "basic_convar",
                 "48",
                 FCVAR_GAMEDLL.try_into().unwrap(),
@@ -58,9 +58,7 @@ fn basic_command_callback(command: CCommandResult) {
 }
 
 #[convar]
-fn basic_convar_changed_callback(convar: ConvarStruct, old_value: String, float_old_value: f32) {
-    log::info!("convar name: {}", convar.get_name());
-    log::info!("new value: {}", convar.get_value().value_float);
+fn basic_convar_changed_callback(convar: Option<ConVarStruct>, old_value: String, float_old_value: f32) {
     log::info!("old value: {}", float_old_value)
 }
 

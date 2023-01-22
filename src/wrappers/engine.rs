@@ -1,6 +1,7 @@
 #[cfg(feature = "concommand")]
 pub use crate::bindings::command::CCommand;
 use crate::bindings::plugin_abi::PluginEngineData;
+#[cfg(any(feature = "concommand", feature = "convar"))]
 use crate::wrappers::errors::RegisterError;
 use once_cell::sync::OnceCell;
 
@@ -56,10 +57,10 @@ impl EngineData {
         help_string: impl Into<String>,
         flags: i32,
     ) -> Result<(), RegisterError> {
-        use super::convars::{ConvarRegister, ConvarStruct};
+        use super::convars::{ConVarRegister, ConVarStruct};
 
-        let convar = ConvarStruct::try_new().ok_or(RegisterError::NoneResult)?;
-        let register_info = ConvarRegister::new(name, default_value, flags, help_string);
+        let convar = ConVarStruct::try_new().ok_or(RegisterError::NoneResult)?;
+        let register_info = ConVarRegister::new(name, default_value, flags, help_string);
         convar.private_register(register_info, self)
     }
 }
