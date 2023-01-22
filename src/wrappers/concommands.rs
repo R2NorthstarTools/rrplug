@@ -1,9 +1,11 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
+//! conconcommand related abstractions
+
 use super::northstar::CREATE_OBJECT_FUNC;
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::os::raw::c_void;
-use std::{mem, ptr};
+use std::ptr;
 
 use crate::bindings::command::{CCommand, ConCommand, ConCommandConstructorType};
 use crate::bindings::plugin_abi::ObjectType_CONCOMMANDS;
@@ -11,6 +13,7 @@ use crate::to_sq_string;
 
 use super::errors::RegisterError;
 
+/// [`CCommandResult`] gets all the usefull stuff from [`*const CCommand`] and puts in this safe struct 
 #[derive(Debug, Default)]
 pub struct CCommandResult {
     pub args: Vec<String>,
@@ -87,24 +90,6 @@ impl RegisterConCommands {
                 ptr::null_mut(),
             )
         };
-
-        unsafe {
-            (*command).m_pCompletionCallback = Some(completion_callback);
-        }
-
         Ok(())
     }
-}
-
-unsafe extern "C" fn completion_callback(whar: *const i8, whar2: *mut [i8; 128]) -> i32 {
-    log::info!("called completion_callback");
-    unsafe {
-        log::info!(
-            "whar {}",
-            CStr::from_ptr(whar).to_string_lossy().to_string()
-        );
-
-        log::info!("whar2 {:?}", CString::from_raw(mem::transmute_copy(&whar2)));
-    }
-    0
 }

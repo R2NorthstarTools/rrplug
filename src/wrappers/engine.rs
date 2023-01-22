@@ -1,5 +1,7 @@
+//! engine related abstractions and functions
+
 #[cfg(feature = "concommand")]
-pub use crate::bindings::command::CCommand;
+use crate::bindings::command::CCommand;
 use crate::bindings::plugin_abi::PluginEngineData;
 #[cfg(any(feature = "concommand", feature = "convar"))]
 use crate::wrappers::errors::RegisterError;
@@ -12,13 +14,14 @@ pub fn get_engine_data() -> Option<&'static EngineData> {
     unsafe { ENGINE_DATA.get() }
 }
 
+/// Use this struct to register convars and concommands
+///
+/// only usefull when the convars or concommands features are enabled
 pub struct EngineData {
     #[cfg(feature = "concommand")]
     concommands: super::concommands::RegisterConCommands,
     #[cfg(feature = "convar")]
     pub(crate) convar: super::convars::ConVarClasses,
-
-    pub raw: PluginEngineData,
 }
 
 impl EngineData {
@@ -30,7 +33,6 @@ impl EngineData {
             },
             #[cfg(feature = "convar")]
             convar: super::convars::ConVarClasses::new(&raw),
-            raw,
         }
     }
 

@@ -11,6 +11,7 @@ use crate::bindings::plugin_abi::{CreateObjectFunc, PluginInitFuncs, PluginNorth
 use crate::bindings::squirrelclasstypes::{SQFunction, ScriptContext};
 use crate::nslog;
 
+#[doc(hidden)]
 pub static CREATE_OBJECT_FUNC: OnceCell<CreateObjectFunc> = OnceCell::new();
 
 // cpp name, sq name, types, return, func
@@ -24,6 +25,9 @@ pub type SQFuncInfo = (
     SQFunction,
 );
 
+/// All the possible vm types titanfall 2 has
+/// 
+/// `UiClient` is used for function registration on both vms
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ScriptVmType {
     Server,
@@ -54,7 +58,7 @@ impl From<ScriptContext> for ScriptVmType {
             0 => Self::Server,
             1 => Self::Client,
             2 => Self::Ui,
-            _ => todo!(),
+            _ => unreachable!(),
         }
     }
 }
@@ -75,6 +79,11 @@ impl Into<ScriptContext> for ScriptVmType {
     }
 }
 
+/// All the engine load states northstar has
+/// 
+/// Each one loads a dll at it stage
+/// 
+/// `EngineFailed` is an Error
 pub enum EngineLoadType {
     Engine(&'static EngineData),
     EngineFailed,
@@ -82,6 +91,9 @@ pub enum EngineLoadType {
     Client,
 }
 
+/// Provides Usefull Initilization infomation
+/// 
+/// Alought I would only count sqfunction registration as usefull
 pub struct PluginData {
     plugin_init_funcs: PluginInitFuncs,
     plugin_northstar_data: PluginNorthstarData,
@@ -106,6 +118,7 @@ impl PluginData {
     }
 
     /// logging is already initialized in the entry marco by default
+    #[doc(hidden)]
     pub fn try_init_logger(&self) -> Result<(), SetLoggerError> {
         nslog::try_init(
             self.plugin_init_funcs.logger,
@@ -113,19 +126,27 @@ impl PluginData {
         )
     }
 
-    /// logging is already initialized in the entry marco by default
+    /// logging is already initialized in the entry marco by default\
+    #[doc(hidden)]
     pub fn init_logger(&self) {
         self.try_init_logger().unwrap();
     }
-
+    
+    /// returns the current northsar version in a weird form
     pub fn get_northstar_version(&self) -> i8 {
         unsafe { *self.plugin_northstar_data.version }
     }
-
+    
+    /// returns the plugin id
+    /// 
+    /// only used for login which is handled by rrplug
     pub fn get_plugin_handle(&self) -> i32 {
         self.plugin_northstar_data.pluginHandle
     }
-
+    
+    /// Adds a sqfunction to the registration list
+    /// 
+    /// The sqfunction will be registered when its vm is loaded
     pub fn register_sq_functions(
         &self,
         get_info_func: FuncSQFuncInfo,

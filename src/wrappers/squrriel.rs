@@ -1,3 +1,5 @@
+//! squrriel vm related function and statics
+
 use once_cell::sync::OnceCell;
 use std::sync::Mutex;
 
@@ -11,20 +13,29 @@ use crate::{
     sq_return_null, to_sq_string,
 };
 
+#[doc(hidden)]
 pub static mut FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
+
+/// functions that used to interact with the sqvm
+/// 
+/// client functions are both for ui and client vms
 pub static SQFUNCTIONS: SqFunctions = SqFunctions {
     client: OnceCell::new(),
     server: OnceCell::new(),
 };
 
+/// functions that used to interact with the sqvm
+/// 
+/// client functions are both for ui and client vms
 pub struct SqFunctions {
     pub client: OnceCell<SquirrelFunctionsUnwraped>,
     pub server: OnceCell<SquirrelFunctionsUnwraped>,
 }
 
-/// ## call_sq_function
-/// safely calls any function defined on the sqvm
-/// they would only run when the
+
+/// [`call_sq_function`] "safely" calls any function defined on the sqvm
+/// 
+/// they would only run when the sqvm is valid
 pub fn call_sq_function(contex: ScriptVmType, function_name: impl Into<String>, pop_function: Option<SQFunction>) {
     let sqfunctions = match contex {
         ScriptVmType::Server => SQFUNCTIONS.server.wait(),

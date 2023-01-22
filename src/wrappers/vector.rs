@@ -1,5 +1,10 @@
+//! just used to define the struct for vectors
+
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // cluless
 
+/// the repersention of the source engine's vector
+/// 
+/// This is a copied struct since in reality its much more unsafe
 #[derive(Copy, Clone, Debug)]
 pub struct Vector3 {
     pub x: f32,

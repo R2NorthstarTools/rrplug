@@ -1,3 +1,5 @@
+//! convar related abstractions
+
 use std::{ffi::CStr, mem, os::raw::c_void, ptr::addr_of_mut};
 
 use super::{
@@ -14,12 +16,18 @@ use crate::{
     to_sq_string,
 };
 
+/// the state of the convar in all of its possible types
+/// 
+/// value should be valid most of the time
 pub struct ConVarValues {
     pub value: Option<String>,
     pub value_float: f32,
     pub value_int: i32,
 }
 
+/// [`ConVarRegister`] is builder sturct for convars
+/// 
+/// consumed by [`ConVarStruct`]`::register`
 pub struct ConVarRegister {
     pub name: String,
     pub default_value: String,
@@ -76,6 +84,9 @@ pub struct ConVarStruct {
 }
 
 impl ConVarStruct {
+    /// Creates an unregistered convar
+    /// 
+    /// Would only fail if something goes wrong with northstar
     pub fn try_new() -> Option<Self> {
         let obj_func = (*CREATE_OBJECT_FUNC.wait())?;
 
@@ -152,7 +163,7 @@ impl ConVarStruct {
     }
 
     
-    /// [`get_name`] gets the name of the convar
+    /// gets the name of the convar
     ///
     /// only really safe on the titanfall thread
     pub fn get_name(&self) -> String {
@@ -162,7 +173,7 @@ impl ConVarStruct {
         }
     }
 
-    /// [`get_value`] gets the value inside the convar
+    /// gets the value inside the convar
     ///
     /// only safe on the titanfall thread
     pub fn get_value(&self) -> ConVarValues {
@@ -197,7 +208,6 @@ impl ConVarStruct {
         }
     }
 
-    /// ## is_registered
     /// returns [`true`] if the convar is registered
     ///
     /// only safe on the titanfall thread
@@ -205,7 +215,6 @@ impl ConVarStruct {
         unsafe { (*self.inner).m_ConCommandBase.m_bRegistered }
     }
 
-    /// ## has_flag
     /// returns [`true`] if the given flags are set for this convar
     ///
     /// only safe on the titanfall thread
@@ -213,7 +222,6 @@ impl ConVarStruct {
         unsafe { (*self.inner).m_ConCommandBase.m_nFlags & flags != 0 }
     }
 
-    /// ## add_flags
     /// adds flags to the convar
     ///
     /// only safe on the titanfall thread
@@ -221,7 +229,6 @@ impl ConVarStruct {
         unsafe { (*self.inner).m_ConCommandBase.m_nFlags |= flags }
     }
 
-    /// ## remove_flags
     /// removes flags from the convar
     ///
     /// only safe on the titanfall thread

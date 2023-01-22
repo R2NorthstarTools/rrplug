@@ -5,6 +5,11 @@ use crate::{
     wrappers::northstar::{EngineLoadType, PluginData, ScriptVmType},
 };
 
+/// Trait for defining the callbacks and entry point of the plugin
+/// 
+/// also provides a thread to run code on (the main function) 
+/// 
+/// it is unsafe to run any titanfall engine functions on it
 pub trait Plugin: Any + Sync {
     fn new() -> Self;
 

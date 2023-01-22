@@ -2,7 +2,19 @@
 
 //! rrplug is a safe wrapper around the plugin system in [R2Norhtstar](https://northstar.tf/)
 //! 
-//! # Basic Setup
+//! 
+//! ## Setup with template
+//! 
+//! install cargo-generate if you don't have it
+//! ```bash
+//! cargo install cargo-generate
+//! ```
+//! 
+//! ```bash
+//! cargo generate -g  https://github.com/catornot/rrplug.git -b v2
+//! ```
+//! 
+//! ## Manual setup
 //! for Northstar to be able to use the plugin it must be compiled into a dll.
 //! 
 //! So natturaly you would want your plugin to be a cdylib lib crate.
@@ -13,7 +25,7 @@
 //! crate-type = ["cdylib"]
 //! ```
 //! 
-//! ### manifest
+//! ### Manifest
 //! Northstar also requires plugins to have a manifest.json inserted into them.
 //! 
 //! it is possible to do so with [windres](https://crates.io/crates/windres) and build.rs.
@@ -25,7 +37,7 @@
 //!     "name": "plugin_name",
 //!     "displayname": "plugin_name",
 //!     "description": "plugin_name",
-//!     "api_version": "1",
+//!     "api_version": "2",
 //!     "version": "1.0",
 //!     "run_on_server": false,
 //!     "run_on_client": true
@@ -48,18 +60,34 @@
 //! ```
 //! and add windres as a build dependencie.
 //! 
-//! ### basic lib.rs
+//! ### Basic lib.rs
 //! ```
 //! use rrplug::prelude::*;
-//! TODO
-//! entry!(TODO);
+//! 
+//! pub struct BasicPlugin;
+//! 
+//! impl Plugin for BasicPlugin {
+//!     fn new() -> Self {
+//!         Self {}
+//!     }
+//! 
+//!     fn initialize(&mut self, plugin_data: &PluginData) {
+//!         log::info!("yay logging :D");
+//!     }
+//! 
+//!     fn main(&self) {}
+//! }
+//! 
+//! entry!(BasicPlugin);
 //! ```
+//! 
 
 pub mod bindings;
 pub mod macros;
 // pub mod ffi;
 pub mod plugin;
 pub mod prelude;
+#[doc(hidden)]
 pub mod nslog;
 pub mod wrappers;
 

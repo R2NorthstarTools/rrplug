@@ -1,3 +1,5 @@
+//! contains all the exposed **"safe"** function
+
 pub mod northstar;
 pub mod squrriel;
 pub mod vector;
