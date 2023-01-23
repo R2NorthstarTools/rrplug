@@ -74,5 +74,5 @@ cargo install cargo-generate
 ```
 
 ```bash
-cargo generate -g  https://github.com/catornot/rrplug.git -b v2
+cargo generate -g  https://github.com/catornot/rrplug.git
 ```
