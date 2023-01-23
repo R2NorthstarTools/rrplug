@@ -63,13 +63,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "CompanyName", "Northstar"
-            VALUE "FileDescription", "Northstar"
+            VALUE "CompanyName", ""
+            VALUE "FileDescription", ""
             VALUE "FileVersion", "1.0.0.0"
-            VALUE "InternalName", "DiscordRPC.dll"
-            VALUE "LegalCopyright", "Copyright (C) 2022"
-            VALUE "OriginalFilename", "DiscordRPC.dll"
-            VALUE "ProductName", "Northstar Discord Rich Presence"
+            VALUE "InternalName", ""
+            VALUE "LegalCopyright", ""
+            VALUE "OriginalFilename", ""
+            VALUE "ProductName", ""
             VALUE "ProductVersion", "1.0.0.0"
         END
     END
