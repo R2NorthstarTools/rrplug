@@ -37,7 +37,7 @@ impl From<*const CCommand> for CCommandResult {
                 let mut whole_command = whole_command.split_whitespace();
 
                 let command = whole_command.next().unwrap_or_default().into();
-                let args = whole_command.into_iter().map(|a| a.to_string()).collect();
+                let args = whole_command.map(|a| a.to_string()).collect();
 
                 (args, command)
             }

@@ -6,6 +6,7 @@ use rrplug::{
     wrappers::northstar::{EngineLoadType, PluginData},
 };
 
+#[derive(Debug)]
 pub struct ExamplePlugin;
 
 impl Plugin for ExamplePlugin {
@@ -54,7 +55,7 @@ impl Plugin for ExamplePlugin {
 #[concommand]
 fn basic_command_callback(command: CCommandResult) {
     log::info!("running basic_command");
-    log::info!("args: {}", command.args)
+    log::info!("args: {:?}", command.args)
 }
 
 #[convar]
@@ -72,6 +73,7 @@ fn example(name: String) {
 entry!(ExamplePlugin);
 {% else %}use rrplug::prelude::*;
 
+#[derive(Debug)]
 pub struct BasicPlugin;
 
 impl Plugin for BasicPlugin {

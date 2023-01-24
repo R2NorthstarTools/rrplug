@@ -64,7 +64,7 @@ entry!(BasicPlugin);
 
 Compile
 
-Then Enojoy your hello world plugin
+Then Enjoy your hello world plugin
 
 ## rrplug template
 

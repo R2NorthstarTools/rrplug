@@ -41,6 +41,15 @@ impl Parse for Args {
     }
 }
 
+/// proc marco for generating compatible functions with the sqvm
+/// 
+///  ### abstractions 
+/// the marco catpures any arguments types and return types and tranlates them into sqfunction deffintion 
+/// also adds code to transform the sqtypes to rust types at runtime
+/// 
+/// all the information that is relevent for the sqfunction registration is collected into the functin with the same and a `info_` prefix
+/// 
+/// returns are managed by other marcos 
 #[proc_macro_attribute]
 pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let args = parse_macro_input!(attr as Args).args;
@@ -283,6 +292,11 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 // 3. runframe ran on plugins ;)
 // ^ this would allow safe editing of convars and conconmands and also call any sqvm function "safely" :D
 
+/// proc marco for generating compatible concommand callbacks
+/// 
+/// any arguments and return deffition are discarded
+/// 
+/// in favor of `convar` with `CCommandResult` which is created at compile time from the actuall passed arguments
 #[proc_macro_attribute]
 pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
@@ -309,6 +323,13 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
+/// proc marco for generating compatible concommand callbacks
+/// 
+/// any arguments and return deffition are discarded
+/// 
+/// are the actual agurments: convar: `Option<ConVarStruct>`, old_value: `String`, float_old_value: `f32`
+/// 
+/// the convar that is passed to this callback is always garbage data so you will have to bring the convar from a `static`
 #[proc_macro_attribute]
 pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
