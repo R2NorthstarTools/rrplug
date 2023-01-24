@@ -39,6 +39,30 @@ impl From<*mut f32> for Vector3 {
     }
 }
 
+impl From<(f32,f32,f32)> for Vector3 {
+    fn from(value: (f32,f32,f32)) -> Self {
+        Vector3 { x: value.0, y: value.1, z: value.2 }
+    }
+}
+
+impl From<(f32,f32)> for Vector3 {
+    fn from(value: (f32,f32)) -> Self {
+        Vector3 { x: value.0, y: value.1, z: 0. }
+    }
+}
+
+impl From<[f32;3]> for Vector3 {
+    fn from(value: [f32;3]) -> Self {
+        Vector3 { x: value[0], y: value[1], z: value[2] }
+    }
+}
+
+impl From<[f32;2]> for Vector3 {
+    fn from(value: [f32;2]) -> Self {
+        Vector3 { x: value[0], y: value[1], z: 0. }
+    }
+}
+
 impl PartialEq for Vector3 {
     fn eq(&self, other: &Self) -> bool {
         self.x == other.x && self.y == other.y && self.z == other.z
