@@ -19,10 +19,7 @@ macro_rules! to_sq_string {
 #[macro_export]
 macro_rules! sq_return_string {
     ($value:expr, $sqvm:expr, $sq_functions:expr) => (
-        // boxing this would be a good idea and leaking
-        let cstring = to_sq_string!($value);
-        // its impossble for it to crash since we replace null with space if it does it must be reported
-        unsafe { ($sq_functions.sq_pushstring)($sqvm, cstring.as_ptr(), -1) };
+        $crate::wrappers::squirrel::push_sq_string( $sqvm, $sq_functions, $value );
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL;
     )
 }
@@ -35,7 +32,7 @@ macro_rules! sq_return_string {
 #[macro_export]
 macro_rules! sq_return_bool {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
-        unsafe { ($sq_functions.sq_pushbool)($sqvm, $value as u32) };
+        $crate::wrappers::squirrel::push_sq_bool( $sqvm, $sq_functions, $value );
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL;
     };
 }
@@ -48,7 +45,7 @@ macro_rules! sq_return_bool {
 #[macro_export]
 macro_rules! sq_return_int {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
-        unsafe { ($sq_functions.sq_pushinteger)($sqvm, $value.into()) };
+        $crate::wrappers::squirrel::push_sq_int( $sqvm, $sq_functions, $value );
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL;
     };
 }
@@ -61,7 +58,7 @@ macro_rules! sq_return_int {
 #[macro_export]
 macro_rules! sq_return_float {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
-        unsafe { ($sq_functions.sq_pushfloat)($sqvm, $value.into()) };
+        $crate::wrappers::squirrel::push_sq_float( $sqvm, $sq_functions, $value );
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL;
     };
 }
@@ -74,7 +71,7 @@ macro_rules! sq_return_float {
 #[macro_export]
 macro_rules! sq_return_vector {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
-        unsafe { ($sq_functions.sq_pushvector)($sqvm, $value.into()) };
+        $crate::wrappers::squirrel::push_sq_vector( $sqvm, $sq_functions, $value );
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL;
     };
 }
@@ -85,6 +82,15 @@ macro_rules! sq_return_vector {
 macro_rules! sq_return_null {
     () => {
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NULL
+    };
+}
+
+/// # sq_return_notnull
+/// just tells squirrel that you returned smth (I trust you to use this correctly)
+#[macro_export]
+macro_rules! sq_return_notnull {
+    () => {
+        return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_NOTNULL
     };
 }
 

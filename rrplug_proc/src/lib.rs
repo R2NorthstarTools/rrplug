@@ -96,7 +96,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sq_stack_pos = 1;
     let mut sq_gets_stmts = Vec::new();
 
-    let out = match output {
+    let mut out = match output {
         syn::ReturnType::Default => "void",
         syn::ReturnType::Type(_, ty) => match &**ty {
             Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => "bool",
@@ -164,8 +164,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     push_type!(sqtypes, "vector", &name.to_string()[..]);
                     let tk = quote! {
                         let #name = unsafe {
-                            let _temp = unsafe { (sq_functions.sq_getvector)(sqvm, #sq_stack_pos) };
-                            rrplug::wrappers::vector::Vector3::from(_temp)
+                            rrplug::wrappers::vector::Vector3::from( (sq_functions.sq_getvector)(sqvm, #sq_stack_pos) )
                         };
                     }
                     .into();
@@ -240,6 +239,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 default_sq_output = ReturnType::Default;
             } // this has to be finshed some day, rn asycn fn calls with i32 return don't cause problems
             "ExportName" => export_name = input,
+            "ReturnOverwrite" => out = out,
             _ => {
                 let fmt = format!("wrong arg {} or arg {}", input, arg.ident.to_string());
                 return quote! {

@@ -7,7 +7,7 @@ macro_rules! entry {
         #[doc(hidden)]
         use $crate::bindings::{plugin_abi,squirreldatatypes,squirrelclasstypes};
         #[doc(hidden)]
-        use $crate::wrappers::{northstar,squrriel};
+        use $crate::wrappers::{northstar,squirrel};
         use $crate::log;
 
         static PLUGIN: $crate::OnceCell<$func> = $crate::OnceCell::new();
@@ -48,7 +48,7 @@ macro_rules! entry {
                 }
             };
 
-            _ = unsafe { squrriel::SQFUNCTIONS.client.set((*funcs).into()) }
+            _ = unsafe { squirrel::SQFUNCTIONS.client.set((*funcs).into()) }
         }
 
         #[no_mangle]
@@ -62,7 +62,7 @@ macro_rules! entry {
                 }
             };
 
-            _ = unsafe { squrriel::SQFUNCTIONS.server.set((*funcs).into()) }
+            _ = unsafe { squirrel::SQFUNCTIONS.server.set((*funcs).into()) }
         }
 
         #[no_mangle]
@@ -72,7 +72,7 @@ macro_rules! entry {
             log::info!("PLUGIN_INFORM_SQVM_CREATED called {}", context);
 
             let mut locked_register_functions = loop {
-                match unsafe { squrriel::FUNCTION_SQ_REGISTER.try_lock() } {
+                match unsafe { squirrel::FUNCTION_SQ_REGISTER.try_lock() } {
                     Ok(locked_sq_functions) => break locked_sq_functions,
                     Err(err) => log::error!(
                         "failed to get functions marked for REGISTER: {err:?}; retrying in a bit"
@@ -81,9 +81,9 @@ macro_rules! entry {
             };
 
             let sq_functions = match context {
-                northstar::ScriptVmType::Server => squrriel::SQFUNCTIONS.server.wait(),
-                northstar::ScriptVmType::Client => squrriel::SQFUNCTIONS.client.wait(),
-                northstar::ScriptVmType::Ui => squrriel::SQFUNCTIONS.client.wait(),
+                northstar::ScriptVmType::Server => squirrel::SQFUNCTIONS.server.wait(),
+                northstar::ScriptVmType::Client => squirrel::SQFUNCTIONS.client.wait(),
+                northstar::ScriptVmType::Ui => squirrel::SQFUNCTIONS.client.wait(),
                 _ => {
                     log::error!("invalid ScriptContext");
                     return;

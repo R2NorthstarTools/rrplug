@@ -1,9 +1,10 @@
 //! just used to define the struct for vectors
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // cluless
+#![allow(clippy::from_over_into)]
 
 /// the repersention of the source engine's vector
-/// 
+///
 /// This is a copied struct since in reality its much more unsafe
 #[derive(Copy, Clone, Debug)]
 pub struct Vector3 {
@@ -39,27 +40,50 @@ impl From<*mut f32> for Vector3 {
     }
 }
 
-impl From<(f32,f32,f32)> for Vector3 {
-    fn from(value: (f32,f32,f32)) -> Self {
-        Vector3 { x: value.0, y: value.1, z: value.2 }
+impl Into<*const f32> for Vector3 {
+    fn into(self) -> *const f32 {
+        let as_array = Box::new([self.x, self.y, self.z]);
+        Box::leak(as_array) as *mut [f32; 3] as *const f32
     }
 }
 
-impl From<(f32,f32)> for Vector3 {
-    fn from(value: (f32,f32)) -> Self {
-        Vector3 { x: value.0, y: value.1, z: 0. }
+impl From<(f32, f32, f32)> for Vector3 {
+    fn from(value: (f32, f32, f32)) -> Self {
+        Vector3 {
+            x: value.0,
+            y: value.1,
+            z: value.2,
+        }
     }
 }
 
-impl From<[f32;3]> for Vector3 {
-    fn from(value: [f32;3]) -> Self {
-        Vector3 { x: value[0], y: value[1], z: value[2] }
+impl From<(f32, f32)> for Vector3 {
+    fn from(value: (f32, f32)) -> Self {
+        Vector3 {
+            x: value.0,
+            y: value.1,
+            z: 0.,
+        }
     }
 }
 
-impl From<[f32;2]> for Vector3 {
-    fn from(value: [f32;2]) -> Self {
-        Vector3 { x: value[0], y: value[1], z: 0. }
+impl From<[f32; 3]> for Vector3 {
+    fn from(value: [f32; 3]) -> Self {
+        Vector3 {
+            x: value[0],
+            y: value[1],
+            z: value[2],
+        }
+    }
+}
+
+impl From<[f32; 2]> for Vector3 {
+    fn from(value: [f32; 2]) -> Self {
+        Vector3 {
+            x: value[0],
+            y: value[1],
+            z: 0.,
+        }
     }
 }
 

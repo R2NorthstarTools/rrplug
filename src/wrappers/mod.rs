@@ -1,7 +1,7 @@
 //! contains all the exposed **"safe"** function
 
 pub mod northstar;
-pub mod squrriel;
+pub mod squirrel;
 pub mod vector;
 pub mod engine;
 #[cfg(feature = "concommand")]

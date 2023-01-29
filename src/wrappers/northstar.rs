@@ -6,7 +6,7 @@ use std::fmt::Display;
 
 use super::engine::EngineData;
 use super::errors::RegisterError;
-use super::squrriel::FUNCTION_SQ_REGISTER;
+use super::squirrel::FUNCTION_SQ_REGISTER;
 use crate::bindings::plugin_abi::{CreateObjectFunc, PluginInitFuncs, PluginNorthstarData};
 use crate::bindings::squirrelclasstypes::{SQFunction, ScriptContext};
 use crate::nslog;
