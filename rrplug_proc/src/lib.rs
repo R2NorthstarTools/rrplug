@@ -42,14 +42,14 @@ impl Parse for Args {
 }
 
 /// proc marco for generating compatible functions with the sqvm
-/// 
-///  ### abstractions 
-/// the marco catpures any arguments types and return types and tranlates them into sqfunction deffintion 
+///
+///  ### abstractions
+/// the marco catpures any arguments types and return types and tranlates them into sqfunction deffintion
 /// also adds code to transform the sqtypes to rust types at runtime
-/// 
+///
 /// all the information that is relevent for the sqfunction registration is collected into the functin with the same and a `info_` prefix
-/// 
-/// returns are managed by other marcos 
+///
+/// returns are managed by other marcos
 #[proc_macro_attribute]
 pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let args = parse_macro_input!(attr as Args).args;
@@ -104,6 +104,24 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => "float",
             Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
                 "string"
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vector3" => {
+                "vector"
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<String>" => {
+                "array<string>"
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<Vector3>" => {
+                "array<vector>"
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<bool>" => {
+                "array<bool>"
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<i32>" => {
+                "array<int>"
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<f32>" => {
+                "array<float>"
             }
             _ => "var",
         },
@@ -280,7 +298,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 // TODO: Rewrite concommand and convar to use the user's varible names and maybe types
 
 // NOTES FOR cat_or_not
-// so the convar callback is weird 
+// so the convar callback is weird
 // it returns a weird convar instead of the real one
 // we can travel up the convar list to get ours but we can't get the values only the name
 // since we know the name of the convar we can get it from g_pCVar but thats not exposed to plugins
@@ -293,9 +311,9 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 // ^ this would allow safe editing of convars and conconmands and also call any sqvm function "safely" :D
 
 /// proc marco for generating compatible concommand callbacks
-/// 
+///
 /// any arguments and return deffition are discarded
-/// 
+///
 /// in favor of `convar` with `CCommandResult` which is created at compile time from the actuall passed arguments
 #[proc_macro_attribute]
 pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -324,11 +342,11 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// proc marco for generating compatible concommand callbacks
-/// 
+///
 /// any arguments and return deffition are discarded
-/// 
+///
 /// are the actual agurments: convar: `Option<ConVarStruct>`, old_value: `String`, float_old_value: `f32`
-/// 
+///
 /// the convar that is passed to this callback is always garbage data so you will have to bring the convar from a `static`
 #[proc_macro_attribute]
 pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {

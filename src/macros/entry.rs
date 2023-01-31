@@ -99,7 +99,7 @@ macro_rules! entry {
             {
                 log::info!("Registering {context} function {sq_func_name} with types: {types}"); // TODO: context int to str
 
-                let esq_returntype = match returntype {
+                let esq_returntype = match returntype.split('<').collect::<Vec<&str>>()[0] {
                     "bool" => squirrelclasstypes::eSQReturnType_Boolean,
                     "float" => squirrelclasstypes::eSQReturnType_Float,
                     "vector" => squirrelclasstypes::eSQReturnType_Vector,
