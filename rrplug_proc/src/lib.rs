@@ -108,19 +108,29 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vector3" => {
                 "vector"
             }
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<String>" => {
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<String>" =>
+            {
                 "array<string>"
             }
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<Vector3>" => {
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<Vector3>" =>
+            {
                 "array<vector>"
             }
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<bool>" => {
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<bool>" =>
+            {
                 "array<bool>"
             }
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<i32>" => {
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<i32>" =>
+            {
                 "array<int>"
             }
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vec<f32>" => {
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<f32>" =>
+            {
                 "array<float>"
             }
             _ => "var",

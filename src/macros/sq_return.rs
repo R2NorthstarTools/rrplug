@@ -104,7 +104,7 @@ macro_rules! sq_return_notnull {
 #[macro_export]
 macro_rules! sq_raise_error {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
-        let err = to_sq_string!($value);
+        let err = $crate::to_sq_string!($value);
         unsafe { ($sq_functions.sq_raiseerror)($sqvm, err.as_ptr()) };
         return $crate::bindings::squirrelclasstypes::SQRESULT_SQRESULT_ERROR;
     };
