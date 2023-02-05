@@ -2,6 +2,7 @@
 
 use log::SetLoggerError;
 use once_cell::sync::OnceCell;
+use std::ffi::CStr;
 use std::fmt::Display;
 
 use super::engine::EngineData;
@@ -26,7 +27,7 @@ pub type SQFuncInfo = (
 );
 
 /// All the possible vm types titanfall 2 has
-/// 
+///
 /// `UiClient` is used for function registration on both vms
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ScriptVmType {
@@ -74,15 +75,15 @@ impl Into<ScriptContext> for ScriptVmType {
                 #[cfg(debug_assertions)]
                 log::warn!("ScriptVmType::UiClient is interpreted as ScriptVmType::Client");
                 1
-            },
+            }
         }
     }
 }
 
 /// All the engine load states northstar has
-/// 
+///
 /// Each one loads a dll at it stage
-/// 
+///
 /// `EngineFailed` is an Error
 pub enum EngineLoadType {
     Engine(&'static EngineData),
@@ -92,7 +93,7 @@ pub enum EngineLoadType {
 }
 
 /// Provides Usefull Initilization infomation
-/// 
+///
 /// Alought I would only count sqfunction registration as usefull
 pub struct PluginData {
     plugin_init_funcs: PluginInitFuncs,
@@ -131,21 +132,25 @@ impl PluginData {
     pub fn init_logger(&self) {
         self.try_init_logger().unwrap();
     }
-    
-    /// returns the current northsar version in a weird form
-    pub fn get_northstar_version(&self) -> i8 {
-        unsafe { *self.plugin_northstar_data.version }
+
+    /// returns the current northsar version
+    pub fn get_northstar_version(&self) -> String {
+        unsafe {
+            CStr::from_ptr(self.plugin_northstar_data.version)
+                .to_string_lossy()
+                .into_owned()
+        }
     }
-    
+
     /// returns the plugin id
-    /// 
+    ///
     /// only used for login which is handled by rrplug
     pub fn get_plugin_handle(&self) -> i32 {
         self.plugin_northstar_data.pluginHandle
     }
-    
+
     /// Adds a sqfunction to the registration list
-    /// 
+    ///
     /// The sqfunction will be registered when its vm is loaded
     pub fn register_sq_functions(
         &self,
