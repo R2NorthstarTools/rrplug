@@ -16,3 +16,24 @@ pub enum RegisterError {
     #[error("A builder functin returned None")]
     NoneResult,
 }
+
+impl RegisterError {
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum CallError {
+    #[error("{0} function wasn't found on the sqvm; is it global?")]
+    FunctionNotFound( String ),
+
+    #[error("function failed to execute")]
+    FunctionFailedToExecute
+}
+
+impl CallError {
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}
