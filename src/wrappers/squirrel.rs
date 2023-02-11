@@ -70,14 +70,13 @@ pub fn async_call_sq_function(
 /// "safely" calls any function defined on the sqvm
 ///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
+/// 
+/// this only allows calls without args use the marco instead if you want args
 pub fn call_sq_function<T>(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     function_name: impl Into<String>,
-    args: Vec<T>,
 ) -> Result<(), CallError>
-where
-    T: PushToSquirrelVm,
 {
     let obj = Box::new(std::mem::MaybeUninit::<SQObject>::zeroed());
     let ptr = Box::leak(obj).as_mut_ptr();
@@ -96,11 +95,7 @@ where
             (sqfunctions.sq_pushobject)(sqvm, ptr);
             (sqfunctions.sq_pushroottable)(sqvm);
 
-            for arg in args.into_iter() {
-                arg.push_to_sqvm(sqvm, sqfunctions)
-            }
-
-            let result = if (sqfunctions.sq_call)(sqvm, 3, false as u32, false as u32) == -1 {
+            let result = if (sqfunctions.sq_call)(sqvm, 1, false as u32, false as u32) == -1 {
                 Err(CallError::FunctionFailedToExecute)
             } else {
                 Ok(())
