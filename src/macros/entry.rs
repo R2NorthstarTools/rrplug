@@ -162,12 +162,10 @@ macro_rules! entry {
                     _ = *std::ffi::CStr::from_ptr(types_ptr);
                 }
             }
-            unsafe {
-                match sqvm.as_ref() {
-                    Some(sqvm) => PLUGIN.wait().on_sqvm_created(context, sqvm),
-                    None => log::warn!("sqvm is a null ptr")
-                }
-            }
+
+            let handle = $crate::wrappers::squirrel::CSquirrelVMHandle::new( sqvm, context );
+
+            PLUGIN.wait().on_sqvm_created( &handle );
         }
 
         #[no_mangle]

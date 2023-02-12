@@ -13,7 +13,7 @@ use super::{
 use crate::{
     bindings::{
         squirrelclasstypes::SQFunction,
-        squirreldatatypes::{HSquirrelVM, SQObject},
+        squirreldatatypes::{HSquirrelVM, SQObject, CSquirrelVM},
         unwraped::SquirrelFunctionsUnwraped,
     },
     sq_return_null, to_sq_string,
@@ -36,6 +36,50 @@ pub static SQFUNCTIONS: SqFunctions = SqFunctions {
 pub struct SqFunctions {
     pub client: OnceCell<SquirrelFunctionsUnwraped>,
     pub server: OnceCell<SquirrelFunctionsUnwraped>,
+}
+
+pub struct CSquirrelVMHandle {
+    handle: *mut CSquirrelVM,
+    vm_type: ScriptVmType
+}
+
+impl CSquirrelVMHandle {
+    pub fn new( handle: *mut CSquirrelVM, vm_type: ScriptVmType ) -> Self {
+        Self { handle, vm_type }
+    }
+    
+    /// defines a constant on the sqvm
+    /// 
+    /// Like `SERVER`, `CLIENT`, `UI`, etc
+    pub fn define_sq_constant( &self, name: String, value: bool ) {
+        let sqfunctions = if self.vm_type == ScriptVmType::Server {
+            SQFUNCTIONS.server.wait()
+        } else {
+            SQFUNCTIONS.client.wait()
+        };
+        
+        // not sure if I need to leak this
+        let name = to_sq_string!( name );
+
+        unsafe {
+        (sqfunctions.sq_defconst)( self.handle, name.as_ptr(), value as i32 )
+        }
+    }
+    
+    /// gets the raw pointer to [`HSquirrelVM`]
+    /// 
+    /// # Safety
+    /// assumes its valid
+    /// 
+    /// it is not valid after sqvm destruction
+    pub unsafe fn get_sqvm(&self) -> *mut HSquirrelVM {
+        (*self.handle).sqvm
+    } 
+    
+    /// gets the type of the sqvm :D
+    pub fn get_context(&self) -> ScriptVmType {
+        self.vm_type
+    }     
 }
 
 /// "safely" calls any function defined on the sqvm
