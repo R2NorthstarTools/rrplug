@@ -235,6 +235,14 @@ impl ConVarStruct {
     pub fn remove_flags(&mut self, flags: i32) {
         unsafe { (*self.inner).m_ConCommandBase.m_nFlags |= !flags }
     }
+    
+    /// exposes the raw pointer to the [`ConVar`] class
+    /// 
+    /// # Safety
+    /// its safe unless you start iteracting with the raw pointer
+    pub unsafe fn get_raw_convar_ptr(&self) -> *mut ConVar {
+        self.inner
+    }
 }
 
 impl From<*mut ConVar> for ConVarStruct {

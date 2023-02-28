@@ -156,7 +156,7 @@ impl PluginData {
         &self,
         get_info_func: FuncSQFuncInfo,
     ) -> Result<(), RegisterError> {
-        match unsafe { FUNCTION_SQ_REGISTER.try_lock() } {
+        match FUNCTION_SQ_REGISTER.lock() {
             Ok(mut sq_function_vec) => {
                 sq_function_vec.push(get_info_func);
                 Ok(())

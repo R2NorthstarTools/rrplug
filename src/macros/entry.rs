@@ -71,13 +71,12 @@ macro_rules! entry {
             let context = std::convert::Into::<northstar::ScriptVmType>::into(context);
             log::info!("PLUGIN_INFORM_SQVM_CREATED called {}", context);
 
-            let mut locked_register_functions = loop {
-                match unsafe { squirrel::FUNCTION_SQ_REGISTER.try_lock() } {
-                    Ok(locked_sq_functions) => break locked_sq_functions,
-                    Err(err) => log::error!(
-                        "failed to get functions marked for REGISTER: {err:?}; retrying in a bit"
-                    ),
-                }
+            let mut locked_register_functions = match squirrel::FUNCTION_SQ_REGISTER.lock() {
+                Ok(locked_sq_functions) => locked_sq_functions,
+                Err(err) => { 
+                    log::error!("failed to get functions marked for REGISTER: {err:?}; retrying in a bit");
+                    panic!() 
+                },
             };
 
             let sq_functions = match context {
@@ -187,7 +186,7 @@ macro_rules! entry {
                                 Ok(_) => northstar::EngineLoadType::Engine($crate::wrappers::engine::ENGINE_DATA.wait()),
                                 Err(_) => northstar::EngineLoadType::EngineFailed,
                             }
-                            
+
                         },
                         None => northstar::EngineLoadType::EngineFailed,
                     };

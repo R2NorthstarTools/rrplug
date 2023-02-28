@@ -1,5 +1,7 @@
 #![allow(non_camel_case_types)] // whar
 
+use std::ffi::c_void;
+
 use crate::bindings::{
     plugin_abi::SquirrelFunctions,
     squirrelclasstypes::{
@@ -7,8 +9,7 @@ use crate::bindings::{
         SQRESULT,
     },
     squirreldatatypes::{
-        CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObject,
-        SQStackInfos,
+        CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObject, SQStackInfos,
     },
 };
 
@@ -129,8 +130,8 @@ pub struct SquirrelFunctionsUnwraped {
     pub sq_pushasset: sq_pushassetType_unwraped,
     pub sq_pushvector: sq_pushvectorType_unwraped,
     pub sq_pushobject: sq_pushobjectType_unwraped,
-    // pub sq_getthisentity: sq_getthisentityType_unwraped,
-    // pub sq_getobject: sq_getobjectType_unwraped,
+    pub sq_getthisentity: sq_getthisentityType_unwraped,
+    pub sq_getobject: sq_getobjectType_unwraped,
     pub sq_stackinfos: sq_stackinfosType_unwraped,
     pub sq_getstring: sq_getstringType_unwraped,
     pub sq_getinteger: sq_getintegerType_unwraped,
@@ -179,8 +180,12 @@ impl From<SquirrelFunctions> for SquirrelFunctionsUnwraped {
             sq_setuserdatatypeid: value.__sq_setuserdatatypeid.unwrap(),
             sq_getfunction: value.__sq_getfunction.unwrap(),
             sq_schedule_call_external: value.__sq_schedule_call_external.unwrap(),
-            // sq_getthisentity: value.__sq_getthisentity.unwrap(),
-            // sq_getobject: value.__sq_getobject.unwrap(),
+            sq_getthisentity: value
+                .__sq_getthisentity
+                .unwrap_or(unsafe { std::mem::transmute(std::ptr::null() as *const c_void) }),
+            sq_getobject: value
+                .__sq_getobject
+                .unwrap_or(unsafe { std::mem::transmute(std::ptr::null() as *const c_void) }), // this is temporary since these are null on client; seams like squirrel bridge v3 wasn't completed D:
             sq_stackinfos: value.__sq_stackinfos.unwrap(),
             sq_getentityfrominstance: value.__sq_getentityfrominstance.unwrap(),
             sq_get_entity_constant_cbase_entity: value.__sq_GetEntityConstant_CBaseEntity.unwrap(),

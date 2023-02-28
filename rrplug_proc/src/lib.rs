@@ -201,8 +201,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     sq_stack_pos += 1;
                 }
 
-                // soon
-                // Type::BareFn(_) => todo!(),
+                // Type::BareFn(fun) => fun.fn_token, // aaaaaaaaaaaaaaaaah recursive function
 
                 // maybe
                 // Type::Array(_) => todo!(),

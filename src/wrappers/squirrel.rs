@@ -13,14 +13,14 @@ use super::{
 use crate::{
     bindings::{
         squirrelclasstypes::SQFunction,
-        squirreldatatypes::{HSquirrelVM, SQObject, CSquirrelVM},
+        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQObject},
         unwraped::SquirrelFunctionsUnwraped,
     },
     sq_return_null, to_sq_string,
 };
 
 #[doc(hidden)]
-pub static mut FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
+pub static FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
 
 /// functions that used to interact with the sqvm
 ///
@@ -40,46 +40,44 @@ pub struct SqFunctions {
 
 pub struct CSquirrelVMHandle {
     handle: *mut CSquirrelVM,
-    vm_type: ScriptVmType
+    vm_type: ScriptVmType,
 }
 
 impl CSquirrelVMHandle {
-    pub fn new( handle: *mut CSquirrelVM, vm_type: ScriptVmType ) -> Self {
+    pub fn new(handle: *mut CSquirrelVM, vm_type: ScriptVmType) -> Self {
         Self { handle, vm_type }
     }
-    
+
     /// defines a constant on the sqvm
-    /// 
+    ///
     /// Like `SERVER`, `CLIENT`, `UI`, etc
-    pub fn define_sq_constant( &self, name: String, value: bool ) {
+    pub fn define_sq_constant(&self, name: String, value: bool) {
         let sqfunctions = if self.vm_type == ScriptVmType::Server {
             SQFUNCTIONS.server.wait()
         } else {
             SQFUNCTIONS.client.wait()
         };
-        
-        // not sure if I need to leak this
-        let name = to_sq_string!( name );
 
-        unsafe {
-        (sqfunctions.sq_defconst)( self.handle, name.as_ptr(), value as i32 )
-        }
+        // not sure if I need to leak this
+        let name = to_sq_string!(name);
+
+        unsafe { (sqfunctions.sq_defconst)(self.handle, name.as_ptr(), value as i32) }
     }
-    
+
     /// gets the raw pointer to [`HSquirrelVM`]
-    /// 
+    ///
     /// # Safety
     /// assumes its valid
-    /// 
+    ///
     /// it is not valid after sqvm destruction
     pub unsafe fn get_sqvm(&self) -> *mut HSquirrelVM {
         (*self.handle).sqvm
-    } 
-    
+    }
+
     /// gets the type of the sqvm :D
     pub fn get_context(&self) -> ScriptVmType {
         self.vm_type
-    }     
+    }
 }
 
 /// "safely" calls any function defined on the sqvm
@@ -114,16 +112,15 @@ pub fn async_call_sq_function(
 /// "safely" calls any function defined on the sqvm
 ///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
-/// 
-/// this only allows calls without args use the marco instead if you want args
-pub fn call_sq_function<T>(
+///
+/// this only allows calls without args use the marco [`crate::call_sq_function`] instead if you want args
+pub fn call_sq_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     function_name: impl Into<String>,
-) -> Result<(), CallError>
-{
-    let obj = Box::new(std::mem::MaybeUninit::<SQObject>::zeroed());
-    let ptr = Box::leak(obj).as_mut_ptr();
+) -> Result<(), CallError> {
+    let mut obj = Box::new(std::mem::MaybeUninit::<SQObject>::zeroed());
+    let ptr = obj.as_mut_ptr();
 
     let function_name = to_sq_string!(function_name.into());
 
@@ -132,22 +129,41 @@ pub fn call_sq_function<T>(
     };
 
     if result != 0 {
-        Err(CallError::FunctionNotFound(function_name.to_string_lossy().into())) // totaly safe :clueless:
+        Err(CallError::FunctionNotFound(
+            function_name.to_string_lossy().into(),
+        )) // totaly safe :clueless:
     } else {
-        log::info!("got function");
-        unsafe {
-            (sqfunctions.sq_pushobject)(sqvm, ptr);
-            (sqfunctions.sq_pushroottable)(sqvm);
+        _call_sq_object_function(sqvm, sqfunctions, ptr)
+    }
+}
 
-            let result = if (sqfunctions.sq_call)(sqvm, 1, false as u32, false as u32) == -1 {
-                Err(CallError::FunctionFailedToExecute)
-            } else {
-                Ok(())
-            };
+/// "safely" calls any function defined on the sqvm from its [`SQObject`]
+///
+/// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
+///
+/// this only allows calls without args use the marco [`crate::call_sq_object_function`] instead if you want args
+pub fn call_sq_object_function(
+    sqvm: *mut HSquirrelVM,
+    sqfunctions: &SquirrelFunctionsUnwraped,
+    obj: &mut SQObject,
+) -> Result<(), CallError> {
+    _call_sq_object_function( sqvm, sqfunctions, obj as *mut SQObject)
+}
 
-            _ = *ptr; // drop?
+#[inline] // let rust decide I just follow dry :)
+fn _call_sq_object_function(
+    sqvm: *mut HSquirrelVM,
+    sqfunctions: &SquirrelFunctionsUnwraped,
+    ptr: *mut SQObject,
+) -> Result<(), CallError> {
+    unsafe {
+        (sqfunctions.sq_pushobject)(sqvm, ptr);
+        (sqfunctions.sq_pushroottable)(sqvm);
 
-            result
+        if (sqfunctions.sq_call)(sqvm, 1, false as u32, false as u32) == -1 {
+            Err(CallError::FunctionFailedToExecute)
+        } else {
+            Ok(())
         }
     }
 }
