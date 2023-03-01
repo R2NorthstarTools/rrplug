@@ -5,7 +5,12 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::parse::{Parse, ParseStream};
-use syn::{self, parse_macro_input, FnArg, Ident, ItemFn, Result, ReturnType, Stmt, Token, Type};
+use syn::punctuated::Punctuated;
+use syn::token::Comma;
+use syn::{
+    self, parse_macro_input, FnArg, Ident, ItemFn, Result as SynResult, ReturnType, Stmt, Token,
+    Type,
+};
 
 struct Arg {
     ident: Ident,
@@ -13,7 +18,7 @@ struct Arg {
 }
 
 impl Parse for Arg {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream) -> SynResult<Self> {
         let ident = input.parse()?;
         _ = input.parse::<Token![=]>()?;
         let arg = input.parse()?;
@@ -26,7 +31,7 @@ struct Args {
 }
 
 impl Parse for Args {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream) -> SynResult<Self> {
         let mut args = Args { args: Vec::new() };
 
         loop {
@@ -74,11 +79,144 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         };
     }
 
+    fn recursive_type_match(t: Type) -> Result<String, String> {
+        match t {
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
+                Ok("bool".into())
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => {
+                Ok("int".into())
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => {
+                Ok("float".into())
+            }
+            Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
+                Ok("string".into())
+            }
+            Type::Path(type_path)
+                if type_path.to_token_stream().to_string().ends_with("Vector3") =>
+            {
+                Ok("vector".into())
+            }
+
+            Type::BareFn(fun) => {
+                let head_types = format!("{} functionref( ", get_sqoutput(&fun.output));
+                let mut func_args = String::new();
+
+
+                for arg in fun.inputs {
+                    push_type!(func_args, &recursive_type_match(arg.ty)?[..], "");
+                }
+
+                Ok(format!("{head_types}{func_args})"))
+            }
+
+            _ => Err(format!(
+                "{} type isn't supported",
+                t.into_token_stream().to_string()
+            )),
+        }
+    }
+
+    // type, name, token stream
+    fn match_input(
+        arg: &FnArg,
+        sq_stack_pos: i32,
+    ) -> Result<(String, String, TokenStream), String> {
+        match arg.to_owned() {
+            FnArg::Receiver(_) => {
+                Err("wtf are you doing? stop this now! rrplug doesn't support methods".into())
+            }
+            FnArg::Typed(t) => match &*t.ty {
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
+                    let name = t.clone().pat.to_token_stream();
+                    let tk = quote! {let #name: bool = unsafe { (sq_functions.sq_getbool)(sqvm, #sq_stack_pos) } != 0;}.into();
+                    Ok(("bool".into(), name.to_string(), tk))
+                }
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => {
+                    let name = t.clone().pat.to_token_stream();
+                    let tk = quote! {let #name = unsafe { (sq_functions.sq_getinteger)(sqvm, #sq_stack_pos) } as i32;}.into();
+                    Ok(("int".into(), name.to_string(), tk))
+                }
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => {
+                    let name = t.clone().pat.to_token_stream();
+                    let tk = quote! {let #name = unsafe { (sq_functions.sq_getfloat)(sqvm, #sq_stack_pos) } as f32;}.into();
+                    Ok(("float".into(), name.to_string(), tk))
+                }
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
+                    let name = t.clone().pat.to_token_stream();
+                    let tk = quote! {
+                        let #name = unsafe {
+                            let _sq_str = (sq_functions.sq_getstring)(sqvm, #sq_stack_pos);
+                            let _c_str = std::ffi::CStr::from_ptr(_sq_str);
+                            String::from_utf8_lossy(_c_str.to_bytes()).to_string()
+                        };
+                    }
+                    .into();
+                    Ok(("string".into(), name.to_string(), tk))
+                }
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string().ends_with("Vector3") =>
+                {
+                    let name = t.clone().pat.to_token_stream();
+                    let tk = quote! {
+                        let #name = unsafe {
+                            rrplug::wrappers::vector::Vector3::from( (sq_functions.sq_getvector)(sqvm, #sq_stack_pos) )
+                        };
+                    }
+                    .into();
+                    Ok(("vector".into(), name.to_string(), tk))
+                }
+
+                Type::BareFn(_) => {
+                    let name = t.clone().pat.to_token_stream();
+                    let sqty = recursive_type_match(*t.ty)?;
+                    let tk = quote! {
+                        let mut #name = unsafe {
+                            let mut obj = Box::new(std::mem::MaybeUninit::<SQObject>::zeroed());
+                            (sq_functions.sq_getobject)(sqvm, #sq_stack_pos, obj.as_mut_ptr());
+                            obj
+                        };
+                    }
+                    .into();
+
+                    Ok((sqty, name.to_string(), tk))
+                }
+
+                _ => Err(format!(
+                    "{} type isn't supported",
+                    t.ty.into_token_stream().to_string()
+                )),
+            },
+        }
+    }
+
+    fn input_mapping(
+        args: &Punctuated<FnArg, Comma>,
+        sqtypes: &mut String,
+        sq_stack_pos: &mut i32,
+    ) -> Result<Vec<TokenStream>, String> {
+        let mut token_streams = Vec::new();
+
+        for arg in args.iter() {
+            let out = match_input(arg, *sq_stack_pos);
+
+            let out = out?;
+
+            push_type!(sqtypes, &out.0[..], &out.1[..]);
+            token_streams.push(out.2);
+
+            *sq_stack_pos += 1;
+        }
+
+        Ok(token_streams)
+    }
+
     let input = parse_macro_input!(item as ItemFn);
 
     let ItemFn {
         attrs: _,
-        vis: _,
+        vis,
         sig,
         block,
     } = input;
@@ -96,143 +234,70 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sq_stack_pos = 1;
     let mut sq_gets_stmts = Vec::new();
 
-    let mut out = match output {
-        syn::ReturnType::Default => "void",
-        syn::ReturnType::Type(_, ty) => match &**ty {
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => "bool",
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => "int",
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => "float",
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
-                "string"
-            }
-            Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vector3" => {
-                "vector"
-            }
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<String>" =>
-            {
-                "array<string>"
-            }
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<Vector3>" =>
-            {
-                "array<vector>"
-            }
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<bool>" =>
-            {
-                "array<bool>"
-            }
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<i32>" =>
-            {
-                "array<int>"
-            }
-            Type::Path(type_path)
-                if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<f32>" =>
-            {
-                "array<float>"
-            }
-            _ => "var",
-        },
-    };
-
-    for i in input.iter() {
-        match i.to_owned() {
-            FnArg::Receiver(_) => {
-                return quote! {
-                    compile_error!("wtf are you doing? stop this now! rrplug doesn't support methods");
-                }
-                .into();
-            }
-            FnArg::Typed(t) => match &*t.ty {
+    fn get_sqoutput(output: &ReturnType) -> &str {
+        match output {
+            syn::ReturnType::Default => "void",
+            syn::ReturnType::Type(_, ty) => match &**ty {
                 Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
-                    let name = t.clone().pat.to_token_stream();
-                    push_type!(sqtypes, "bool", &name.to_string()[..]);
-                    let tk = quote! {let #name: bool = unsafe { (sq_functions.sq_getbool)(sqvm, #sq_stack_pos) } != 0;}.into();
-                    push_stmts!(sq_gets_stmts, tk);
-
-                    sq_stack_pos += 1;
+                    "bool"
                 }
-                Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => {
-                    let name = t.clone().pat.to_token_stream();
-                    push_type!(sqtypes, "int", &name.to_string()[..]);
-                    let tk = quote! {let #name = unsafe { (sq_functions.sq_getinteger)(sqvm, #sq_stack_pos) } as i32;}.into();
-                    push_stmts!(sq_gets_stmts, tk);
-
-                    sq_stack_pos += 1;
-                }
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => "int",
                 Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => {
-                    let name = t.clone().pat.to_token_stream();
-                    push_type!(sqtypes, "float", &name.to_string()[..]);
-                    let tk = quote! {let #name = unsafe { (sq_functions.sq_getfloat)(sqvm, #sq_stack_pos) } as f32;}.into();
-                    push_stmts!(sq_gets_stmts, tk);
-
-                    sq_stack_pos += 1;
+                    "float"
                 }
                 Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
-                    let name = t.clone().pat.to_token_stream();
-                    push_type!(sqtypes, "string", &name.to_string()[..]);
-                    let tk = quote! {
-                        let #name = unsafe {
-                            let _sq_str = (sq_functions.sq_getstring)(sqvm, #sq_stack_pos);
-                            let _c_str = std::ffi::CStr::from_ptr(_sq_str);
-                            String::from_utf8_lossy(_c_str.to_bytes()).to_string()
-                        };
-                    }
-                    .into();
-                    push_stmts!(sq_gets_stmts, tk);
-
-                    sq_stack_pos += 1;
+                    "string"
+                }
+                Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vector3" => {
+                    "vector"
                 }
                 Type::Path(type_path)
-                    if type_path.to_token_stream().to_string().ends_with("Vector3") =>
+                    if type_path.to_token_stream().to_string().replace(' ', "")
+                        == "Vec<String>" =>
                 {
-                    let name = t.clone().pat.to_token_stream();
-                    push_type!(sqtypes, "vector", &name.to_string()[..]);
-                    let tk = quote! {
-                        let #name = unsafe {
-                            rrplug::wrappers::vector::Vector3::from( (sq_functions.sq_getvector)(sqvm, #sq_stack_pos) )
-                        };
-                    }
-                    .into();
-                    push_stmts!(sq_gets_stmts, tk);
-
-                    sq_stack_pos += 1;
+                    "array<string>"
                 }
-
-                // Type::BareFn(fun) => fun.fn_token, // aaaaaaaaaaaaaaaaah recursive function
-
-                // maybe
-                // Type::Array(_) => todo!(),
-                // Type::Slice(_) => todo!(),
-                // Type::Tuple(_) => todo!(),
-                // Type::Reference(_) => todo!(),
-
-                // will not support
-                // Type::Infer(_) => todo!(),
-                // Type::Macro(_) => todo!(),
-                // Type::Never(_) => todo!(),
-                // Type::Paren(_) => todo!(),
-                // Type::Group(_) => todo!(),
-                // Type::ImplTrait(_) => todo!(),
-                // Type::TraitObject(_) => todo!(),
-                // Type::Verbatim(_) => todo!(),
-                // Type::Ptr(_) => todo!(),
-                _ => {
-                    let _ty = format!(
-                        "{} type isn't supported",
-                        t.ty.into_token_stream().to_string()
-                    );
-                    return quote! {
-                        compile_error!(#_ty);
-                    }
-                    .into();
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string().replace(' ', "")
+                        == "Vec<Vector3>" =>
+                {
+                    "array<vector>"
                 }
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<bool>" =>
+                {
+                    "array<bool>"
+                }
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<i32>" =>
+                {
+                    "array<int>"
+                }
+                Type::Path(type_path)
+                    if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<f32>" =>
+                {
+                    "array<float>"
+                }
+                _ => "var",
             },
         }
     }
 
+    let mut out = get_sqoutput(output);
+
+    match input_mapping(input, &mut sqtypes, &mut sq_stack_pos) {
+        Ok(tks) => {
+            for tk in tks {
+                push_stmts!(sq_gets_stmts, tk);
+            }
+        }
+        Err(err) => {
+            return quote! {
+                compile_error!(#err);
+            }
+            .into()
+        }
+    }
     sq_gets_stmts.reverse();
     for s in sq_gets_stmts {
         stmts.insert(0, s);
@@ -283,7 +348,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     push_stmts!(stmts, tk);
 
     let mut info_func = quote! {
-        const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
+        #vis const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
 
             (#func_name, #export_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, #ident )
         }

@@ -3,7 +3,7 @@
 //! squirrel vm related function and statics
 
 use once_cell::sync::OnceCell;
-use std::sync::Mutex;
+use std::{sync::Mutex, mem::MaybeUninit};
 
 use super::{
     errors::CallError,
@@ -145,9 +145,9 @@ pub fn call_sq_function(
 pub fn call_sq_object_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
-    obj: &mut SQObject,
+    mut obj: Box<MaybeUninit<SQObject>>,
 ) -> Result<(), CallError> {
-    _call_sq_object_function( sqvm, sqfunctions, obj as *mut SQObject)
+    _call_sq_object_function( sqvm, sqfunctions, obj.as_mut_ptr())
 }
 
 #[inline] // let rust decide I just follow dry :)

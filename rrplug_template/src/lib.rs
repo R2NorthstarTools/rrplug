@@ -1,7 +1,6 @@
 {% if example %}use rrplug::prelude::*;
 use rrplug::{
-    bindings::convar::FCVAR_GAMEDLL,
-    concommand, convar, sq_return_null, sqfunction,
+    bindings::convar::FCVAR_GAMEDLL, sq_return_null,
     wrappers::convars::{ConVarRegister, ConVarStruct},
     wrappers::northstar::{EngineLoadType, PluginData},
 };
@@ -52,18 +51,18 @@ impl Plugin for ExamplePlugin {
     }
 }
 
-#[concommand]
+#[rrplug::concommand]
 fn basic_command_callback(command: CCommandResult) {
     log::info!("running basic_command");
     log::info!("args: {:?}", command.args)
 }
 
-#[convar]
+#[rrplug::convar]
 fn basic_convar_changed_callback(convar: Option<ConVarStruct>, old_value: String, float_old_value: f32) {
     log::info!("old value: {}", float_old_value)
 }
 
-#[sqfunction(VM=Client,ExportName=BasicExample)]
+#[rrplug::sqfunction(VM=Client,ExportName=BasicExample)]
 fn example(name: String) {
     log::info!("exmaple {name}");
 
