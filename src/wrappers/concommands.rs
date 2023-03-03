@@ -65,12 +65,9 @@ impl RegisterConCommands {
         help_string: String,
         flags: i32,
     ) -> Result<(), RegisterError> {
-        let name = Box::new(to_sq_string!(name).into_bytes_with_nul()).into_raw_parts();
-        let name_ptr = name.0 as *mut i8;
+        let name_ptr = Box::new(to_sq_string!(name)).as_ptr().cast_mut();
 
-        let help_string =
-            Box::new(to_sq_string!(help_string).into_bytes_with_nul()).into_raw_parts();
-        let help_string_ptr = help_string.0 as *mut i8;
+        let help_string_ptr = Box::new(to_sq_string!(help_string)).as_ptr().cast_mut();
 
         let command: *mut ConCommand = unsafe {
             std::mem::transmute((CREATE_OBJECT_FUNC

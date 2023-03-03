@@ -130,17 +130,17 @@ impl ConVarStruct {
 
         // the following stuff may still leak memory
         // has to be investigated
+        // I think its safe
+        // since it should live until process termination so the os would clean it
 
-        let (name_ptr, _, _) =
-            Box::new(to_sq_string!(register_info.name).into_bytes_with_nul()).into_raw_parts();
+        let name_ptr =
+            Box::new(to_sq_string!(register_info.name)).as_ptr().cast_mut();
 
-        let (default_value_ptr, _, _) =
-            Box::new(to_sq_string!(register_info.default_value).into_bytes_with_nul())
-                .into_raw_parts();
+        let default_value_ptr =
+        Box::new(to_sq_string!(register_info.default_value)).as_ptr().cast_mut();
 
-        let (help_string_ptr, _, _) =
-            Box::new(to_sq_string!(register_info.help_string).into_bytes_with_nul())
-                .into_raw_parts();
+        let help_string_ptr=
+            Box::new(to_sq_string!(register_info.help_string)).as_ptr().cast_mut();
 
         unsafe {
             (engine_data
@@ -148,10 +148,10 @@ impl ConVarStruct {
                 .convar_register
                 .ok_or(RegisterError::NoneFunction)?)(
                 self.inner,
-                name_ptr as *mut i8,
-                default_value_ptr as *mut i8,
+                name_ptr,
+                default_value_ptr,
                 register_info.flags,
-                help_string_ptr as *mut i8,
+                help_string_ptr,
                 register_info.bmin,
                 register_info.fmin,
                 register_info.bmax,
