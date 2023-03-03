@@ -37,3 +37,18 @@ impl CallError {
         log::error!("{}", self)
     }
 }
+
+#[derive(Error, Debug)]
+pub enum SQCompileError {
+    #[error("provided code failed to compile")]
+    CompileError,
+
+    #[error("compiled buffer failed to execute")]
+    BufferFailedToExecute
+}
+
+impl SQCompileError {
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}

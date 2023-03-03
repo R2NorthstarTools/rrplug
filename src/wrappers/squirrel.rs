@@ -3,16 +3,16 @@
 //! squirrel vm related function and statics
 
 use once_cell::sync::OnceCell;
-use std::{sync::Mutex, mem::MaybeUninit};
+use std::{mem::MaybeUninit, sync::Mutex};
 
 use super::{
-    errors::CallError,
+    errors::{CallError, SQCompileError},
     northstar::{FuncSQFuncInfo, ScriptVmType},
     vector::Vector3,
 };
 use crate::{
     bindings::{
-        squirrelclasstypes::SQFunction,
+        squirrelclasstypes::{CompileBufferState, SQFunction, SQRESULT_SQRESULT_ERROR},
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQObject},
         unwraped::SquirrelFunctionsUnwraped,
     },
@@ -145,9 +145,9 @@ pub fn call_sq_function(
 pub fn call_sq_object_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
-    mut obj: Box<MaybeUninit<SQObject>>,
+    mut obj: MaybeUninit<SQObject>,
 ) -> Result<(), CallError> {
-    _call_sq_object_function( sqvm, sqfunctions, obj.as_mut_ptr())
+    _call_sq_object_function(sqvm, sqfunctions, obj.as_mut_ptr())
 }
 
 #[inline] // let rust decide I just follow dry :)
@@ -164,6 +164,45 @@ fn _call_sq_object_function(
             Err(CallError::FunctionFailedToExecute)
         } else {
             Ok(())
+        }
+    }
+}
+
+pub fn compile_string(
+    sqvm: *mut HSquirrelVM,
+    sqfunctions: &SquirrelFunctionsUnwraped,
+    should_throw_error: bool,
+    code: impl Into<String>,
+) -> Result<(), SQCompileError> {
+    let buffer = to_sq_string!(code.into());
+
+    let mut compile_buffer = CompileBufferState {
+        buffer: buffer.as_ptr(),
+        bufferPlusLength: (buffer.as_ptr() as usize + buffer.as_bytes().len()) as *const i8,
+        bufferAgain: buffer.as_ptr(),
+    };
+
+    let name = to_sq_string!("compile_string");
+
+    unsafe {
+        let result = (sqfunctions.sq_compilebuffer)(
+            sqvm,
+            &mut compile_buffer as *mut CompileBufferState,
+            name.as_ptr(),
+            -1,
+            should_throw_error as u32,
+        );
+
+        if result != SQRESULT_SQRESULT_ERROR {
+            (sqfunctions.sq_pushroottable)(sqvm);
+            
+            if (sqfunctions.sq_call)(sqvm, 1, 0, 0) == SQRESULT_SQRESULT_ERROR {
+                Err(SQCompileError::BufferFailedToExecute)
+            } else {
+                Ok(())
+            }
+        } else {
+            Err(SQCompileError::CompileError)
         }
     }
 }
