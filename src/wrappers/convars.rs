@@ -134,13 +134,13 @@ impl ConVarStruct {
         // since it should live until process termination so the os would clean it
 
         let name_ptr =
-            Box::new(to_sq_string!(register_info.name)).as_ptr().cast_mut();
+            to_sq_string!(register_info.name).into_raw();
 
         let default_value_ptr =
-        Box::new(to_sq_string!(register_info.default_value)).as_ptr().cast_mut();
+        to_sq_string!(register_info.default_value).into_raw();
 
         let help_string_ptr=
-            Box::new(to_sq_string!(register_info.help_string)).as_ptr().cast_mut();
+            to_sq_string!(register_info.help_string).into_raw();
 
         unsafe {
             (engine_data

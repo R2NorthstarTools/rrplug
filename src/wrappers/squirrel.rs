@@ -168,6 +168,7 @@ fn _call_sq_object_function(
     }
 }
 
+/// compiles a string and runs it on the provided sqvm
 pub fn compile_string(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
@@ -195,7 +196,7 @@ pub fn compile_string(
 
         if result != SQRESULT_SQRESULT_ERROR {
             (sqfunctions.sq_pushroottable)(sqvm);
-            
+
             if (sqfunctions.sq_call)(sqvm, 1, 0, 0) == SQRESULT_SQRESULT_ERROR {
                 Err(SQCompileError::BufferFailedToExecute)
             } else {

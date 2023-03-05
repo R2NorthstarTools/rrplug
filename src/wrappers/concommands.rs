@@ -13,7 +13,7 @@ use crate::to_sq_string;
 
 use super::errors::RegisterError;
 
-/// [`CCommandResult`] gets all the usefull stuff from [`*const CCommand`] and puts in this safe struct 
+/// [`CCommandResult`] gets all the usefull stuff from [`*const CCommand`] and puts in this safe struct
 #[derive(Debug, Default)]
 pub struct CCommandResult {
     pub args: Vec<String>,
@@ -65,9 +65,9 @@ impl RegisterConCommands {
         help_string: String,
         flags: i32,
     ) -> Result<(), RegisterError> {
-        let name_ptr = Box::new(to_sq_string!(name)).as_ptr().cast_mut();
+        let name_ptr = to_sq_string!(name).into_raw();
 
-        let help_string_ptr = Box::new(to_sq_string!(help_string)).as_ptr().cast_mut();
+        let help_string_ptr = to_sq_string!(help_string).into_raw();
 
         let command: *mut ConCommand = unsafe {
             std::mem::transmute((CREATE_OBJECT_FUNC
