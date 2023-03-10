@@ -251,7 +251,7 @@ impl From<*mut ConVar> for ConVarStruct {
     }
 }
 
-// this must be revert once plugins v3 is out
+// this must be revert once plugins v3 is out or not
 unsafe impl Sync for ConVarStruct {}
 unsafe impl Sync for ConVar {}
 unsafe impl Send for ConVarStruct {}

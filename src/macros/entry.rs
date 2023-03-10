@@ -74,7 +74,7 @@ macro_rules! entry {
             let mut locked_register_functions = match squirrel::FUNCTION_SQ_REGISTER.lock() {
                 Ok(locked_sq_functions) => locked_sq_functions,
                 Err(err) => { 
-                    log::error!("failed to get functions marked for REGISTER: {err:?}; retrying in a bit");
+                    log::error!("failed to get functions marked for REGISTER: {err:?}");
                     panic!() 
                 },
             };
@@ -111,7 +111,6 @@ macro_rules! entry {
                     "void" => squirrelclasstypes::eSQReturnType_Default,
                     "var" => squirrelclasstypes::eSQReturnType_Default,
                     _ => {
-                        log::info!("undefined return type choosing eSQReturnType_Default");
                         squirrelclasstypes::eSQReturnType_Default
                     }
                 };
@@ -201,8 +200,8 @@ macro_rules! entry {
         #[no_mangle]
         #[export_name = "PLUGIN_RECEIVE_PRESENCE"]
         extern "C" fn plugin_receive_presence(presence: *const plugin_abi::PluginGameStatePresence) {
-            match unsafe { presence.as_ref() } {
-                Some(presence) => PLUGIN.wait().on_presence_updated(*presence),
+            match $crate::wrappers::presence::GamePresence::new( presence ) {
+                Some(presence) => PLUGIN.wait().on_presence_updated(presence),
                 None => {}
             }
 

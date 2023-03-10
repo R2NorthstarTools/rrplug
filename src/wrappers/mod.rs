@@ -9,3 +9,4 @@ pub mod concommands;
 #[cfg(feature = "convar")]
 pub mod convars;
 pub mod errors;
+pub mod presence;

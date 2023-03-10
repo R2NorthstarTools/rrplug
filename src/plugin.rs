@@ -1,8 +1,7 @@
 use std::{any::Any, fmt::Debug};
 
 use crate::{
-    bindings::{plugin_abi::PluginGameStatePresence},
-    wrappers::{northstar::{EngineLoadType, PluginData, ScriptVmType}, squirrel::CSquirrelVMHandle},
+    wrappers::{northstar::{EngineLoadType, PluginData, ScriptVmType}, squirrel::CSquirrelVMHandle, presence::GamePresence},
 };
 
 /// Trait for defining the callbacks and entry point of the plugin
@@ -23,5 +22,5 @@ pub trait Plugin: Any + Debug + Sync {
     
     fn on_sqvm_destroyed(&self, _context: ScriptVmType) {}
 
-    fn on_presence_updated(&self, _presence: PluginGameStatePresence) {}
+    fn on_presence_updated(&self, _presence: &GamePresence) {}
 }
