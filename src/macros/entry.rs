@@ -201,8 +201,8 @@ macro_rules! entry {
         #[export_name = "PLUGIN_RECEIVE_PRESENCE"]
         extern "C" fn plugin_receive_presence(presence: *const plugin_abi::PluginGameStatePresence) {
             match $crate::wrappers::presence::GamePresence::new( presence ) {
-                Some(presence) => PLUGIN.wait().on_presence_updated(presence),
-                None => {}
+                Ok(presence) => PLUGIN.wait().on_presence_updated(&presence),
+                Err(_) => {}
             }
 
         }
