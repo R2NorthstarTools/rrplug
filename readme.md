@@ -45,26 +45,26 @@ Finnaly shove this into lib.rs
 ```rust
 use rrplug::prelude::*;
 
-pub struct BasicPlugin;
+pub struct HelloWorld;
 
-impl Plugin for BasicPlugin {
+impl Plugin for HelloWorld {
     fn new() -> Self {
         Self {}
     }
 
     fn initialize(&mut self, plugin_data: &PluginData) {
-        log::info!("yay logging :D");
+        log::info!("Hello World");
     }
 
     fn main(&self) {}
 }
 
-entry!(BasicPlugin);
+entry!(HelloWorld);
 ```
 
 Compile
 
-Then Enjoy your hello world plugin
+Then enjoy your hello world plugin
 
 ## rrplug template
 

@@ -10,14 +10,16 @@ use super::{
 use crate::{
     bindings::{
         command::ConCommandBase,
-        convar::{ConVar, ConVarMallocType, ConVarRegisterType, FnChangeCallback_t},
+        convar::{
+            ConVar, ConVarMallocType, ConVarRegisterType, FnChangeCallback_t, FCVAR_NEVER_AS_STRING,
+        },
         plugin_abi::{ObjectType_CONVAR, PluginEngineData},
     },
     to_sq_string,
 };
 
 /// the state of the convar in all of its possible types
-/// 
+///
 /// value should be valid most of the time
 pub struct ConVarValues {
     pub value: Option<String>,
@@ -26,7 +28,7 @@ pub struct ConVarValues {
 }
 
 /// [`ConVarRegister`] is builder sturct for convars
-/// 
+///
 /// consumed by [`ConVarStruct`]`::register`
 pub struct ConVarRegister {
     pub name: String,
@@ -71,13 +73,13 @@ impl ConVarRegister {
 }
 
 /// [`ConVarStruct`] wraps unsafe code in a safe api
-/// 
+///
 /// ### Thread Safety
 /// even thought [`Sync`] and [`Send`] are implemented for this struct
-/// 
+///
 /// it is not safe to call any of its functions outside of titanfall's engine callbacks to plugins
 /// and may result in a crash
-/// 
+///
 /// [`Sync`] and [`Send`] will be removed once plugins v3 will be real
 pub struct ConVarStruct {
     inner: *mut ConVar,
@@ -85,7 +87,7 @@ pub struct ConVarStruct {
 
 impl ConVarStruct {
     /// Creates an unregistered convar
-    /// 
+    ///
     /// Would only fail if something goes wrong with northstar
     pub fn try_new() -> Option<Self> {
         let obj_func = (*CREATE_OBJECT_FUNC.wait())?;
@@ -133,14 +135,11 @@ impl ConVarStruct {
         // I think its safe
         // since it should live until process termination so the os would clean it
 
-        let name_ptr =
-            to_sq_string!(register_info.name).into_raw();
+        let name_ptr = to_sq_string!(register_info.name).into_raw();
 
-        let default_value_ptr =
-        to_sq_string!(register_info.default_value).into_raw();
+        let default_value_ptr = to_sq_string!(register_info.default_value).into_raw();
 
-        let help_string_ptr=
-            to_sq_string!(register_info.help_string).into_raw();
+        let help_string_ptr = to_sq_string!(register_info.help_string).into_raw();
 
         unsafe {
             (engine_data
@@ -162,8 +161,7 @@ impl ConVarStruct {
         Ok(())
     }
 
-    
-    /// gets the name of the convar
+    /// get the name of the convar
     ///
     /// only really safe on the titanfall thread
     pub fn get_name(&self) -> String {
@@ -173,14 +171,19 @@ impl ConVarStruct {
         }
     }
 
-    /// gets the value inside the convar
+    /// get the value inside the convar
     ///
     /// only safe on the titanfall thread
     pub fn get_value(&self) -> ConVarValues {
         unsafe {
-            let value = (*self.inner).m_Value;
+            let value = &(*self.inner).m_Value;
 
-            let string = if value.m_pszString.is_null() {
+            let string = if !value.m_pszString.is_null()
+                && self.has_flag(
+                    FCVAR_NEVER_AS_STRING
+                        .try_into()
+                        .expect("supposed to always work"),
+                ) {
                 Some(
                     CStr::from_ptr(value.m_pszString)
                         .to_string_lossy()
@@ -195,6 +198,94 @@ impl ConVarStruct {
                 value_float: value.m_fValue,
                 value_int: value.m_nValue,
             }
+        }
+    }
+
+    /// get the value as a string
+    ///
+    /// only safe on the titanfall thread
+    pub fn get_value_string(&self) -> Option<String> {
+        unsafe {
+            let value = &(*self.inner).m_Value;
+
+            if value.m_pszString.is_null()
+                || !self.has_flag(
+                    FCVAR_NEVER_AS_STRING
+                        .try_into()
+                        .expect("supposed to always work"),
+                )
+            {
+                return None;
+            }
+
+            let value = CStr::from_ptr(value.m_pszString)
+                .to_string_lossy()
+                .to_string();
+            Some(value)
+        }
+    }
+
+    /// get the value as a i32
+    ///
+    /// only safe on the titanfall thread
+    pub fn get_value_i32(&self) -> i32 {
+        unsafe {
+            let value = &(*self.inner).m_Value;
+
+            value.m_nValue
+        }
+    }
+
+    /// get the value as a f32
+    ///
+    /// only safe on the titanfall thread
+    pub fn get_value_f32(&self) -> f32 {
+        unsafe {
+            let value = &(*self.inner).m_Value;
+
+            value.m_fValue
+        }
+    }
+    
+    /// set the int value of the convar
+    /// 
+    /// only safe on the titanfall thread
+    /// 
+    /// ## Warning
+    /// this function only updates the integer and float values of the convar, the string value remains unchanged 
+    /// see this [discord message](https://discord.com/channels/920776187884732556/950322078945538058/1084286030858948638)
+    /// for more info
+    pub fn set_value_i32(&self, new_value: i32) {
+        unsafe {
+            let value = &mut (*self.inner).m_Value;
+
+            if value.m_nValue == new_value {
+                return;
+            }
+            
+            value.m_fValue = new_value as f32;
+            value.m_nValue = new_value;
+        }
+    }
+
+    /// set the int value of the convar
+    /// 
+    /// only safe on the titanfall thread
+    /// 
+    /// ## Warning
+    /// this function only updates the integer and float values of the convar, the string value remains unchanged 
+    /// see this [discord message](https://discord.com/channels/920776187884732556/950322078945538058/1084286030858948638)
+    /// for more info
+    pub fn set_value_f32(&self, new_value: f32) {
+        unsafe {
+            let value = &mut (*self.inner).m_Value;
+
+            if value.m_fValue == new_value {
+                return;
+            }
+            
+            value.m_nValue = new_value as i32;
+            value.m_fValue = new_value;
         }
     }
 
@@ -235,9 +326,9 @@ impl ConVarStruct {
     pub fn remove_flags(&mut self, flags: i32) {
         unsafe { (*self.inner).m_ConCommandBase.m_nFlags |= !flags }
     }
-    
+
     /// exposes the raw pointer to the [`ConVar`] class
-    /// 
+    ///
     /// # Safety
     /// its safe unless you start iteracting with the raw pointer
     pub unsafe fn get_raw_convar_ptr(&self) -> *mut ConVar {
