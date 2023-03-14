@@ -34,7 +34,7 @@ pub struct ConVarRegister {
     pub name: String,
     pub default_value: String,
     pub flags: i32,
-    pub help_string: String,
+    pub help_string: &'static str,
     pub bmin: bool,
     pub fmin: f32,
     pub bmax: bool,
@@ -47,7 +47,7 @@ impl ConVarRegister {
         name: impl Into<String>,
         default_value: impl Into<String>,
         flags: i32,
-        help_string: impl Into<String>,
+        help_string: &'static str,
     ) -> Self {
         Self::mandatory(name, default_value, flags, help_string)
     }
@@ -56,13 +56,13 @@ impl ConVarRegister {
         name: impl Into<String>,
         default_value: impl Into<String>,
         flags: i32,
-        help_string: impl Into<String>,
+        help_string: &'static str,
     ) -> Self {
         Self {
             name: name.into(),
             default_value: default_value.into(),
             flags,
-            help_string: help_string.into(),
+            help_string,
             bmin: bool::default(),
             fmin: f32::default(),
             bmax: bool::default(),
@@ -139,7 +139,18 @@ impl ConVarStruct {
 
         let default_value_ptr = to_sq_string!(register_info.default_value).into_raw();
 
-        let help_string_ptr = to_sq_string!(register_info.help_string).into_raw();
+        let help_bytes = register_info.help_string.as_bytes();
+        let help_string_ptr = match help_bytes.last() {
+            Some(last) => {
+                if *last == b'\0' {
+                    help_bytes.as_ptr() as *mut i8
+                } else {
+                    to_sq_string!(register_info.help_string).into_raw()
+                }
+                
+            }
+            None => "\0".as_bytes().as_ptr() as *mut i8,
+        };
 
         unsafe {
             (engine_data
@@ -246,13 +257,13 @@ impl ConVarStruct {
             value.m_fValue
         }
     }
-    
+
     /// set the int value of the convar
-    /// 
+    ///
     /// only safe on the titanfall thread
-    /// 
+    ///
     /// ## Warning
-    /// this function only updates the integer and float values of the convar, the string value remains unchanged 
+    /// this function only updates the integer and float values of the convar, the string value remains unchanged
     /// see this [discord message](https://discord.com/channels/920776187884732556/950322078945538058/1084286030858948638)
     /// for more info
     pub fn set_value_i32(&self, new_value: i32) {
@@ -262,18 +273,22 @@ impl ConVarStruct {
             if value.m_nValue == new_value {
                 return;
             }
-            
+
             value.m_fValue = new_value as f32;
             value.m_nValue = new_value;
+
+            // how
+            // let string = to_sq_string!(new_value.to_string());
+            // (*self.inner).SetValue2(string.as_ptr())
         }
     }
 
     /// set the int value of the convar
-    /// 
+    ///
     /// only safe on the titanfall thread
-    /// 
+    ///
     /// ## Warning
-    /// this function only updates the integer and float values of the convar, the string value remains unchanged 
+    /// this function only updates the integer and float values of the convar, the string value remains unchanged
     /// see this [discord message](https://discord.com/channels/920776187884732556/950322078945538058/1084286030858948638)
     /// for more info
     pub fn set_value_f32(&self, new_value: f32) {
@@ -283,7 +298,7 @@ impl ConVarStruct {
             if value.m_fValue == new_value {
                 return;
             }
-            
+
             value.m_nValue = new_value as i32;
             value.m_fValue = new_value;
         }

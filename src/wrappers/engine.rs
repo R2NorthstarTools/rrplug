@@ -56,7 +56,7 @@ impl EngineData {
         &self,
         name: impl Into<String>,
         default_value: impl Into<String>,
-        help_string: impl Into<String>,
+        help_string: &'static str,
         flags: i32,
     ) -> Result<(), RegisterError> {
         use super::convars::{ConVarRegister, ConVarStruct};
