@@ -107,6 +107,7 @@ impl PluginData {
         plugin_northstar_data: *const PluginNorthstarData,
     ) -> Self {
         let plugin_init_funcs = *plugin_init_funcs;
+        let plugin_northstar_data = *plugin_northstar_data;
 
         CREATE_OBJECT_FUNC
             .set(plugin_init_funcs.createObject)
@@ -114,7 +115,7 @@ impl PluginData {
 
         Self {
             plugin_init_funcs,
-            plugin_northstar_data: *plugin_northstar_data,
+            plugin_northstar_data,
         }
     }
 

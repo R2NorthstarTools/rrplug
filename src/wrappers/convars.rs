@@ -1,6 +1,6 @@
 //! convar related abstractions
 
-use std::{ffi::CStr, mem, os::raw::c_void, ptr::addr_of_mut};
+use std::{ffi::{CStr, c_char}, mem, os::raw::c_void, ptr::addr_of_mut};
 
 use super::{
     engine::{get_engine_data, EngineData},
@@ -147,7 +147,6 @@ impl ConVarStruct {
                 } else {
                     to_sq_string!(register_info.help_string).into_raw()
                 }
-                
             }
             None => "\0".as_bytes().as_ptr() as *mut i8,
         };
@@ -259,13 +258,9 @@ impl ConVarStruct {
     }
 
     /// set the int value of the convar
+    /// also sets float and string
     ///
     /// only safe on the titanfall thread
-    ///
-    /// ## Warning
-    /// this function only updates the integer and float values of the convar, the string value remains unchanged
-    /// see this [discord message](https://discord.com/channels/920776187884732556/950322078945538058/1084286030858948638)
-    /// for more info
     pub fn set_value_i32(&self, new_value: i32) {
         unsafe {
             let value = &mut (*self.inner).m_Value;
@@ -274,23 +269,67 @@ impl ConVarStruct {
                 return;
             }
 
-            value.m_fValue = new_value as f32;
-            value.m_nValue = new_value;
+            let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
+            let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
+            let set_value_int = vtable_array[14]; // the index for SetValue for ints; weird stuff
 
-            // how
-            // let string = to_sq_string!(new_value.to_string());
-            // (*self.inner).SetValue2(string.as_ptr())
+            /*
+
+            log::info!("vtable_array {:?}", vtable_array);
+
+            log::info!("thing {:?}", *vtable_array[10]);
+
+            // for (i, ptr) in vtable_array.iter().enumerate() {
+            //     if *ptr == 0x00007fffeb8d9990 as *const c_void {
+            //         log::info!("we found it {i} {:?}", *ptr)
+            //     }
+            // }
+
+            const THI: usize = 14;
+
+            let funcadrr = vtable_array[THI];
+
+            log::info!("funcadrr {funcadrr:?}");
+
+            log::info!("vtable_adr {:?}", (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable);
+
+            
+            let start = engine.convar.convar_vtable;
+            let start2 = engine.convar.iconvar_vtable;
+
+            log::info!("address of is convar_vtable {start:?}");
+            log::info!("address of is iconvar_vtable {start2:?}");
+            log::info!("NORTHSTAR_ADDRESS = {NORTHSTAR_ADDRESS:?}");
+
+            // let end = start + 10_usize;
+            // let func = mem::transmute::<_,fn(*const ConVar) -> *const c_char>(start);
+
+            function for float 0x00007FFFEB744A03
+            function for int 0x00007FFFEB74AD04
+            function for string 0x00007FFFEB74F5B6
+            start 0x7fffc462fd28
+            start2 0x7fffc462fdc8
+
+            used this cpp code
+
+            void (ConVar::*ptr)(float) = &ConVar::SetValue;
+
+            printf("address of function ConVar::SetValue(float) is : %p\n", ptr);
+            
+
+            // const OFFSET_FUNC_INT: usize = 655470556;
+            // let func = mem::transmute::<_, fn(*const ConVar, i32)>(vtable_adr + OFFSET_FUNC_INT);
+            */
+            let func = mem::transmute::<_, fn(*const ConVar, i32)>(set_value_int);
+
+            func(self.inner, new_value)
         }
     }
 
-    /// set the int value of the convar
+    /// set the float value of the convar
+    /// also sets int and string
     ///
     /// only safe on the titanfall thread
-    ///
-    /// ## Warning
-    /// this function only updates the integer and float values of the convar, the string value remains unchanged
-    /// see this [discord message](https://discord.com/channels/920776187884732556/950322078945538058/1084286030858948638)
-    /// for more info
     pub fn set_value_f32(&self, new_value: f32) {
         unsafe {
             let value = &mut (*self.inner).m_Value;
@@ -299,8 +338,37 @@ impl ConVarStruct {
                 return;
             }
 
-            value.m_nValue = new_value as i32;
-            value.m_fValue = new_value;
+            let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
+            let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
+            let set_value_float = vtable_array[13]; // the index for SetValue for floats; weird stuff
+
+            // const OFFSET_FUNC_FLOAT: usize = 655445211;
+            // let func = mem::transmute::<_, fn(*const ConVar, f32)>(vtable_adr + OFFSET_FUNC_FLOAT);
+            let func = mem::transmute::<_, fn(*const ConVar, f32)>(set_value_float);
+
+            func(self.inner, new_value)
+        }
+    }
+
+    /// set the string value of the convar
+    ///
+    /// only safe on the titanfall thread
+    pub fn set_value_string(&self, new_value: String) {
+        unsafe {
+            if self.has_flag(FCVAR_NEVER_AS_STRING.try_into().unwrap()) {
+                return;
+            }
+
+            let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
+            let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
+            let set_value_string = vtable_array[12]; // the index for SetValue for strings; weird stuff
+
+            // const OFFSET_FUNC_STRING: usize = 655489166;
+            // let func = mem::transmute::<_, fn(*const ConVar, *const c_char)>(vtable_adr + OFFSET_FUNC_STRING);
+            let func = mem::transmute::<_, fn(*const ConVar, *const c_char)>(set_value_string);
+
+            let string_value = to_sq_string!(new_value);
+            func(self.inner, string_value.as_ptr())
         }
     }
 
