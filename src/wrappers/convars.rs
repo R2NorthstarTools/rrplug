@@ -128,7 +128,6 @@ impl ConVarStruct {
         log::info!("Registering ConVar {}", register_info.name);
 
         debug_assert!(!register_info.name.is_empty());
-        debug_assert!(!register_info.default_value.is_empty());
 
         // the following stuff may still leak memory
         // has to be investigated
@@ -137,7 +136,7 @@ impl ConVarStruct {
 
         let name_ptr = to_sq_string!(register_info.name).into_raw();
 
-        let default_value_ptr = to_sq_string!(register_info.default_value).into_raw();
+        let default_value_ptr = to_sq_string!(register_info.default_value).into_raw(); // altough this wouldn't
 
         let help_bytes = register_info.help_string.as_bytes();
         let help_string_ptr = match help_bytes.last() {
