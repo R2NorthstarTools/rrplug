@@ -1,7 +1,10 @@
 use crate::bindings::plugin_abi::{loggerfunc_t, LogMsg, MessageSource};
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
-use std::ffi::CString;
+use std::ffi::{c_char, CStr, CString};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+const C_STRING_ERROR: *const c_char =
+    "rrplug logger failed to transform a String to a CString\0".as_ptr() as *const c_char;
 
 static mut LOGGER: NorthstarLogger = NorthstarLogger {
     logger: None,
@@ -29,7 +32,7 @@ impl NorthstarLogger {
     fn init(logger: loggerfunc_t, plugin_handle: i32) -> Self {
         Self {
             logger,
-            plugin_handle
+            plugin_handle,
         }
     }
 }
@@ -43,6 +46,8 @@ impl log::Log for NorthstarLogger {
         if !self.enabled(record.metadata()) || self.logger.is_none() {
             return;
         }
+
+        // probably should be reworked to use less to_cstring, like who needs file, func and line context?
 
         let msg = to_cstring(record.args());
         let file = to_cstring(record.module_path().unwrap_or(" "));
@@ -67,7 +72,8 @@ impl log::Log for NorthstarLogger {
             source,
             pluginHandle: self.plugin_handle,
         };
-
+        
+        // if this is null then smth went very wrong
         unsafe { self.logger.unwrap()(&mut logs as *mut LogMsg) }
     }
 
@@ -78,9 +84,11 @@ fn to_cstring<T>(string: T) -> CString
 where
     T: ToString,
 {
-    CString::new(string.to_string()).unwrap()
+    CString::new(string.to_string())
+        .unwrap_or(CString::from(unsafe { CStr::from_ptr(C_STRING_ERROR) }))
 }
 
+/// this is needed because [`Level`] doesn't have the same order
 fn level_to_int(level: Level) -> i32 {
     match level {
         Level::Error => 4,
