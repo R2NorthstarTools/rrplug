@@ -5,10 +5,10 @@
 macro_rules! entry {
     ( $func:ty ) => {
         #[doc(hidden)]
-        use $crate::bindings::{plugin_abi,squirreldatatypes,squirrelclasstypes};
-        #[doc(hidden)]
-        use $crate::wrappers::{northstar,squirrel};
+        use $crate::bindings::{plugin_abi, squirrelclasstypes, squirreldatatypes};
         use $crate::log;
+        #[doc(hidden)]
+        use $crate::wrappers::{northstar, squirrel};
 
         static PLUGIN: $crate::OnceCell<$func> = $crate::OnceCell::new();
 
@@ -43,7 +43,9 @@ macro_rules! entry {
             let funcs = match unsafe { funcs.as_ref() } {
                 Some(funcs) => funcs,
                 None => {
-                    log::error!("failed to get SquirrelFunctions from ptr in PLUGIN_INIT_SQVM_CLIENT");
+                    log::error!(
+                        "failed to get SquirrelFunctions from ptr in PLUGIN_INIT_SQVM_CLIENT"
+                    );
                     return;
                 }
             };
@@ -57,7 +59,9 @@ macro_rules! entry {
             let funcs = match unsafe { funcs.as_ref() } {
                 Some(funcs) => funcs,
                 None => {
-                    log::error!("failed to get SquirrelFunctions from ptr in PLUGIN_INIT_SQVM_SERVER");
+                    log::error!(
+                        "failed to get SquirrelFunctions from ptr in PLUGIN_INIT_SQVM_SERVER"
+                    );
                     return;
                 }
             };
@@ -67,16 +71,19 @@ macro_rules! entry {
 
         #[no_mangle]
         #[export_name = "PLUGIN_INFORM_SQVM_CREATED"]
-        extern "C" fn plugin_inform_sqvm_created(context: squirrelclasstypes::ScriptContext, sqvm: *mut squirreldatatypes::CSquirrelVM) {
+        extern "C" fn plugin_inform_sqvm_created(
+            context: squirrelclasstypes::ScriptContext,
+            sqvm: *mut squirreldatatypes::CSquirrelVM,
+        ) {
             let context = std::convert::Into::<northstar::ScriptVmType>::into(context);
             log::info!("PLUGIN_INFORM_SQVM_CREATED called {}", context);
 
             let mut locked_register_functions = match squirrel::FUNCTION_SQ_REGISTER.lock() {
                 Ok(locked_sq_functions) => locked_sq_functions,
-                Err(err) => { 
+                Err(err) => {
                     log::error!("failed to get functions marked for REGISTER: {err:?}");
-                    panic!() 
-                },
+                    panic!()
+                }
             };
 
             let sq_functions = match context {
@@ -91,10 +98,11 @@ macro_rules! entry {
 
             let sq_register_func = sq_functions.register_squirrel_func;
 
-            for (cpp_func_name, sq_func_name, types, returntype, _, func) in locked_register_functions
-                .iter_mut()
-                .map(|f| f())
-                .filter(|info| info.4.is_right_vm(&context))
+            for (cpp_func_name, sq_func_name, types, returntype, _, func) in
+                locked_register_functions
+                    .iter_mut()
+                    .map(|f| f())
+                    .filter(|info| info.4.is_right_vm(&context))
             {
                 log::info!("Registering {context} function {sq_func_name} with types: {types}"); // TODO: context int to str
 
@@ -110,9 +118,7 @@ macro_rules! entry {
                     "table" => squirrelclasstypes::eSQReturnType_Table,
                     "void" => squirrelclasstypes::eSQReturnType_Default,
                     "var" => squirrelclasstypes::eSQReturnType_Default,
-                    _ => {
-                        squirrelclasstypes::eSQReturnType_Default
-                    }
+                    _ => squirrelclasstypes::eSQReturnType_Default,
                 };
 
                 // shouldn't be unwraping here but I will say : why did you name your function like this?
@@ -128,7 +134,9 @@ macro_rules! entry {
                 let returntype_ptr = Box::leak(returntype).as_ptr();
                 let types_ptr = Box::leak(types).as_ptr();
 
-                let reg = Box::new(std::mem::MaybeUninit::<squirrelclasstypes::SQFuncRegistration>::zeroed());
+                let reg = Box::new(std::mem::MaybeUninit::<
+                    squirrelclasstypes::SQFuncRegistration,
+                >::zeroed());
                 let struct_ptr = Box::leak(reg).as_mut_ptr();
 
                 unsafe {
@@ -161,9 +169,9 @@ macro_rules! entry {
                 }
             }
 
-            let handle = $crate::wrappers::squirrel::CSquirrelVMHandle::new( sqvm, context );
+            let handle = $crate::wrappers::squirrel::CSquirrelVMHandle::new(sqvm, context);
 
-            PLUGIN.wait().on_sqvm_created( &handle );
+            PLUGIN.wait().on_sqvm_created(&handle);
         }
 
         #[no_mangle]
@@ -175,36 +183,50 @@ macro_rules! entry {
 
         #[no_mangle]
         #[export_name = "PLUGIN_INFORM_DLL_LOAD"]
-        extern "C" fn plugin_inform_dll_load(dll: plugin_abi::PluginLoadDLL, data: *const ::std::os::raw::c_void) {
+        extern "C" fn plugin_inform_dll_load(
+            dll: plugin_abi::PluginLoadDLL,
+            data: *const ::std::os::raw::c_void,
+        ) {
             match dll {
                 plugin_abi::PluginLoadDLL_ENGINE => unsafe {
                     let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
                     let engine_result = match engine_dll.as_ref() {
                         Some(engine_dll) => {
-                            match $crate::wrappers::engine::ENGINE_DATA.set( $crate::wrappers::engine::EngineData::new(&*engine_dll) ) { // maybe use as_ref later
-                                Ok(_) => northstar::EngineLoadType::Engine($crate::wrappers::engine::ENGINE_DATA.wait()),
+                            match $crate::wrappers::engine::ENGINE_DATA
+                                .set($crate::wrappers::engine::EngineData::new(&*engine_dll))
+                            {
+                                // maybe use as_ref later
+                                Ok(_) => northstar::EngineLoadType::Engine(
+                                    $crate::wrappers::engine::ENGINE_DATA.wait(),
+                                ),
                                 Err(_) => northstar::EngineLoadType::EngineFailed,
                             }
-
-                        },
+                        }
                         None => northstar::EngineLoadType::EngineFailed,
                     };
                     PLUGIN.wait().on_engine_load(engine_result)
                 },
-                plugin_abi::PluginLoadDLL_SERVER => PLUGIN.wait().on_engine_load(northstar::EngineLoadType::Server),
-                plugin_abi::PluginLoadDLL_CLIENT => PLUGIN.wait().on_engine_load(northstar::EngineLoadType::Client),
-                _ => log::warn!("PLUGIN_INFORM_DLL_LOAD called with unknown PluginLoadDLL type {dll}"),
+                plugin_abi::PluginLoadDLL_SERVER => PLUGIN
+                    .wait()
+                    .on_engine_load(northstar::EngineLoadType::Server),
+                plugin_abi::PluginLoadDLL_CLIENT => PLUGIN
+                    .wait()
+                    .on_engine_load(northstar::EngineLoadType::Client),
+                _ => log::warn!(
+                    "PLUGIN_INFORM_DLL_LOAD called with unknown PluginLoadDLL type {dll}"
+                ),
             }
         }
 
         #[no_mangle]
         #[export_name = "PLUGIN_RECEIVE_PRESENCE"]
-        extern "C" fn plugin_receive_presence(presence: *const plugin_abi::PluginGameStatePresence) {
-            match $crate::wrappers::presence::GamePresence::new( presence ) {
+        extern "C" fn plugin_receive_presence(
+            presence: *const plugin_abi::PluginGameStatePresence,
+        ) {
+            match $crate::wrappers::presence::GamePresence::new(presence) {
                 Ok(presence) => PLUGIN.wait().on_presence_updated(&presence),
                 Err(_) => {}
             }
-
         }
     };
 }

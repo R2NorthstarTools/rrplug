@@ -3,7 +3,7 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // cluless
 #![allow(clippy::from_over_into)]
 
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 /// the repersention of the source engine's vector
 ///

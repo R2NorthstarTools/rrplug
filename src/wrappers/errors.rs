@@ -26,10 +26,10 @@ impl RegisterError {
 #[derive(Error, Debug)]
 pub enum CallError {
     #[error("{0} function wasn't found on the sqvm; is it global?")]
-    FunctionNotFound( String ),
+    FunctionNotFound(String),
 
     #[error("function failed to execute")]
-    FunctionFailedToExecute
+    FunctionFailedToExecute,
 }
 
 impl CallError {
@@ -44,7 +44,7 @@ pub enum SQCompileError {
     CompileError,
 
     #[error("compiled buffer failed to execute")]
-    BufferFailedToExecute
+    BufferFailedToExecute,
 }
 
 impl SQCompileError {
@@ -56,7 +56,7 @@ impl SQCompileError {
 #[derive(Error, Debug)]
 pub enum GamePresenceError {
     #[error("the provided GamePresenceError was a null")]
-    NullGamePresenceError
+    NullGamePresenceError,
 }
 
 impl GamePresenceError {
@@ -64,4 +64,3 @@ impl GamePresenceError {
         log::error!("{}", self)
     }
 }
-

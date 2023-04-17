@@ -103,7 +103,6 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 let head_types = format!("{} functionref( ", get_sqoutput(&fun.output));
                 let mut func_args = String::new();
 
-
                 for arg in fun.inputs {
                     push_type!(func_args, &recursive_type_match(arg.ty)?[..], "");
                 }
@@ -394,7 +393,7 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
     let ItemFn {
         attrs: _,
-        vis: _,
+        vis,
         sig,
         block,
     } = input;
@@ -408,7 +407,7 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     stmts.insert(0, new_stmt);
 
     quote! {
-        extern "C" fn #ident (command: *const rrplug::bindings::command::CCommand) {
+        #vis extern "C" fn #ident (command: *const rrplug::bindings::command::CCommand) {
             #(#stmts)*
         }
     }
@@ -427,7 +426,7 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
     let ItemFn {
         attrs: _,
-        vis: _,
+        vis,
         sig,
         block,
     } = input;
@@ -450,7 +449,7 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     stmts.insert(0, new_stmt);
 
     quote! {
-        extern "C" fn #ident (
+        #vis extern "C" fn #ident (
             convar: *mut rrplug::bindings::convar::ConVar,
             old_value: *const ::std::os::raw::c_char,
             float_old_value: f32

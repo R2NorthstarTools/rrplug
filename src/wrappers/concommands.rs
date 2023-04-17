@@ -1,7 +1,7 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
 //! concommands are console commands. yes.
-//! 
+//!
 //! registering a concommand
 //! ```no_run
 //! // inside Plugin impl
@@ -10,17 +10,17 @@
 //!         EngineLoadType::Engine(engine) => engine,
 //!         _ => return;
 //!     };
-//! 
+//!
 //!     engine.register_concommand("boom", explode, "displays a explosion in the console", 0); // register the concommand
 //! }
 //! ```
-//! 
+//!
 //! concommand use callback
 //! ```no_run
 //! #[rrplug::concommand]
 //! fn explode(_command: CCommandResult) {
 //!     log::info!("explode");
-//! 
+//!
 //!     const BOOM: &str = r#"
 //!           _ ._  _ , _ ._
 //!           (_ ' ( `  )_  .__)
@@ -31,13 +31,12 @@
 //!               /   \
 //! _____________/_ __ \_____________
 //!     "#;
-//! 
+//!
 //!     for line in BOOM.split('\n') {
 //!         log::info!("{line}")
 //!     }
 //! }
 //! ```
-
 
 use super::northstar::CREATE_OBJECT_FUNC;
 use std::ffi::CStr;

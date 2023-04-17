@@ -1,23 +1,23 @@
 //! **convars** are simple. You register them then you can read or edit its data; either in the plugin or from scripts.
-//! 
+//!
 //! they can either be a
 //! 1. `string` (`String`)
 //! 2. `int` (`i32`)
 //! 3. `float` (`f32`)
-//! 
+//!
 //! ## Safety
-//! 
+//!
 //! convars are also being accessed by the sqvm or the engine so it is unsafe to read or edit them from threads.
-//! 
+//!
 //! so they must read/writen only from **convar callbacks**, **concommands** or **native sqfunction**
-//! 
+//!
 //! if you like **taking risks** you can ignore this or **if** the sqvm/engine never read or edit the convar.
-//! 
-//! 
+//!
+//!
 //! ## Working with Convars
-//! 
-//! convars can be created at any time after engine load but its better to create them when the engine loads 
-//! 
+//!
+//! convars can be created at any time after engine load but its better to create them when the engine loads
+//!
 //! ```no_run
 //! // inside Plugin impl
 //! fn on_engine_load(&self, engine: EngineLoadType) {
@@ -25,7 +25,7 @@
 //!         EngineLoadType::Engine(_) => {},
 //!         _ => return;
 //!     };
-//! 
+//!
 //!     let convar = ConVarStruct::try_new().unwrap(); // creates the convar struct
 //!     let register_info = ConVarRegister { // struct containing info the convar ( there is a lot of stuff )
 //!         callback: Some(cool_convar_change_callback),
@@ -36,16 +36,16 @@
 //!         "cool_convar",
 //!     )
 //!     };
-//! 
+//!
 //!     convar.register(register_info).unwrap(); // register the convar
 //! }
 //! ```
-//! 
+//!
 //! to access your convar, you will have to save them into a static or in the plugin struct
-//! 
+//!
 //! ```no_run
 //! static COOLCONVAR: OnceCell<Mutex<ConVarStruct>> = OnceCell::new();
-//! 
+//!
 //! // reading it from a convar change callback
 //! #[rrplug::convar]
 //! fn cool_convar_change_callback(convar: Option<ConvarStruct>, old_value: String, float_old_value: f32) {
@@ -53,7 +53,7 @@
 //!         Some(c) => c,
 //!         None => return,
 //!     };
-//! 
+//!
 //!     log::info!("convar name: {}", convar.get_name());
 //!     log::info!("new value: {}", convar.get_value().value);
 //!     log::info!("old value: {}", old_value)

@@ -1,6 +1,8 @@
 #[cfg(doc)]
-use crate::wrappers::{errors::CallError, squirrel::{call_sq_object_function,call_sq_function}};
-
+use crate::wrappers::{
+    errors::CallError,
+    squirrel::{call_sq_function, call_sq_object_function},
+};
 
 /// "safely" calls any function defined on the sqvm
 ///
