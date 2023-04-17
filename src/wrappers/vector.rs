@@ -45,7 +45,7 @@ impl From<*mut f32> for Vector3 {
 impl Into<*const f32> for Vector3 {
     fn into(self) -> *const f32 {
         let as_array = Box::new([self.x, self.y, self.z]);
-        Box::leak(as_array) as *mut [f32; 3] as *const f32
+        Box::leak(as_array) as *mut [f32; 3] as *const f32 // do we need to leak it?
     }
 }
 

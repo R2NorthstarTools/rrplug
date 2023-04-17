@@ -1,6 +1,43 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 
-//! conconcommand related abstractions
+//! concommands are console commands. yes.
+//! 
+//! registering a concommand
+//! ```no_run
+//! // inside Plugin impl
+//! fn on_engine_load(&self, engine: EngineLoadType) {
+//!     let engine = match engine {
+//!         EngineLoadType::Engine(engine) => engine,
+//!         _ => return;
+//!     };
+//! 
+//!     engine.register_concommand("boom", explode, "displays a explosion in the console", 0); // register the concommand
+//! }
+//! ```
+//! 
+//! concommand use callback
+//! ```no_run
+//! #[rrplug::concommand]
+//! fn explode(_command: CCommandResult) {
+//!     log::info!("explode");
+//! 
+//!     const BOOM: &str = r#"
+//!           _ ._  _ , _ ._
+//!           (_ ' ( `  )_  .__)
+//!       ( (  (    )   `)  ) _)
+//!       (__ (_   (_ . _) _) ,__)
+//!           `~~`\ ' . /`~~`
+//!               ;   ;
+//!               /   \
+//! _____________/_ __ \_____________
+//!     "#;
+//! 
+//!     for line in BOOM.split('\n') {
+//!         log::info!("{line}")
+//!     }
+//! }
+//! ```
+
 
 use super::northstar::CREATE_OBJECT_FUNC;
 use std::ffi::CStr;
@@ -20,6 +57,7 @@ pub struct CCommandResult {
     pub command: String,
 }
 
+// todo redo the whole concommand abstraction, I don't like i, maybe with a deref instead of From
 impl From<*const CCommand> for CCommandResult {
     fn from(value: *const CCommand) -> Self {
         let ccommand = match unsafe { value.as_ref() } {
@@ -58,7 +96,7 @@ impl RegisterConCommands {
         Self { reg_func }
     }
 
-    pub fn register_concommand(
+    pub(crate) fn register_concommand(
         &self,
         name: String,
         callback: extern "C" fn(arg1: *const CCommand),

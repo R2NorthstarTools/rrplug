@@ -24,9 +24,10 @@ default-target = "x86_64-pc-windows-msvc"
 targets = ["x86_64-pc-windows-msvc"]
 
 [features]
-default = ["full"] # should be changed to default_features later 
+default = ["default_features"] # should be changed to default_features later 
 convar = []
 concommand = []
 presence = []
+low-engine = []
 default_features = [ "convar", "concommand"]
-full = [ "convar", "concommand", "presence" ]
+full = [ "convar", "concommand", "presence", "low-engine" ]

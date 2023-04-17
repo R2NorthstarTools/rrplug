@@ -1,6 +1,71 @@
-//! convar related abstractions
+//! **convars** are simple. You register them then you can read or edit its data; either in the plugin or from scripts.
+//! 
+//! they can either be a
+//! 1. `string` (`String`)
+//! 2. `int` (`i32`)
+//! 3. `float` (`f32`)
+//! 
+//! ## Safety
+//! 
+//! convars are also being accessed by the sqvm or the engine so it is unsafe to read or edit them from threads.
+//! 
+//! so they must read/writen only from **convar callbacks**, **concommands** or **native sqfunction**
+//! 
+//! if you like **taking risks** you can ignore this or **if** the sqvm/engine never read or edit the convar.
+//! 
+//! 
+//! ## Working with Convars
+//! 
+//! convars can be created at any time after engine load but its better to create them when the engine loads 
+//! 
+//! ```no_run
+//! // inside Plugin impl
+//! fn on_engine_load(&self, engine: EngineLoadType) {
+//!     match engine {
+//!         EngineLoadType::Engine(_) => {},
+//!         _ => return;
+//!     };
+//! 
+//!     let convar = ConVarStruct::try_new().unwrap(); // creates the convar struct
+//!     let register_info = ConVarRegister { // struct containing info the convar ( there is a lot of stuff )
+//!         callback: Some(cool_convar_change_callback),
+//!         ..ConVarRegister::mandatory(
+//!         "cool_convar",
+//!         "cool_convar",
+//!         FCVAR_CLIENTDLL as i32,
+//!         "cool_convar",
+//!     )
+//!     };
+//! 
+//!     convar.register(register_info).unwrap(); // register the convar
+//! }
+//! ```
+//! 
+//! to access your convar, you will have to save them into a static or in the plugin struct
+//! 
+//! ```no_run
+//! static COOLCONVAR: OnceCell<Mutex<ConVarStruct>> = OnceCell::new();
+//! 
+//! // reading it from a convar change callback
+//! #[rrplug::convar]
+//! fn cool_convar_change_callback(convar: Option<ConvarStruct>, old_value: String, float_old_value: f32) {
+//!     let convar = match COOLCONVAR.get() {
+//!         Some(c) => c,
+//!         None => return,
+//!     };
+//! 
+//!     log::info!("convar name: {}", convar.get_name());
+//!     log::info!("new value: {}", convar.get_value().value);
+//!     log::info!("old value: {}", old_value)
+//! }
+//! ```
 
-use std::{ffi::{CStr, c_char}, mem, os::raw::c_void, ptr::addr_of_mut};
+use std::{
+    ffi::{c_char, CStr},
+    mem,
+    os::raw::c_void,
+    ptr::addr_of_mut,
+};
 
 use super::{
     engine::{get_engine_data, EngineData},
@@ -262,7 +327,7 @@ impl ConVarStruct {
     /// only safe on the titanfall thread
     pub fn set_value_i32(&self, new_value: i32) {
         unsafe {
-            let value = &mut (*self.inner).m_Value;
+            let value = &(*self.inner).m_Value;
 
             if value.m_nValue == new_value {
                 return;
@@ -270,55 +335,9 @@ impl ConVarStruct {
 
             let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
             let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
-            let set_value_int = vtable_array[14]; // the index for SetValue for ints; weird stuff
+            let set_value_int = vtable_array[14];
+            // the index for SetValue for ints; weird stuff
 
-            /*
-
-            log::info!("vtable_array {:?}", vtable_array);
-
-            log::info!("thing {:?}", *vtable_array[10]);
-
-            // for (i, ptr) in vtable_array.iter().enumerate() {
-            //     if *ptr == 0x00007fffeb8d9990 as *const c_void {
-            //         log::info!("we found it {i} {:?}", *ptr)
-            //     }
-            // }
-
-            const THI: usize = 14;
-
-            let funcadrr = vtable_array[THI];
-
-            log::info!("funcadrr {funcadrr:?}");
-
-            log::info!("vtable_adr {:?}", (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable);
-
-            
-            let start = engine.convar.convar_vtable;
-            let start2 = engine.convar.iconvar_vtable;
-
-            log::info!("address of is convar_vtable {start:?}");
-            log::info!("address of is iconvar_vtable {start2:?}");
-            log::info!("NORTHSTAR_ADDRESS = {NORTHSTAR_ADDRESS:?}");
-
-            // let end = start + 10_usize;
-            // let func = mem::transmute::<_,fn(*const ConVar) -> *const c_char>(start);
-
-            function for float 0x00007FFFEB744A03
-            function for int 0x00007FFFEB74AD04
-            function for string 0x00007FFFEB74F5B6
-            start 0x7fffc462fd28
-            start2 0x7fffc462fdc8
-
-            used this cpp code
-
-            void (ConVar::*ptr)(float) = &ConVar::SetValue;
-
-            printf("address of function ConVar::SetValue(float) is : %p\n", ptr);
-            
-
-            // const OFFSET_FUNC_INT: usize = 655470556;
-            // let func = mem::transmute::<_, fn(*const ConVar, i32)>(vtable_adr + OFFSET_FUNC_INT);
-            */
             let func = mem::transmute::<_, fn(*const ConVar, i32)>(set_value_int);
 
             func(self.inner, new_value)
@@ -331,7 +350,7 @@ impl ConVarStruct {
     /// only safe on the titanfall thread
     pub fn set_value_f32(&self, new_value: f32) {
         unsafe {
-            let value = &mut (*self.inner).m_Value;
+            let value = &(*self.inner).m_Value;
 
             if value.m_fValue == new_value {
                 return;
@@ -339,10 +358,9 @@ impl ConVarStruct {
 
             let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
             let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
-            let set_value_float = vtable_array[13]; // the index for SetValue for floats; weird stuff
+            let set_value_float = vtable_array[13];
+            // the index for SetValue for floats; weird stuff
 
-            // const OFFSET_FUNC_FLOAT: usize = 655445211;
-            // let func = mem::transmute::<_, fn(*const ConVar, f32)>(vtable_adr + OFFSET_FUNC_FLOAT);
             let func = mem::transmute::<_, fn(*const ConVar, f32)>(set_value_float);
 
             func(self.inner, new_value)
@@ -360,10 +378,9 @@ impl ConVarStruct {
 
             let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
             let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
-            let set_value_string = vtable_array[12]; // the index for SetValue for strings; weird stuff
+            let set_value_string = vtable_array[12];
+            // the index for SetValue for strings; weird stuff
 
-            // const OFFSET_FUNC_STRING: usize = 655489166;
-            // let func = mem::transmute::<_, fn(*const ConVar, *const c_char)>(vtable_adr + OFFSET_FUNC_STRING);
             let func = mem::transmute::<_, fn(*const ConVar, *const c_char)>(set_value_string);
 
             let string_value = to_sq_string!(new_value);

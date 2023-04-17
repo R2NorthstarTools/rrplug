@@ -15,8 +15,9 @@ use crate::nslog;
 #[doc(hidden)]
 pub static CREATE_OBJECT_FUNC: OnceCell<CreateObjectFunc> = OnceCell::new();
 
-// cpp name, sq name, types, return, func
+
 pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
+/// cpp name, sq name, types, return, func
 pub type SQFuncInfo = (
     &'static str,
     &'static str,

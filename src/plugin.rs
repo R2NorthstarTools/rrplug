@@ -4,6 +4,12 @@ use crate::{
     wrappers::{northstar::{EngineLoadType, PluginData, ScriptVmType}, squirrel::CSquirrelVMHandle, presence::GamePresence},
 };
 
+///! the plugin system will look for a exported function to pass stuff to
+///! 
+///! this exported function and others are created by the `entry` macro
+///! 
+///! it takes your plugin struct and calls specific function for each event
+
 /// Trait for defining the callbacks and entry point of the plugin
 ///
 /// also provides a thread to run code on (the main function)

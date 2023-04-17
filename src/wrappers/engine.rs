@@ -22,17 +22,21 @@ pub struct EngineData {
     concommands: super::concommands::RegisterConCommands,
     #[cfg(feature = "convar")]
     pub(crate) convar: super::convars::ConVarClasses,
+    #[cfg(feature = "low-engine")]
+    pub low: Box<PluginEngineData>,
 }
 
 impl EngineData {
-    pub fn new(raw: PluginEngineData) -> Self {
+    pub fn new(raw: &PluginEngineData) -> Self {
         Self {
             #[cfg(feature = "concommand")]
             concommands: unsafe {
                 super::concommands::RegisterConCommands::new(raw.ConCommandConstructor)
             },
             #[cfg(feature = "convar")]
-            convar: super::convars::ConVarClasses::new(&raw),
+            convar: super::convars::ConVarClasses::new(raw),
+            #[cfg(feature = "low-engine")]
+            low: Box::new(*raw),
         }
     }
 

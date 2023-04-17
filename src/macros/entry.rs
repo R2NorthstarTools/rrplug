@@ -181,7 +181,7 @@ macro_rules! entry {
                     let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
                     let engine_result = match engine_dll.as_ref() {
                         Some(engine_dll) => {
-                            match $crate::wrappers::engine::ENGINE_DATA.set( $crate::wrappers::engine::EngineData::new(*engine_dll) ) {
+                            match $crate::wrappers::engine::ENGINE_DATA.set( $crate::wrappers::engine::EngineData::new(&*engine_dll) ) { // maybe use as_ref later
                                 Ok(_) => northstar::EngineLoadType::Engine($crate::wrappers::engine::ENGINE_DATA.wait()),
                                 Err(_) => northstar::EngineLoadType::EngineFailed,
                             }

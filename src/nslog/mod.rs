@@ -72,7 +72,7 @@ impl log::Log for NorthstarLogger {
             source,
             pluginHandle: self.plugin_handle,
         };
-        
+
         // if this is null then smth went very wrong
         unsafe { self.logger.unwrap()(&mut logs as *mut LogMsg) }
     }
@@ -85,7 +85,7 @@ where
     T: ToString,
 {
     CString::new(string.to_string())
-        .unwrap_or(CString::from(unsafe { CStr::from_ptr(C_STRING_ERROR) }))
+        .unwrap_or_else(|_| CString::from(unsafe { CStr::from_ptr(C_STRING_ERROR) }))
 }
 
 /// this is needed because [`Level`] doesn't have the same order

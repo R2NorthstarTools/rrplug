@@ -49,7 +49,7 @@
 //! now we have everything to make the build script
 //! 
 //! create build.rs in the root of your project with the following content
-//! ```
+//! ```no_run
 //! extern crate windres;
 //! use windres::Build;
 //! 
@@ -60,7 +60,7 @@
 //! and add windres as a build dependencie.
 //! 
 //! ### Basic lib.rs
-//! ```
+//! ```no_run
 //! use rrplug::prelude::*;
 //! 
 //! pub struct BasicPlugin;
@@ -89,7 +89,7 @@ pub mod prelude;
 pub mod nslog;
 pub mod wrappers;
 
-// could be changed to sqexternal
+// could be changed to sqexternal also add low, med and high
 pub use rrplug_proc::{sqfunction,concommand,convar};
 #[doc(hidden)]
 pub use once_cell::sync::OnceCell;

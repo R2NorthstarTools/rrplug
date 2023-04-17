@@ -1,13 +1,19 @@
+use crate::bindings::plugin_abi::PluginGameStatePresence;
+#[cfg(feature = "presence")]
 use crate::bindings::plugin_abi::{
     GameState_INGAME, GameState_LOADING, GameState_LOBBY, GameState_MAINMENU,
-    PluginGameStatePresence,
 };
 
 use super::errors::GamePresenceError;
 
+#[cfg(feature = "presence")]
 macro_rules! c_char_to_string {
     ($char_ptr: expr) => {
-        unsafe{ std::ffi::CStr::from_ptr($char_ptr).to_string_lossy().to_string() }
+        unsafe {
+            std::ffi::CStr::from_ptr($char_ptr)
+                .to_string_lossy()
+                .to_string()
+        }
     };
 }
 
@@ -41,7 +47,7 @@ pub enum GameStateEnum {
     InGame = 3,
 }
 
-pub struct GamePresence(&'static PluginGameStatePresence );
+pub struct GamePresence(&'static PluginGameStatePresence);
 
 impl GamePresence {
     #[doc(hidden)]
@@ -52,7 +58,7 @@ impl GamePresence {
             None => Err(GamePresenceError::NullGamePresenceError),
         }
     }
-    
+
     #[cfg(not(feature = "presence"))]
     pub fn get_raw_game_presence(&self) -> &PluginGameStatePresence {
         self.0
@@ -61,7 +67,6 @@ impl GamePresence {
 
 #[cfg(feature = "presence")]
 impl GamePresence {
-
     pub fn get_id(&self) -> String {
         c_char_to_string!(self.0.id)
     }
@@ -85,7 +90,7 @@ impl GamePresence {
     pub fn is_local(&self) -> bool {
         self.0.is_local
     }
-    
+
     #[allow(non_upper_case_globals)]
     pub fn get_state(&self) -> Option<GameStateEnum> {
         Some(match self.0.state {
