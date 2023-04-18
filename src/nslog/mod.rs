@@ -1,6 +1,7 @@
 use crate::bindings::plugin_abi::{loggerfunc_t, LogMsg, MessageSource};
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use std::ffi::{c_char, CStr, CString};
+use std::panic;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const C_STRING_ERROR: *const c_char =
@@ -12,6 +13,20 @@ static mut LOGGER: NorthstarLogger = NorthstarLogger {
 };
 
 pub fn try_init(logger: loggerfunc_t, plugin_handle: i32) -> Result<(), SetLoggerError> {
+    panic::set_hook(Box::new(|info| {
+        log::error!("");
+
+        match info.location() {
+            Some(location) => log::error!("plugin panicked at {}", location),
+            None => log::error!("plugin panicked at unknown"),
+        }
+
+        log::error!("full message:");
+        log::error!("{}", info.to_string());
+
+        log::error!("");
+    }));
+
     unsafe {
         LOGGER = NorthstarLogger::init(logger, plugin_handle);
 
