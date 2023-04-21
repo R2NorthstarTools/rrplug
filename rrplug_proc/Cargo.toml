@@ -4,7 +4,7 @@ version = "2.0.0"
 authors = ["catornot"]
 description = "crate for proc macros of rrplug"
 repository = "https://github.com/catornot/rrplug"
-license = "Apache-2.0 or MIT"
+license = "Apache-2.0 OR MIT"
 keywords = ["plugin", "northstar", "titanfall","macro"]
 edition = "2021"
 
