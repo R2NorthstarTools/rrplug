@@ -1,6 +1,11 @@
 [package]
 name = "rrplug_proc"
 version = "2.0.0"
+authors = ["catornot"]
+description = "crate for proc macros of rrplug"
+repository = "https://github.com/catornot/rrplug"
+license = "Apache-2.0 or MIT"
+keywords = ["plugin", "northstar", "titanfall","macro"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
