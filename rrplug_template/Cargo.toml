@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rrplug = { git = "https://github.com/catornot/rrplug.git" }
+rrplug = "2.0.0"
 
 [build-dependencies]
 windres = "0.2.2"
