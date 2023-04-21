@@ -1,7 +1,5 @@
 #![allow(non_camel_case_types)] // whar
 
-use std::ffi::c_void;
-
 use crate::bindings::{
     plugin_abi::SquirrelFunctions,
     squirrelclasstypes::{
@@ -150,45 +148,56 @@ pub struct SquirrelFunctionsUnwraped {
 }
 impl From<SquirrelFunctions> for SquirrelFunctionsUnwraped {
     fn from(value: SquirrelFunctions) -> Self {
-        SquirrelFunctionsUnwraped {
-            register_squirrel_func: value.RegisterSquirrelFunc.unwrap(),
-            sq_defconst: value.__sq_defconst.unwrap(),
-            sq_compilebuffer: value.__sq_compilebuffer.unwrap(),
-            sq_call: value.__sq_call.unwrap(),
-            sq_raiseerror: value.__sq_raiseerror.unwrap(),
-            sq_newarray: value.__sq_newarray.unwrap(),
-            sq_arrayappend: value.__sq_arrayappend.unwrap(),
-            sq_newtable: value.__sq_newtable.unwrap(),
-            sq_newslot: value.__sq_newslot.unwrap(),
-            sq_pushroottable: value.__sq_pushroottable.unwrap(),
-            sq_pushstring: value.__sq_pushstring.unwrap(),
-            sq_pushinteger: value.__sq_pushinteger.unwrap(),
-            sq_pushfloat: value.__sq_pushfloat.unwrap(),
-            sq_pushbool: value.__sq_pushbool.unwrap(),
-            sq_pushasset: value.__sq_pushasset.unwrap(),
-            sq_pushvector: value.__sq_pushvector.unwrap(),
-            sq_pushobject: value.__sq_pushobject.unwrap(),
-            sq_getstring: value.__sq_getstring.unwrap(),
-            sq_getinteger: value.__sq_getinteger.unwrap(),
-            sq_getfloat: value.__sq_getfloat.unwrap(),
-            sq_getbool: value.__sq_getbool.unwrap(),
-            sq_get: value.__sq_get.unwrap(),
-            sq_getasset: value.__sq_getasset.unwrap(),
-            sq_getuserdata: value.__sq_getuserdata.unwrap(),
-            sq_getvector: value.__sq_getvector.unwrap(),
-            sq_createuserdata: value.__sq_createuserdata.unwrap(),
-            sq_setuserdatatypeid: value.__sq_setuserdatatypeid.unwrap(),
-            sq_getfunction: value.__sq_getfunction.unwrap(),
-            sq_schedule_call_external: value.__sq_schedule_call_external.unwrap(),
-            sq_getthisentity: value
-                .__sq_getthisentity
-                .unwrap_or(unsafe { std::mem::transmute(std::ptr::null() as *const c_void) }),
-            sq_getobject: value
-                .__sq_getobject
-                .unwrap_or(unsafe { std::mem::transmute(std::ptr::null() as *const c_void) }), // this is temporary since these are null on client; seams like squirrel bridge v3 wasn't completed D:
-            sq_stackinfos: value.__sq_stackinfos.unwrap(),
-            sq_getentityfrominstance: value.__sq_getentityfrominstance.unwrap(),
-            sq_get_entity_constant_cbase_entity: value.__sq_GetEntityConstant_CBaseEntity.unwrap(),
+        // can produce ub but the plugins v2 contract should never be broken so ub wouldn't be a problem
+        // also would allow for extra optimizations compared to normal unwrap
+        // this was done so release builds wouldn't collapse here which quite weird imo
+        // release was triping and producing panics on `Some` values wtf
+        // if the contract does somehow break then I would just die
+        // like hello?
+        // don't panic on Some in release
+        // actually might be caused by hyper optimzations producing ub
+        // so basically this is safe 
+
+        // could be rewriten with a macro
+        unsafe {
+            SquirrelFunctionsUnwraped {
+                register_squirrel_func: value.RegisterSquirrelFunc.unwrap_unchecked(),
+                sq_defconst: value.__sq_defconst.unwrap_unchecked(),
+                sq_compilebuffer: value.__sq_compilebuffer.unwrap_unchecked(),
+                sq_call: value.__sq_call.unwrap_unchecked(),
+                sq_raiseerror: value.__sq_raiseerror.unwrap_unchecked(),
+                sq_newarray: value.__sq_newarray.unwrap_unchecked(),
+                sq_arrayappend: value.__sq_arrayappend.unwrap_unchecked(),
+                sq_newtable: value.__sq_newtable.unwrap_unchecked(),
+                sq_newslot: value.__sq_newslot.unwrap_unchecked(),
+                sq_pushroottable: value.__sq_pushroottable.unwrap_unchecked(),
+                sq_pushstring: value.__sq_pushstring.unwrap_unchecked(),
+                sq_pushinteger: value.__sq_pushinteger.unwrap_unchecked(),
+                sq_pushfloat: value.__sq_pushfloat.unwrap_unchecked(),
+                sq_pushbool: value.__sq_pushbool.unwrap_unchecked(),
+                sq_pushasset: value.__sq_pushasset.unwrap_unchecked(),
+                sq_pushvector: value.__sq_pushvector.unwrap_unchecked(),
+                sq_pushobject: value.__sq_pushobject.unwrap_unchecked(),
+                sq_getstring: value.__sq_getstring.unwrap_unchecked(),
+                sq_getinteger: value.__sq_getinteger.unwrap_unchecked(),
+                sq_getfloat: value.__sq_getfloat.unwrap_unchecked(),
+                sq_getbool: value.__sq_getbool.unwrap_unchecked(),
+                sq_get: value.__sq_get.unwrap_unchecked(),
+                sq_getasset: value.__sq_getasset.unwrap_unchecked(),
+                sq_getuserdata: value.__sq_getuserdata.unwrap_unchecked(),
+                sq_getvector: value.__sq_getvector.unwrap_unchecked(),
+                sq_createuserdata: value.__sq_createuserdata.unwrap_unchecked(),
+                sq_setuserdatatypeid: value.__sq_setuserdatatypeid.unwrap_unchecked(),
+                sq_getfunction: value.__sq_getfunction.unwrap_unchecked(),
+                sq_schedule_call_external: value.__sq_schedule_call_external.unwrap_unchecked(),
+                sq_getthisentity: value.__sq_getthisentity.unwrap_unchecked(),
+                sq_getobject: value.__sq_getobject.unwrap_unchecked(),
+                sq_stackinfos: value.__sq_stackinfos.unwrap_unchecked(),
+                sq_getentityfrominstance: value.__sq_getentityfrominstance.unwrap_unchecked(),
+                sq_get_entity_constant_cbase_entity: value
+                    .__sq_GetEntityConstant_CBaseEntity
+                    .unwrap_unchecked(),
+            }
         }
     }
 }
