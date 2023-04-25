@@ -1,6 +1,7 @@
 {
 	"name": "{{project-name}}",
 	"displayname": "{{project-name}}",
+	"dependencyName": "{{project-name}}",
 	"description": "{{description}}",
 	"api_version": "2",
 	"version": "1.0",
