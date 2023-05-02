@@ -401,7 +401,9 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut stmts = block.stmts;
     let ident = &sig.ident;
 
-    let tk = quote! {let command: rrplug::wrappers::concommands::CCommandResult = command.into();}
+    let tk = quote! {
+        let command = rrplug::Lazy::<rrplug::wrappers::concommands::CCommandResult,_>::new( || rrplug::wrappers::concommands::CCommandResult::from(command) );
+    }
         .into();
     let new_stmt = parse_macro_input!(tk as Stmt);
     stmts.insert(0, new_stmt);

@@ -56,7 +56,6 @@ pub struct CCommandResult {
     pub command: String,
 }
 
-// todo redo the whole concommand abstraction, I don't like i, maybe with a deref instead of From
 impl From<*const CCommand> for CCommandResult {
     fn from(value: *const CCommand) -> Self {
         let ccommand = match unsafe { value.as_ref() } {

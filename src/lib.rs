@@ -93,5 +93,5 @@ pub mod wrappers;
 #[doc(hidden)]
 pub use log;
 #[doc(hidden)]
-pub use once_cell::sync::OnceCell;
+pub use once_cell::{sync::OnceCell,unsync::Lazy};
 pub use rrplug_proc::{concommand, convar, sqfunction};
