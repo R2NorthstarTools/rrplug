@@ -24,7 +24,7 @@ pub trait Plugin: Any + Debug + Sync {
 
     fn main(&self);
 
-    fn on_engine_load(&self, _engine: EngineLoadType) {}
+    fn on_engine_load(&self, _engine: &EngineLoadType) {}
 
     fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle) {}
 

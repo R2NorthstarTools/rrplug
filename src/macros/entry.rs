@@ -204,14 +204,14 @@ macro_rules! entry {
                         }
                         None => northstar::EngineLoadType::EngineFailed,
                     };
-                    PLUGIN.wait().on_engine_load(engine_result)
+                    PLUGIN.wait().on_engine_load(&engine_result)
                 },
                 plugin_abi::PluginLoadDLL_SERVER => PLUGIN
                     .wait()
-                    .on_engine_load(northstar::EngineLoadType::Server),
+                    .on_engine_load(&northstar::EngineLoadType::Server),
                 plugin_abi::PluginLoadDLL_CLIENT => PLUGIN
                     .wait()
-                    .on_engine_load(northstar::EngineLoadType::Client),
+                    .on_engine_load(&northstar::EngineLoadType::Client),
                 _ => log::warn!(
                     "PLUGIN_INFORM_DLL_LOAD called with unknown PluginLoadDLL type {dll}"
                 ),
