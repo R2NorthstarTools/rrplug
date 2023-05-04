@@ -169,7 +169,9 @@ macro_rules! entry {
                 }
             }
 
-            let handle = $crate::wrappers::squirrel::CSquirrelVMHandle::new(sqvm, context);
+            let handle = $crate::wrappers::squirrel::CSquirrelVMHandle::<
+                <$func as Plugin>::ShouldSave,
+            >::new(sqvm, context);
 
             PLUGIN.wait().on_sqvm_created(&handle);
         }

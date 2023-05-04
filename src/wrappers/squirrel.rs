@@ -38,16 +38,41 @@ pub struct SqFunctions {
     pub server: OnceCell<SquirrelFunctionsUnwraped>,
 }
 
-pub struct CSquirrelVMHandle {
+pub struct Save;
+pub struct NoSave;
+
+pub struct CSquirrelVMHandle<T> {
     handle: *mut CSquirrelVM,
     vm_type: ScriptVmType,
+    maker: std::marker::PhantomData<T>,
 }
 
-impl CSquirrelVMHandle {
+impl CSquirrelVMHandle<Save> {
     pub fn new(handle: *mut CSquirrelVM, vm_type: ScriptVmType) -> Self {
-        Self { handle, vm_type }
+        Self {
+            handle,
+            vm_type,
+            maker: std::marker::PhantomData::<Save>,
+        }
+    }
+}
+
+impl CSquirrelVMHandle<NoSave> {
+    pub fn new(handle: *mut CSquirrelVM, vm_type: ScriptVmType) -> Self {
+        Self {
+            handle,
+            vm_type,
+            maker: std::marker::PhantomData::<NoSave>,
+        }
     }
 
+    // gets the [`CSquirrel`] from the handle
+    pub fn get_cs_sqvm(&self) -> *mut CSquirrelVM {
+        self.handle
+    }
+}
+
+impl<T> CSquirrelVMHandle<T> {
     /// defines a constant on the sqvm
     ///
     /// Like `SERVER`, `CLIENT`, `UI`, etc

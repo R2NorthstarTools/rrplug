@@ -18,6 +18,8 @@ use crate::wrappers::{
 ///
 /// it is unsafe to run any titanfall engine functions on it
 pub trait Plugin: Any + Debug + Sync {
+    type SaveType;
+
     fn new() -> Self;
 
     fn initialize(&mut self, plugin_data: &PluginData);
@@ -26,7 +28,7 @@ pub trait Plugin: Any + Debug + Sync {
 
     fn on_engine_load(&self, _engine: &EngineLoadType) {}
 
-    fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle) {}
+    fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle<Self::SaveType>) {}
 
     fn on_sqvm_destroyed(&self, _context: ScriptVmType) {}
 
