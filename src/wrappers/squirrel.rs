@@ -58,7 +58,7 @@ pub struct Saved;
 pub struct CSquirrelVMHandle<T> {
     handle: *mut CSquirrelVM,
     vm_type: ScriptVmType,
-    maker: std::marker::PhantomData<T>,
+    marker: std::marker::PhantomData<T>,
 }
 
 impl CSquirrelVMHandle<Save> {
@@ -68,7 +68,7 @@ impl CSquirrelVMHandle<Save> {
         Self {
             handle,
             vm_type,
-            maker: std::marker::PhantomData::<Save>,
+            marker: std::marker::PhantomData::<Save>,
         }
     }
 }
@@ -78,7 +78,7 @@ impl CSquirrelVMHandle<NoSave> {
         Self {
             handle,
             vm_type,
-            maker: std::marker::PhantomData::<NoSave>,
+            marker: std::marker::PhantomData::<NoSave>,
         }
     }
 
@@ -137,7 +137,7 @@ impl<T> CSquirrelVMHandle<T> {
         let save_handle = CSquirrelVMHandle {
             handle,
             vm_type,
-            maker: std::marker::PhantomData::<Saved>,
+            marker: std::marker::PhantomData::<Saved>,
         };
 
         let save_static = match vm_type {
