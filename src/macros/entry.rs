@@ -50,7 +50,7 @@ macro_rules! entry {
                 }
             };
 
-            _ = unsafe { squirrel::SQFUNCTIONS.client.set((*funcs).into()) }
+            _ = squirrel::SQFUNCTIONS.client.set((*funcs).into())
         }
 
         #[no_mangle]
@@ -66,7 +66,7 @@ macro_rules! entry {
                 }
             };
 
-            _ = unsafe { squirrel::SQFUNCTIONS.server.set((*funcs).into()) }
+            _ = squirrel::SQFUNCTIONS.server.set((*funcs).into())
         }
 
         #[no_mangle]
@@ -78,13 +78,7 @@ macro_rules! entry {
             let context = std::convert::Into::<northstar::ScriptVmType>::into(context);
             log::info!("PLUGIN_INFORM_SQVM_CREATED called {}", context);
 
-            let mut locked_register_functions = match squirrel::FUNCTION_SQ_REGISTER.lock() {
-                Ok(locked_sq_functions) => locked_sq_functions,
-                Err(err) => {
-                    log::error!("failed to get functions marked for REGISTER: {err:?}");
-                    panic!()
-                }
-            };
+            let mut locked_register_functions = squirrel::FUNCTION_SQ_REGISTER.lock();
 
             let sq_functions = match context {
                 northstar::ScriptVmType::Server => squirrel::SQFUNCTIONS.server.wait(),
@@ -169,9 +163,10 @@ macro_rules! entry {
                 }
             }
 
-            let handle = $crate::wrappers::squirrel::CSquirrelVMHandle::<
-                <$func as Plugin>::SaveType,
-            >::new(sqvm, context);
+            let handle =
+                $crate::wrappers::squirrel::CSquirrelVMHandle::<<$func as Plugin>::SaveType>::new(
+                    sqvm, context,
+                );
 
             PLUGIN.wait().on_sqvm_created(&handle);
         }
@@ -235,7 +230,6 @@ macro_rules! entry {
 
 #[cfg(test)]
 mod test_entry {
-    use super::*;
     use crate::prelude::*;
 
     #[derive(Debug)]
@@ -245,10 +239,10 @@ mod test_entry {
         type SaveType = squirrel::Save;
 
         fn new() -> Self {
-            Self {} 
+            Self {}
         }
 
-        fn initialize(&mut self, plugin_data: &PluginData) {}
+        fn initialize(&mut self, _plugin_data: &PluginData) {}
 
         fn main(&self) {}
     }

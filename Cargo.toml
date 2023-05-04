@@ -16,6 +16,7 @@ thiserror = "1.0.37"
 log = "0.4.17"
 once_cell = "1.16.0"
 rrplug_proc = { path = "./rrplug_proc" }
+parking_lot = "0.12.1"
 
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"

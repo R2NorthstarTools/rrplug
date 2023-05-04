@@ -3,7 +3,8 @@
 //! squirrel vm related function and statics
 
 use once_cell::sync::OnceCell;
-use std::{mem::MaybeUninit, sync::Mutex};
+use parking_lot::Mutex;
+use std::mem::MaybeUninit;
 
 use super::{
     errors::{CallError, SQCompileError},
@@ -30,6 +31,11 @@ pub static SQFUNCTIONS: SqFunctions = SqFunctions {
     server: OnceCell::new(),
 };
 
+type CSquirrelVMStatic = Mutex<OnceCell<CSquirrelVMHandle<Saved>>>;
+pub static SV_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
+pub static CL_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
+pub static UI_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
+
 /// functions that used to interact with the sqvm
 ///
 /// client functions are both for ui and client vms
@@ -38,9 +44,17 @@ pub struct SqFunctions {
     pub server: OnceCell<SquirrelFunctionsUnwraped>,
 }
 
-pub struct Save;
-pub struct NoSave;
+#[derive(Debug)] // super cringe
 
+pub struct Save;
+#[derive(Debug)] // super cringe
+
+pub struct NoSave;
+#[derive(Debug)] // super cringe
+
+pub struct Saved;
+
+#[derive(Debug)]
 pub struct CSquirrelVMHandle<T> {
     handle: *mut CSquirrelVM,
     vm_type: ScriptVmType,
@@ -49,6 +63,8 @@ pub struct CSquirrelVMHandle<T> {
 
 impl CSquirrelVMHandle<Save> {
     pub fn new(handle: *mut CSquirrelVM, vm_type: ScriptVmType) -> Self {
+        Self::_save(handle, vm_type);
+
         Self {
             handle,
             vm_type,
@@ -66,10 +82,23 @@ impl CSquirrelVMHandle<NoSave> {
         }
     }
 
+    pub fn save(&self) {
+        Self::_save(self.handle, self.vm_type);
+    }
+
     // gets the [`CSquirrel`] from the handle
     pub fn get_cs_sqvm(&self) -> *mut CSquirrelVM {
         self.handle
     }
+}
+
+impl CSquirrelVMHandle<Saved> {
+    // gets the [`CSquirrel`] from the handle
+    pub fn get_cs_sqvm(&self) -> *mut CSquirrelVM {
+        self.handle
+    }
+
+    // pub fn get
 }
 
 impl<T> CSquirrelVMHandle<T> {
@@ -103,7 +132,30 @@ impl<T> CSquirrelVMHandle<T> {
     pub fn get_context(&self) -> ScriptVmType {
         self.vm_type
     }
+
+    pub(super) fn _save(handle: *mut CSquirrelVM, vm_type: ScriptVmType) {
+        let save_handle = CSquirrelVMHandle {
+            handle,
+            vm_type,
+            maker: std::marker::PhantomData::<Saved>,
+        };
+
+        let save_static = match vm_type {
+            ScriptVmType::Server => &SV_CS_VM,
+            ScriptVmType::Client => &CL_CS_VM,
+            ScriptVmType::Ui => &UI_CS_VM,
+            _ => &UI_CS_VM, // impossible to reach
+        };
+
+        let mut lock = save_static.lock();
+        _ = lock.take();
+        lock.set(save_handle)
+            .expect("someone we failed to set a new CSquirrelVM"); // this is impossible because of the previous line;
+    }
 }
+
+unsafe impl Sync for CSquirrelVMHandle<Saved> {}
+unsafe impl Send for CSquirrelVMHandle<Saved> {}
 
 /// "safely" calls any function defined on the sqvm
 ///

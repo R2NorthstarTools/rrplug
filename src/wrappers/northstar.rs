@@ -6,7 +6,6 @@ use std::ffi::CStr;
 use std::fmt::Display;
 
 use super::engine::EngineData;
-use super::errors::RegisterError;
 use super::squirrel::FUNCTION_SQ_REGISTER;
 use crate::bindings::plugin_abi::{CreateObjectFunc, PluginInitFuncs, PluginNorthstarData};
 use crate::bindings::squirrelclasstypes::{SQFunction, ScriptContext};
@@ -153,16 +152,7 @@ impl PluginData {
     /// Adds a sqfunction to the registration list
     ///
     /// The sqfunction will be registered when its vm is loaded
-    pub fn register_sq_functions(
-        &self,
-        get_info_func: FuncSQFuncInfo,
-    ) -> Result<(), RegisterError> {
-        match FUNCTION_SQ_REGISTER.lock() {
-            Ok(mut sq_function_vec) => {
-                sq_function_vec.push(get_info_func);
-                Ok(())
-            }
-            Err(_) => Err(RegisterError::LockedSqFunctionVec),
-        }
+    pub fn register_sq_functions(&self, get_info_func: FuncSQFuncInfo) {
+        FUNCTION_SQ_REGISTER.lock().push(get_info_func);
     }
 }
