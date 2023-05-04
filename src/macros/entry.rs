@@ -170,7 +170,7 @@ macro_rules! entry {
             }
 
             let handle = $crate::wrappers::squirrel::CSquirrelVMHandle::<
-                <$func as Plugin>::ShouldSave,
+                <$func as Plugin>::SaveType,
             >::new(sqvm, context);
 
             PLUGIN.wait().on_sqvm_created(&handle);
@@ -231,4 +231,32 @@ macro_rules! entry {
             }
         }
     };
+}
+
+#[cfg(test)]
+mod test_entry {
+    use super::*;
+    use crate::prelude::*;
+
+    #[derive(Debug)]
+    pub struct Test;
+
+    impl Plugin for Test {
+        type SaveType = squirrel::Save;
+
+        fn new() -> Self {
+            Self {} 
+        }
+
+        fn initialize(&mut self, plugin_data: &PluginData) {}
+
+        fn main(&self) {}
+    }
+
+    entry!(Test);
+
+    #[test]
+    fn test_init() {
+        // todo: somehow test all the functions
+    }
 }
