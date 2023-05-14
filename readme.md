@@ -2,20 +2,20 @@
 crate that provides function wappers and functions for [R2Northstar](https://github.com/R2Northstar/NorthstarLauncher) plugin creation.
 
 ## Plugin Support
-the v1 branch is for v1 plugins
+the `v1` branch is for v1 plugins
 
-the v2 branch is for v2 plugins
+the `v2` branch is for v2 plugins
 
-the master branch is the newest version
+the `master` branch is the newest version
 
 ## Getting Started
-add this to your Cargo.toml so your lib crate compiles into a dll.
+add this to your `Cargo.toml` so your lib crate compiles into a dll.
 ```t
 [lib]
 crate-type = ["cdylib"]
 ```
 
-create manifest.json with the following contents
+create `manifest.json` with the following contents
 ```json
 {
     "name": "plugin_name",
@@ -28,9 +28,9 @@ create manifest.json with the following contents
 }
 ```
 
-get Resource.rc and resource.h from [ NorthstarDiscordRPC](https://github.com/R2Northstar/NorthstarDiscordRPC/tree/main/DiscordRPC).
+get `Resource.rc` and `resource.h` from [ NorthstarDiscordRPC](https://github.com/R2Northstar/NorthstarDiscordRPC/tree/main/DiscordRPC).
 
-create build.rs in the root of your project with the following content
+create `build.rs` in the root of your project with the following content
 ```rust
 extern crate windres;
 use windres::Build;
@@ -41,7 +41,7 @@ fn main() {
 ```
 and add windres as a build dependencie.
 
-Finnaly shove this into lib.rs
+Finnaly shove this into `lib.rs`
 ```rust
 use rrplug::prelude::*;
 
