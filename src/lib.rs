@@ -18,19 +18,19 @@
 //!
 //! So natturaly you would want your plugin to be a cdylib lib crate.
 //!
-//! adding this to your Cargo.toml would make your lib crate compile into a dll.
+//! adding this to your `Cargo.toml` would make your lib crate compile into a dll.
 //! ```
 //! [lib]
 //! crate-type = ["cdylib"]
 //! ```
 //!
 //! ### Manifest
-//! Northstar also requires plugins to have a manifest.json inserted into them.
+//! Northstar also requires plugins to have a `manifest.json` inserted into them.
 //!
-//! it is possible to do so with [windres](https://crates.io/crates/windres) and build.rs.
+//! it is possible to do so with [windres](https://crates.io/crates/windres) and `build.rs`.
 //!
-//! #### manifest.json
-//! create manifest.json with the following contents
+//! #### `manifest.json`
+//! create `manifest.json` with the following contents
 //! ```json
 //! {
 //!     "name": "plugin_name",
@@ -43,12 +43,12 @@
 //! }
 //! ```
 //!
-//! #### build.rs
-//! get Resource.rc and resource.h from [ NorthstarDiscordRPC](https://github.com/R2Northstar/NorthstarDiscordRPC/tree/main/DiscordRPC).
+//! #### `build.rs`
+//! get `Resource.rc` and `resource.h` from [ NorthstarDiscordRPC](https://github.com/R2Northstar/NorthstarDiscordRPC/tree/main/DiscordRPC).
 //!
 //! now we have everything to make the build script
 //!
-//! create build.rs in the root of your project with the following content
+//! create `build.rs` in the root of your project with the following content
 //! ```no_run
 //! extern crate windres;
 //! use windres::Build;
@@ -59,7 +59,7 @@
 //! ```
 //! and add windres as a build dependencie.
 //!
-//! ### Basic lib.rs
+//! ### Basic `lib.rs`
 //! ```no_run
 //! use rrplug::prelude::*;
 //!
