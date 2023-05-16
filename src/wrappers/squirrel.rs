@@ -336,7 +336,7 @@ pub fn push_sq_vector(
     sqfunctions: &SquirrelFunctionsUnwraped,
     vector: Vector3,
 ) {
-    unsafe { (sqfunctions.sq_pushvector)(sqvm, vector.into()) };
+    unsafe { (sqfunctions.sq_pushvector)(sqvm, (&vector).into()) };
 }
 
 unsafe extern "C" fn __pop_function(_: *mut HSquirrelVM) -> i32 {

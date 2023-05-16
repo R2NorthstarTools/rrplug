@@ -9,6 +9,7 @@ use std::ops::{Add, Div, Mul, Sub};
 ///
 /// This is a copied struct since in reality its much more unsafe
 #[derive(Copy, Clone, Debug)]
+#[repr(C)]
 pub struct Vector3 {
     pub x: f32,
     pub y: f32,
@@ -27,25 +28,13 @@ impl Default for Vector3 {
 
 impl From<*mut f32> for Vector3 {
     fn from(value: *mut f32) -> Self {
-        unsafe {
-            let raw = std::mem::transmute::<*mut f32, *mut [f32; 3usize]>(value);
-
-            match raw.as_ref() {
-                None => Self::default(),
-                Some(raw) => Self {
-                    x: raw[0],
-                    y: raw[1],
-                    z: raw[2],
-                },
-            }
-        }
+        unsafe { *std::mem::transmute::<*mut f32, *const Self>(value) }
     }
 }
 
-impl Into<*const f32> for Vector3 {
+impl Into<*const f32> for &Vector3 {
     fn into(self) -> *const f32 {
-        let as_array = Box::new([self.x, self.y, self.z]);
-        Box::leak(as_array) as *mut [f32; 3] as *const f32 // do we need to leak it?
+        self as *const Vector3 as *const f32 // do we need to leak it?, uh wait we can't leak this, I think the caller is responsible for the memeory
     }
 }
 
