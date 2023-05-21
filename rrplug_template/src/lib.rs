@@ -9,6 +9,8 @@ use rrplug::{
 pub struct ExamplePlugin;
 
 impl Plugin for ExamplePlugin {
+    type SaveType = squirrel::Save;
+
     fn new() -> Self {
         Self {}
     }
@@ -76,6 +78,8 @@ entry!(ExamplePlugin);
 pub struct BasicPlugin;
 
 impl Plugin for BasicPlugin {
+    type SaveType = squirrel::Save;
+
     fn new() -> Self {
         Self {}
     }
