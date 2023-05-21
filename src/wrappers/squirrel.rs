@@ -237,7 +237,7 @@ fn _call_sq_object_function(
         (sqfunctions.sq_pushobject)(sqvm, ptr);
         (sqfunctions.sq_pushroottable)(sqvm);
 
-        if (sqfunctions.sq_call)(sqvm, 1, false as u32, false as u32) == -1 {
+        if (sqfunctions.sq_call)(sqvm, 1, true as u32, true as u32) == -1 {
             Err(CallError::FunctionFailedToExecute)
         } else {
             Ok(())
@@ -339,6 +339,14 @@ pub fn push_sq_vector(
     unsafe { (sqfunctions.sq_pushvector)(sqvm, (&vector).into()) };
 }
 
+pub fn push_sq_object(
+    sqvm: *mut HSquirrelVM,
+    sqfunctions: &SquirrelFunctionsUnwraped,
+    mut object: MaybeUninit<SQObject>,
+) {
+    unsafe { (sqfunctions.sq_pushobject)(sqvm, object.as_mut_ptr()) };
+}
+
 unsafe extern "C" fn __pop_function(_: *mut HSquirrelVM) -> i32 {
     sq_return_null!()
 }
@@ -376,6 +384,12 @@ impl PushToSquirrelVm for bool {
 impl PushToSquirrelVm for Vector3 {
     fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
         push_sq_vector(sqvm, sqfunctions, self)
+    }
+}
+
+impl PushToSquirrelVm for MaybeUninit<SQObject> {
+    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
+        push_sq_object(sqvm, sqfunctions, self)
     }
 }
 
@@ -424,6 +438,17 @@ impl PushToSquirrelVm for Box<dyn Iterator<Item = bool>> {
 }
 
 impl PushToSquirrelVm for Box<dyn Iterator<Item = Vector3>> {
+    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
+        unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
+
+        for e in self {
+            e.push_to_sqvm(sqvm, sqfunctions);
+            unsafe { (sqfunctions.sq_arrayappend)(sqvm, -2) };
+        }
+    }
+}
+
+impl PushToSquirrelVm for Box<dyn Iterator<Item = MaybeUninit<SQObject>>> {
     fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
         unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
 
