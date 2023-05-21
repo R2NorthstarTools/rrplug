@@ -18,12 +18,12 @@ impl Plugin for ExamplePlugin {
     fn initialize(&mut self, plugin_data: &PluginData) {
         log::info!("yay logging :D");
 
-        _ = plugin_data.register_sq_functions(info_example);
+        plugin_data.register_sq_functions(info_example);
     }
 
     fn main(&self) {}
 
-    fn on_engine_load(&self, engine: EngineLoadType) {
+    fn on_engine_load(&self, engine: &EngineLoadType) {
         let engine = match engine {
             EngineLoadType::Engine(engine) => engine,
             EngineLoadType::EngineFailed => return,
