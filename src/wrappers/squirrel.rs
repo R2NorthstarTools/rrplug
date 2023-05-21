@@ -343,6 +343,8 @@ unsafe extern "C" fn __pop_function(_: *mut HSquirrelVM) -> i32 {
     sq_return_null!()
 }
 
+// MaybeUninit<SQObject> should also have PushToSquirrelVm implement for it
+
 pub trait PushToSquirrelVm {
     fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped);
 }

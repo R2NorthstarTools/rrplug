@@ -1,4 +1,4 @@
-use std::{any::Any, fmt::Debug};
+use std::any::Any;
 
 use crate::wrappers::{
     northstar::{EngineLoadType, PluginData, ScriptVmType},
@@ -17,7 +17,7 @@ use crate::wrappers::{
 /// also provides a thread to run code on (the main function)
 ///
 /// it is unsafe to run any titanfall engine functions on it
-pub trait Plugin: Any + Debug + Sync {
+pub trait Plugin: Any + Sync {
     type SaveType;
 
     fn new() -> Self;

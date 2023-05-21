@@ -32,7 +32,7 @@ macro_rules! entry {
 
             plugin.initialize(&plugin_data);
 
-            PLUGIN.set(plugin).unwrap();
+            _ = PLUGIN.set(plugin);
 
             std::thread::spawn(move || PLUGIN.wait().main());
         }
@@ -232,7 +232,7 @@ macro_rules! entry {
 mod test_entry {
     use crate::prelude::*;
 
-    #[derive(Debug)]
+
     pub struct Test;
 
     impl Plugin for Test {
