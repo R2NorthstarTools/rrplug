@@ -283,7 +283,7 @@ impl ConVarStruct {
             let value = &(*self.inner).m_Value;
 
             if value.m_pszString.is_null()
-                || !self.has_flag(
+                || self.has_flag(
                     FCVAR_NEVER_AS_STRING
                         .try_into()
                         .expect("supposed to always work"),
