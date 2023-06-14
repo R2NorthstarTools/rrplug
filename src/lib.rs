@@ -1,5 +1,7 @@
 #![cfg(not(doctest))]
 //! rrplug is a safe wrapper around the plugin system in [R2Northstar](https://northstar.tf/)
+//! 
+//! this version is for plugins v2.
 //!
 //!
 //! ## Setup with template

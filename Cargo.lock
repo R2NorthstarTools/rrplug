@@ -103,7 +103,7 @@ dependencies = [
 
 [[package]]
 name = "rrplug"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "log",
  "once_cell",
@@ -114,7 +114,7 @@ dependencies = [
 
 [[package]]
 name = "rrplug_proc"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "quote",
  "syn 2.0.15",

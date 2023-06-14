@@ -1,6 +1,6 @@
 [package]
 name = "rrplug_proc"
-version = "2.1.0"
+version = "2.1.1"
 authors = ["catornot"]
 description = "crate for proc macros of rrplug"
 repository = "https://github.com/catornot/rrplug"
