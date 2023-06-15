@@ -13,7 +13,7 @@ use super::{
 };
 use crate::{
     bindings::{
-        squirrelclasstypes::{CompileBufferState, SQFunction, SQRESULT_SQRESULT_ERROR},
+        squirrelclasstypes::{CompileBufferState, SQFunction, SQRESULT_ERROR},
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQObject},
         unwraped::SquirrelFunctionsUnwraped,
     },
@@ -271,10 +271,10 @@ pub fn compile_string(
             should_throw_error as u32,
         );
 
-        if result != SQRESULT_SQRESULT_ERROR {
+        if result != SQRESULT_ERROR {
             (sqfunctions.sq_pushroottable)(sqvm);
 
-            if (sqfunctions.sq_call)(sqvm, 1, 0, 0) == SQRESULT_SQRESULT_ERROR {
+            if (sqfunctions.sq_call)(sqvm, 1, 0, 0) == SQRESULT_ERROR {
                 Err(SQCompileError::BufferFailedToExecute)
             } else {
                 Ok(())
@@ -350,8 +350,6 @@ pub fn push_sq_object(
 unsafe extern "C" fn __pop_function(_: *mut HSquirrelVM) -> i32 {
     sq_return_null!()
 }
-
-// MaybeUninit<SQObject> should also have PushToSquirrelVm implement for it
 
 pub trait PushToSquirrelVm {
     fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped);

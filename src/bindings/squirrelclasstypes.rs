@@ -22,27 +22,9 @@ extern "C" {
 extern "C" {
     pub static mut __security_cookie: usize;
 }
-pub type int_least8_t = ::std::os::raw::c_schar;
-pub type int_least16_t = ::std::os::raw::c_short;
-pub type int_least32_t = ::std::os::raw::c_int;
-pub type int_least64_t = ::std::os::raw::c_longlong;
-pub type uint_least8_t = ::std::os::raw::c_uchar;
-pub type uint_least16_t = ::std::os::raw::c_ushort;
-pub type uint_least32_t = ::std::os::raw::c_uint;
-pub type uint_least64_t = ::std::os::raw::c_ulonglong;
-pub type int_fast8_t = ::std::os::raw::c_schar;
-pub type int_fast16_t = ::std::os::raw::c_int;
-pub type int_fast32_t = ::std::os::raw::c_int;
-pub type int_fast64_t = ::std::os::raw::c_longlong;
-pub type uint_fast8_t = ::std::os::raw::c_uchar;
-pub type uint_fast16_t = ::std::os::raw::c_uint;
-pub type uint_fast32_t = ::std::os::raw::c_uint;
-pub type uint_fast64_t = ::std::os::raw::c_ulonglong;
-pub type intmax_t = ::std::os::raw::c_longlong;
-pub type uintmax_t = ::std::os::raw::c_ulonglong;
-pub const SQRESULT_SQRESULT_ERROR: SQRESULT = -1;
-pub const SQRESULT_SQRESULT_NULL: SQRESULT = 0;
-pub const SQRESULT_SQRESULT_NOTNULL: SQRESULT = 1;
+pub const SQRESULT_ERROR: SQRESULT = -1;
+pub const SQRESULT_NULL: SQRESULT = 0;
+pub const SQRESULT_NOTNULL: SQRESULT = 1;
 pub type SQRESULT = ::std::os::raw::c_int;
 pub type SQFunction =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> SQRESULT; // this type was inaccurate

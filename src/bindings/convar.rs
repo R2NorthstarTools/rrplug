@@ -15,17 +15,6 @@ pub mod root {
     #[allow(unused_imports)]
     use self::super::root;
     use crate::bindings::command::ConCommandBase;
-    const _VCRT_COMPILER_PREPROCESSOR: u32 = 1;
-    const _SAL_VERSION: u32 = 20;
-    const __SAL_H_VERSION: u32 = 180000000;
-    const _USE_DECLSPECS_FOR_SAL: u32 = 0;
-    const _USE_ATTRIBUTES_FOR_SAL: u32 = 0;
-    const _CRT_PACKING: u32 = 8;
-    const _HAS_EXCEPTIONS: u32 = 1;
-    const _HAS_CXX17: u32 = 0;
-    const _HAS_CXX20: u32 = 0;
-    const _HAS_CXX23: u32 = 0;
-    const _HAS_NODISCARD: u32 = 1;
     pub const COMMAND_COMPLETION_MAXITEMS: u32 = 64;
     pub const COMMAND_COMPLETION_ITEM_LENGTH: u32 = 128;
     pub const FCVAR_NONE: u32 = 0;
@@ -59,36 +48,6 @@ pub mod root {
     pub const FCVAR_SERVER_CANNOT_QUERY: u32 = 536870912;
     pub const FCVAR_CLIENTCMD_CAN_EXECUTE: u32 = 1073741824;
     pub const FCVAR_ACCESSIBLE_FROM_THREADS: u32 = 33554432;
-    pub type va_list = *mut ::std::os::raw::c_char;
-    extern "C" {
-        pub fn __va_start(arg1: *mut root::va_list, ...);
-    }
-    #[repr(C)]
-    #[derive(Copy, Clone)]
-    pub struct __vcrt_va_list_is_reference {
-        pub _address: u8,
-    }
-    pub const __vcrt_va_list_is_reference___the_value:
-        root::__vcrt_va_list_is_reference__bindgen_ty_1 = false;
-    pub type __vcrt_va_list_is_reference__bindgen_ty_1 = bool;
-    #[repr(C)]
-    #[derive(Copy, Clone)]
-    pub struct __vcrt_assert_va_start_is_not_reference {
-        pub _address: u8,
-    }
-    pub type __vcrt_bool = bool;
-    extern "C" {
-        pub fn __security_init_cookie();
-    }
-    extern "C" {
-        pub fn __security_check_cookie(_StackCookie: usize);
-    }
-    extern "C" {
-        pub fn __report_gsfailure(_StackCookie: usize) -> !;
-    }
-    extern "C" {
-        pub static mut __security_cookie: usize;
-    }
     #[repr(C)]
     #[derive(Copy, Clone)]
     pub struct color24 {

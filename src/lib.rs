@@ -1,6 +1,6 @@
 #![cfg(not(doctest))]
 //! rrplug is a safe wrapper around the plugin system in [R2Northstar](https://northstar.tf/)
-//! 
+//!
 //! this version is for plugins v2.
 //!
 //!
@@ -95,5 +95,23 @@ pub mod wrappers;
 #[doc(hidden)]
 pub use log;
 #[doc(hidden)]
-pub use once_cell::{sync::OnceCell,unsync::Lazy};
+pub use once_cell::{sync::OnceCell, unsync::Lazy};
 pub use rrplug_proc::{concommand, convar, sqfunction};
+
+#[cfg(test)]
+mod test {
+    use crate as rrplug;
+    use rrplug::prelude::*;
+    use rrplug_proc::*;
+
+    #[convar]
+    fn test_convar() {}
+
+    #[concommand]
+    fn test_concommand() {}
+
+    #[sqfunction(VM=Server)]
+    fn test_sqfunction() {
+        0
+    }
+}
