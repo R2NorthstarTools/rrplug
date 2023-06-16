@@ -26,6 +26,8 @@ pub struct EngineData {
     pub low: Box<PluginEngineData>,
 }
 
+// don't forget about CVar class
+
 impl EngineData {
     pub fn new(raw: &PluginEngineData) -> Self {
         Self {

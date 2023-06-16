@@ -44,7 +44,7 @@ use std::os::raw::c_void;
 use std::ptr;
 
 use crate::bindings::command::{CCommand, ConCommand, ConCommandConstructorType};
-use crate::bindings::plugin_abi::ObjectType_CONCOMMANDS;
+use crate::bindings::plugin_abi::ObjectType;
 use crate::to_sq_string;
 
 use super::errors::RegisterError;
@@ -109,7 +109,7 @@ impl RegisterConCommands {
             std::mem::transmute((CREATE_OBJECT_FUNC
                 .wait()
                 .ok_or(RegisterError::NoneFunction)?)(
-                ObjectType_CONCOMMANDS
+                ObjectType::CONCOMMANDS
             ))
         };
 

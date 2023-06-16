@@ -7,6 +7,5 @@ pub mod convars;
 pub mod engine;
 pub mod errors;
 pub mod northstar;
-pub mod presence;
 pub mod squirrel;
 pub mod vector;

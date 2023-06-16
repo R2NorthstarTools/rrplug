@@ -20,7 +20,7 @@ macro_rules! to_sq_string {
 macro_rules! sq_return_string {
     ($value:expr, $sqvm:expr, $sq_functions:expr) => {
         $crate::wrappers::squirrel::push_sq_string($sqvm, $sq_functions, $value);
-        return $crate::bindings::squirrelclasstypes::SQRESULT_NOTNULL;
+        return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
     };
 }
 
@@ -33,7 +33,7 @@ macro_rules! sq_return_string {
 macro_rules! sq_return_bool {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
         $crate::wrappers::squirrel::push_sq_bool($sqvm, $sq_functions, $value);
-        return $crate::bindings::squirrelclasstypes::SQRESULT_NOTNULL;
+        return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
     };
 }
 
@@ -46,7 +46,7 @@ macro_rules! sq_return_bool {
 macro_rules! sq_return_int {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
         $crate::wrappers::squirrel::push_sq_int($sqvm, $sq_functions, $value);
-        return $crate::bindings::squirrelclasstypes::SQRESULT_NOTNULL;
+        return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
     };
 }
 
@@ -59,7 +59,7 @@ macro_rules! sq_return_int {
 macro_rules! sq_return_float {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
         $crate::wrappers::squirrel::push_sq_float($sqvm, $sq_functions, $value);
-        return $crate::bindings::squirrelclasstypes::SQRESULT_NOTNULL;
+        return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
     };
 }
 
@@ -72,7 +72,7 @@ macro_rules! sq_return_float {
 macro_rules! sq_return_vector {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
         $crate::wrappers::squirrel::push_sq_vector($sqvm, $sq_functions, $value);
-        return $crate::bindings::squirrelclasstypes::SQRESULT_NOTNULL;
+        return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
     };
 }
 
@@ -81,7 +81,7 @@ macro_rules! sq_return_vector {
 #[macro_export]
 macro_rules! sq_return_null {
     () => {
-        return $crate::bindings::squirrelclasstypes::SQRESULT_NULL
+        return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NULL
     };
 }
 
@@ -90,7 +90,7 @@ macro_rules! sq_return_null {
 #[macro_export]
 macro_rules! sq_return_notnull {
     () => {
-        return $crate::bindings::squirrelclasstypes::SQRESULT_NOTNULL
+        return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
     };
 }
 
@@ -106,7 +106,7 @@ macro_rules! sq_raise_error {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
         let err = $crate::to_sq_string!($value);
         unsafe { ($sq_functions.sq_raiseerror)($sqvm, err.as_ptr()) };
-        return $crate::bindings::squirrelclasstypes::SQRESULT_ERROR;
+        return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR 
     };
     ($value:expr, $sqvm:expr, $sq_functions: expr, noreturn) => {
         unsafe { ($sq_functions.sq_raiseerror)($sqvm, $crate::to_sq_string!($value).as_ptr()) };

@@ -49,15 +49,3 @@ impl SQCompileError {
         log::error!("{}", self)
     }
 }
-
-#[derive(Error, Debug)]
-pub enum GamePresenceError {
-    #[error("the provided GamePresenceError was a null")]
-    NullGamePresenceError,
-}
-
-impl GamePresenceError {
-    pub fn log(&self) {
-        log::error!("{}", self)
-    }
-}

@@ -1,5 +1,3 @@
-// REMINDER: THIS CRATE MIGHT NEEDS TO BE A SEPARETE CRATE ON CRATES.io
-
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
@@ -224,7 +222,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let ident = &sig.ident;
     let input = &sig.inputs;
     let output = &sig.output;
-    let default_sq_output = "-> ::std::os::raw::c_int";
+    let default_sq_output = "-> rrplug::bindings::squirrelclasstypes::SQRESULT";
     let mut default_sq_output: ReturnType = syn::parse_str(default_sq_output).expect("boom");
     let func_name = ident.to_string();
     let mut export_name = ident.to_string();
@@ -341,7 +339,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
     let script_vm_type = format_ident!("{script_vm}");
-    let script_vm_func = format_ident!("{}", script_vm_func);
+    let script_vm_func = format_ident!("{script_vm_func}" );
 
     let tk = quote! {let sq_functions = SQFUNCTIONS.#script_vm_func.wait();}.into();
     push_stmts!(stmts, tk);
@@ -349,7 +347,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut info_func = quote! {
         #vis const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
 
-            (#func_name, #export_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, #ident )
+            (#func_name, #export_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, Some(#ident) )
         }
     };
 

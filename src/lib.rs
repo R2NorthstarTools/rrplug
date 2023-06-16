@@ -112,6 +112,6 @@ mod test {
 
     #[sqfunction(VM=Server)]
     fn test_sqfunction() {
-        0
+        crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NULL
     }
 }

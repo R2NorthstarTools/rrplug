@@ -55,10 +55,9 @@ impl Display for ScriptVmType {
 impl From<ScriptContext> for ScriptVmType {
     fn from(i: ScriptContext) -> Self {
         match i {
-            0 => Self::Server,
-            1 => Self::Client,
-            2 => Self::Ui,
-            _ => unreachable!(),
+            ScriptContext::SERVER => Self::Server,
+            ScriptContext::CLIENT => Self::Client,
+            ScriptContext::UI => Self::Ui,
         }
     }
 }
@@ -67,13 +66,13 @@ impl From<ScriptContext> for ScriptVmType {
 impl Into<ScriptContext> for ScriptVmType {
     fn into(self) -> ScriptContext {
         match self {
-            ScriptVmType::Server => 0,
-            ScriptVmType::Client => 1,
-            ScriptVmType::Ui => 2,
+            ScriptVmType::Server => ScriptContext::SERVER,
+            ScriptVmType::Client => ScriptContext::CLIENT,
+            ScriptVmType::Ui => ScriptContext::UI,
             ScriptVmType::UiClient => {
                 #[cfg(debug_assertions)]
                 log::warn!("ScriptVmType::UiClient is interpreted as ScriptVmType::Client");
-                1
+                ScriptContext::CLIENT
             }
         }
     }

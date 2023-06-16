@@ -4,7 +4,10 @@
 
 use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
-use std::mem::MaybeUninit;
+use std::{
+    ffi::c_void,
+    mem::{transmute, MaybeUninit},
+};
 
 use super::{
     errors::{CallError, SQCompileError},
@@ -13,11 +16,11 @@ use super::{
 };
 use crate::{
     bindings::{
-        squirrelclasstypes::{CompileBufferState, SQFunction, SQRESULT_ERROR},
+        squirrelclasstypes::{CompileBufferState, SQRESULT},
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQObject},
         unwraped::SquirrelFunctionsUnwraped,
     },
-    sq_return_null, to_sq_string,
+    to_sq_string,
 };
 
 #[doc(hidden)]
@@ -160,19 +163,26 @@ unsafe impl Send for CSquirrelVMHandle<Saved> {}
 /// "safely" calls any function defined on the sqvm
 ///
 /// they would only run when the sqvm is valid
-pub fn async_call_sq_function(
+pub fn async_call_sq_function<T>(
     context: ScriptVmType,
     function_name: impl Into<String>,
-    pop_function: Option<SQFunction>,
-) {
+    callback: Option<Box<T>>,
+) where
+    T: FnOnce(*mut HSquirrelVM) -> i32,
+{
     let sqfunctions = match context {
         ScriptVmType::Server => SQFUNCTIONS.server.wait(),
         _ => SQFUNCTIONS.client.wait(),
     };
 
-    let pop_function = match pop_function {
-        Some(callback) => callback,
-        None => __pop_function,
+    let c_callback = callback.as_ref().map(|_| {
+        callback_trampoline::<T>
+            as unsafe extern "C" fn(sqvm: *mut HSquirrelVM, userdata: *mut c_void) -> i32
+    });
+
+    let userdata: *mut c_void = match callback {
+        Some(callback) => Box::into_raw(callback) as *mut c_void,
+        None => std::ptr::null_mut(),
     };
 
     let function_name = to_sq_string!(function_name.into());
@@ -181,8 +191,25 @@ pub fn async_call_sq_function(
         (sqfunctions.sq_schedule_call_external)(
             context.into(),
             function_name.as_ptr(),
-            pop_function,
+            c_callback,
+            userdata,
         )
+    }
+
+    unsafe extern "C" fn callback_trampoline<T>(
+        sqvm: *mut HSquirrelVM,
+        userdata: *mut c_void,
+    ) -> i32
+    where
+        T: FnOnce(*mut HSquirrelVM) -> i32,
+    {
+        match transmute::<_, *mut T>(userdata).as_mut() {
+            Some(closure) => {
+                let boxed_closure: Box<T> = Box::from_raw(closure);
+                (*boxed_closure)(sqvm)
+            }
+            None => 0,
+        }
     }
 }
 
@@ -237,7 +264,7 @@ fn _call_sq_object_function(
         (sqfunctions.sq_pushobject)(sqvm, ptr);
         (sqfunctions.sq_pushroottable)(sqvm);
 
-        if (sqfunctions.sq_call)(sqvm, 1, true as u32, true as u32) == -1 {
+        if (sqfunctions.sq_call)(sqvm, 1, true as u32, true as u32) == SQRESULT::SQRESULT_ERROR {
             Err(CallError::FunctionFailedToExecute)
         } else {
             Ok(())
@@ -271,10 +298,10 @@ pub fn compile_string(
             should_throw_error as u32,
         );
 
-        if result != SQRESULT_ERROR {
+        if result != SQRESULT::SQRESULT_ERROR {
             (sqfunctions.sq_pushroottable)(sqvm);
 
-            if (sqfunctions.sq_call)(sqvm, 1, 0, 0) == SQRESULT_ERROR {
+            if (sqfunctions.sq_call)(sqvm, 1, 0, 0) == SQRESULT::SQRESULT_ERROR {
                 Err(SQCompileError::BufferFailedToExecute)
             } else {
                 Ok(())
@@ -345,10 +372,6 @@ pub fn push_sq_object(
     mut object: MaybeUninit<SQObject>,
 ) {
     unsafe { (sqfunctions.sq_pushobject)(sqvm, object.as_mut_ptr()) };
-}
-
-unsafe extern "C" fn __pop_function(_: *mut HSquirrelVM) -> i32 {
-    sq_return_null!()
 }
 
 pub trait PushToSquirrelVm {

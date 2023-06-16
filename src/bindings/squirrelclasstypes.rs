@@ -4,41 +4,29 @@
 
 use super::squirreldatatypes::*;
 
-pub type va_list = *mut ::std::os::raw::c_char;
-extern "C" {
-    pub fn __va_start(arg1: *mut *mut ::std::os::raw::c_char, ...);
+#[repr(i32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum SQRESULT {
+    SQRESULT_ERROR = -1,
+    SQRESULT_NULL = 0,
+    SQRESULT_NOTNULL = 1,
 }
-pub type __vcrt_bool = bool;
-pub type wchar_t = ::std::os::raw::c_ushort;
-extern "C" {
-    pub fn __security_init_cookie();
-}
-extern "C" {
-    pub fn __security_check_cookie(_StackCookie: usize);
-}
-extern "C" {
-    pub fn __report_gsfailure(_StackCookie: usize) -> !;
-}
-extern "C" {
-    pub static mut __security_cookie: usize;
-}
-pub const SQRESULT_ERROR: SQRESULT = -1;
-pub const SQRESULT_NULL: SQRESULT = 0;
-pub const SQRESULT_NOTNULL: SQRESULT = 1;
-pub type SQRESULT = ::std::os::raw::c_int;
 pub type SQFunction =
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> SQRESULT; // this type was inaccurate
-pub const eSQReturnType_Float: eSQReturnType = 1;
-pub const eSQReturnType_Vector: eSQReturnType = 3;
-pub const eSQReturnType_Integer: eSQReturnType = 5;
-pub const eSQReturnType_Boolean: eSQReturnType = 6;
-pub const eSQReturnType_Entity: eSQReturnType = 13;
-pub const eSQReturnType_String: eSQReturnType = 33;
-pub const eSQReturnType_Default: eSQReturnType = 32;
-pub const eSQReturnType_Arrays: eSQReturnType = 37;
-pub const eSQReturnType_Asset: eSQReturnType = 40;
-pub const eSQReturnType_Table: eSQReturnType = 38;
-pub type eSQReturnType = ::std::os::raw::c_int;
+    ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> SQRESULT>;
+#[repr(i32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum eSQReturnType {
+    Float = 1,
+    Vector = 3,
+    Integer = 5,
+    Boolean = 6,
+    Entity = 13,
+    String = 33,
+    Default = 32,
+    Arrays = 37,
+    Asset = 40,
+    Table = 38,
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct CompileBufferState {
@@ -275,17 +263,25 @@ fn bindgen_test_layout_SQFuncRegistration() {
         )
     );
 }
-pub const ScriptContext_SERVER: ScriptContext = 0;
-pub const ScriptContext_CLIENT: ScriptContext = 1;
-pub const ScriptContext_UI: ScriptContext = 2;
-pub type ScriptContext = ::std::os::raw::c_int;
-pub type SquirrelMessage_External_Pop =
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> i32; // we can't have null functions here, what are they for then?
+#[repr(i32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum ScriptContext {
+    SERVER = 0,
+    CLIENT = 1,
+    UI = 2,
+}
+pub type SquirrelMessage_External_Pop = ::std::option::Option<
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        userdata: *mut ::std::os::raw::c_void,
+    ) -> ::std::os::raw::c_int,
+>;
 pub type sq_schedule_call_externalType = ::std::option::Option<
     unsafe extern "C" fn(
         context: ScriptContext,
         funcname: *const ::std::os::raw::c_char,
         function: SquirrelMessage_External_Pop,
+        userdata: *mut ::std::os::raw::c_void,
     ),
 >;
 pub type RegisterSquirrelFuncType = ::std::option::Option<
@@ -296,7 +292,11 @@ pub type RegisterSquirrelFuncType = ::std::option::Option<
     ) -> i64,
 >;
 pub type sq_defconstType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut CSquirrelVM, name: *const SQChar, value: ::std::os::raw::c_int),
+    unsafe extern "C" fn(
+        sqvm: *mut CSquirrelVM,
+        name: *const SQChar,
+        value: ::std::os::raw::c_int,
+    ),
 >;
 pub type sq_compilebufferType = ::std::option::Option<
     unsafe extern "C" fn(
@@ -316,21 +316,45 @@ pub type sq_callType = ::std::option::Option<
     ) -> SQRESULT,
 >;
 pub type sq_raiseerrorType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pError: *const SQChar) -> SQInteger,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        pError: *const SQChar,
+    ) -> SQInteger,
 >;
-pub type sq_newarrayType =
-    ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger)>;
+pub type sq_compilefileType = ::std::option::Option<
+    unsafe extern "C" fn(
+        sqvm: *mut CSquirrelVM,
+        path: *const ::std::os::raw::c_char,
+        name: *const ::std::os::raw::c_char,
+        a4: ::std::os::raw::c_int,
+    ) -> bool,
+>;
+pub type sq_newarrayType = ::std::option::Option<
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger),
+>;
 pub type sq_arrayappendType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> SQRESULT,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        iStackpos: SQInteger,
+    ) -> SQRESULT,
 >;
 pub type sq_newtableType =
     ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM) -> SQRESULT>;
 pub type sq_newslotType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, idx: SQInteger, bStatic: SQBool) -> SQRESULT,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        idx: SQInteger,
+        bStatic: SQBool,
+    ) -> SQRESULT,
 >;
-pub type sq_pushroottableType = ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM)>;
+pub type sq_pushroottableType =
+    ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM)>;
 pub type sq_pushstringType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pStr: *const SQChar, iLength: SQInteger),
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        pStr: *const SQChar,
+        iLength: SQInteger,
+    ),
 >;
 pub type sq_pushintegerType =
     ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM, i: SQInteger)>;
@@ -339,17 +363,29 @@ pub type sq_pushfloatType =
 pub type sq_pushboolType =
     ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM, b: SQBool)>;
 pub type sq_pushassetType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, str_: *const SQChar, iLength: SQInteger),
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        str_: *const SQChar,
+        iLength: SQInteger,
+    ),
 >;
-pub type sq_pushvectorType =
-    ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *const SQFloat)>;
-pub type sq_pushobjectType =
-    ::std::option::Option<unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *mut SQObject)>;
+pub type sq_pushvectorType = ::std::option::Option<
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *const SQFloat),
+>;
+pub type sq_pushobjectType = ::std::option::Option<
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *mut SQObject),
+>;
 pub type sq_getstringType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> *const SQChar,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        iStackpos: SQInteger,
+    ) -> *const SQChar,
 >;
 pub type sq_getintegerType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> SQInteger,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        iStackpos: SQInteger,
+    ) -> SQInteger,
 >;
 pub type sq_getfloatType = ::std::option::Option<
     unsafe extern "C" fn(arg1: *mut HSquirrelVM, iStackpos: SQInteger) -> SQFloat,
@@ -358,7 +394,10 @@ pub type sq_getboolType = ::std::option::Option<
     unsafe extern "C" fn(arg1: *mut HSquirrelVM, iStackpos: SQInteger) -> SQBool,
 >;
 pub type sq_getType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> SQRESULT,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        iStackpos: SQInteger,
+    ) -> SQRESULT,
 >;
 pub type sq_getassetType = ::std::option::Option<
     unsafe extern "C" fn(
@@ -376,7 +415,10 @@ pub type sq_getuserdataType = ::std::option::Option<
     ) -> SQRESULT,
 >;
 pub type sq_getvectorType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> *mut SQFloat,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        iStackpos: SQInteger,
+    ) -> *mut SQFloat,
 >;
 pub type sq_getthisentityType = ::std::option::Option<
     unsafe extern "C" fn(
@@ -385,7 +427,11 @@ pub type sq_getthisentityType = ::std::option::Option<
     ) -> SQBool,
 >;
 pub type sq_getobjectType = ::std::option::Option<
-    unsafe extern "C" fn(arg1: *mut HSquirrelVM, iStackPos: SQInteger, pOutObj: *mut SQObject),
+    unsafe extern "C" fn(
+        arg1: *mut HSquirrelVM,
+        iStackPos: SQInteger,
+        pOutObj: *mut SQObject,
+    ),
 >;
 pub type sq_stackinfosType = ::std::option::Option<
     unsafe extern "C" fn(
@@ -396,10 +442,17 @@ pub type sq_stackinfosType = ::std::option::Option<
     ) -> ::std::os::raw::c_longlong,
 >;
 pub type sq_createuserdataType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iSize: SQInteger) -> *mut ::std::os::raw::c_void,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        iSize: SQInteger,
+    ) -> *mut ::std::os::raw::c_void,
 >;
 pub type sq_setuserdatatypeidType = ::std::option::Option<
-    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger, iTypeId: u64) -> SQRESULT,
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        iStackpos: SQInteger,
+        iTypeId: u64,
+    ) -> SQRESULT,
 >;
 pub type sq_getentityfrominstanceType = ::std::option::Option<
     unsafe extern "C" fn(
@@ -417,6 +470,18 @@ pub type sq_getfunctionType = ::std::option::Option<
         returnObj: *mut SQObject,
         signature: *const ::std::os::raw::c_char,
     ) -> ::std::os::raw::c_int,
+>;
+pub type sq_pushnewstructinstanceType = ::std::option::Option<
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        fieldCount: ::std::os::raw::c_int,
+    ) -> SQRESULT,
+>;
+pub type sq_sealstructslotType = ::std::option::Option<
+    unsafe extern "C" fn(
+        sqvm: *mut HSquirrelVM,
+        slotIndex: ::std::os::raw::c_int,
+    ) -> SQRESULT,
 >;
 pub type RegisterSquirrelFuncType_External = ::std::option::Option<
     unsafe extern "C" fn(

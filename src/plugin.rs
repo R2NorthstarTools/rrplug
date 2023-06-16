@@ -2,7 +2,6 @@ use std::any::Any;
 
 use crate::wrappers::{
     northstar::{EngineLoadType, PluginData, ScriptVmType},
-    presence::GamePresence,
     squirrel::CSquirrelVMHandle,
 };
 
@@ -26,11 +25,11 @@ pub trait Plugin: Any + Sync {
 
     fn main(&self);
 
-    fn on_engine_load(&self, _engine: &EngineLoadType) {}
+    fn on_engine_load(&self, _engine: &EngineLoadType, _dll_ptr: *const std::ffi::c_void) {}
 
     fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle<Self::SaveType>) {}
 
     fn on_sqvm_destroyed(&self, _context: ScriptVmType) {}
 
-    fn on_presence_updated(&self, _presence: &GamePresence) {}
+    fn runframe(&self) {}
 }

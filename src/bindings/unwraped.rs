@@ -10,13 +10,13 @@ use crate::bindings::{
         CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObject, SQStackInfos,
     },
 };
-
 pub type sq_schedule_call_externalType_unwraped = unsafe extern "C" fn(
     context: ScriptContext,
     funcname: *const ::std::os::raw::c_char,
     function: SquirrelMessage_External_Pop,
+    userdata: *mut ::std::os::raw::c_void,
 );
-pub type register_squirrel_func_type_unwraped = unsafe extern "C" fn(
+pub type register_squirrel_func_unwraped = unsafe extern "C" fn(
     sqvm: *mut CSquirrelVM,
     funcReg: *mut SQFuncRegistration,
     unknown: ::std::os::raw::c_char,
@@ -38,6 +38,12 @@ pub type sq_callType_unwraped = unsafe extern "C" fn(
 ) -> SQRESULT;
 pub type sq_raiseerrorType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pError: *const SQChar) -> SQInteger;
+pub type sq_compilefileType_unwraped = unsafe extern "C" fn(
+    sqvm: *mut CSquirrelVM,
+    path: *const ::std::os::raw::c_char,
+    name: *const ::std::os::raw::c_char,
+    a4: ::std::os::raw::c_int,
+) -> bool;
 pub type sq_newarrayType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger);
 pub type sq_arrayappendType_unwraped =
@@ -110,12 +116,22 @@ pub type sq_getfunctionType_unwraped = unsafe extern "C" fn(
     returnObj: *mut SQObject,
     signature: *const ::std::os::raw::c_char,
 ) -> ::std::os::raw::c_int;
+pub type sq_pushnewstructinstanceType_unwraped =
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, fieldCount: ::std::os::raw::c_int) -> SQRESULT;
+pub type sq_sealstructslotType_unwraped =
+    unsafe extern "C" fn(sqvm: *mut HSquirrelVM, slotIndex: ::std::os::raw::c_int) -> SQRESULT;
+pub type RegisterSquirrelFuncType_External_unwraped = unsafe extern "C" fn(
+    context: ScriptContext,
+    funcReg: *mut SQFuncRegistration,
+    unknown: ::std::os::raw::c_char,
+) -> i64;
 pub struct SquirrelFunctionsUnwraped {
-    pub register_squirrel_func: register_squirrel_func_type_unwraped,
+    pub register_squirrel_func: register_squirrel_func_unwraped,
     pub sq_defconst: sq_defconstType_unwraped,
     pub sq_compilebuffer: sq_compilebufferType_unwraped,
     pub sq_call: sq_callType_unwraped,
     pub sq_raiseerror: sq_raiseerrorType_unwraped,
+    pub sq_compilefile: sq_compilefileType_unwraped,
     pub sq_newarray: sq_newarrayType_unwraped,
     pub sq_arrayappend: sq_arrayappendType_unwraped,
     pub sq_newtable: sq_newtableType_unwraped,
@@ -128,9 +144,6 @@ pub struct SquirrelFunctionsUnwraped {
     pub sq_pushasset: sq_pushassetType_unwraped,
     pub sq_pushvector: sq_pushvectorType_unwraped,
     pub sq_pushobject: sq_pushobjectType_unwraped,
-    pub sq_getthisentity: sq_getthisentityType_unwraped,
-    pub sq_getobject: sq_getobjectType_unwraped,
-    pub sq_stackinfos: sq_stackinfosType_unwraped,
     pub sq_getstring: sq_getstringType_unwraped,
     pub sq_getinteger: sq_getintegerType_unwraped,
     pub sq_getfloat: sq_getfloatType_unwraped,
@@ -139,12 +152,17 @@ pub struct SquirrelFunctionsUnwraped {
     pub sq_getasset: sq_getassetType_unwraped,
     pub sq_getuserdata: sq_getuserdataType_unwraped,
     pub sq_getvector: sq_getvectorType_unwraped,
+    pub sq_getthisentity: sq_getthisentityType_unwraped,
+    pub sq_getobject: sq_getobjectType_unwraped,
+    pub sq_stackinfos: sq_stackinfosType_unwraped,
     pub sq_createuserdata: sq_createuserdataType_unwraped,
     pub sq_setuserdatatypeid: sq_setuserdatatypeidType_unwraped,
     pub sq_getfunction: sq_getfunctionType_unwraped,
     pub sq_schedule_call_external: sq_schedule_call_externalType_unwraped,
     pub sq_getentityfrominstance: sq_getentityfrominstanceType_unwraped,
     pub sq_get_entity_constant_cbase_entity: sq_GetEntityConstantType_unwraped,
+    pub sq_pushnewstructinstance: sq_pushnewstructinstanceType_unwraped,
+    pub sq_sealstructslot: sq_sealstructslotType_unwraped,
 }
 impl From<SquirrelFunctions> for SquirrelFunctionsUnwraped {
     fn from(value: SquirrelFunctions) -> Self {
@@ -156,7 +174,7 @@ impl From<SquirrelFunctions> for SquirrelFunctionsUnwraped {
         // like hello?
         // don't panic on Some in release
         // actually might be caused by hyper optimzations producing ub
-        // so basically this is safe 
+        // so basically this is safe
 
         // could be rewriten with a macro
         unsafe {
@@ -166,6 +184,7 @@ impl From<SquirrelFunctions> for SquirrelFunctionsUnwraped {
                 sq_compilebuffer: value.__sq_compilebuffer.unwrap_unchecked(),
                 sq_call: value.__sq_call.unwrap_unchecked(),
                 sq_raiseerror: value.__sq_raiseerror.unwrap_unchecked(),
+                sq_compilefile: value.__sq_compilefile.unwrap_unchecked(),
                 sq_newarray: value.__sq_newarray.unwrap_unchecked(),
                 sq_arrayappend: value.__sq_arrayappend.unwrap_unchecked(),
                 sq_newtable: value.__sq_newtable.unwrap_unchecked(),
@@ -186,17 +205,19 @@ impl From<SquirrelFunctions> for SquirrelFunctionsUnwraped {
                 sq_getasset: value.__sq_getasset.unwrap_unchecked(),
                 sq_getuserdata: value.__sq_getuserdata.unwrap_unchecked(),
                 sq_getvector: value.__sq_getvector.unwrap_unchecked(),
+                sq_getthisentity: value.__sq_getthisentity.unwrap_unchecked(),
+                sq_getobject: value.__sq_getobject.unwrap_unchecked(),
+                sq_stackinfos: value.__sq_stackinfos.unwrap_unchecked(),
                 sq_createuserdata: value.__sq_createuserdata.unwrap_unchecked(),
                 sq_setuserdatatypeid: value.__sq_setuserdatatypeid.unwrap_unchecked(),
                 sq_getfunction: value.__sq_getfunction.unwrap_unchecked(),
                 sq_schedule_call_external: value.__sq_schedule_call_external.unwrap_unchecked(),
-                sq_getthisentity: value.__sq_getthisentity.unwrap_unchecked(),
-                sq_getobject: value.__sq_getobject.unwrap_unchecked(),
-                sq_stackinfos: value.__sq_stackinfos.unwrap_unchecked(),
                 sq_getentityfrominstance: value.__sq_getentityfrominstance.unwrap_unchecked(),
                 sq_get_entity_constant_cbase_entity: value
                     .__sq_GetEntityConstant_CBaseEntity
                     .unwrap_unchecked(),
+                sq_pushnewstructinstance: value.__sq_pushnewstructinstance.unwrap_unchecked(),
+                sq_sealstructslot: value.__sq_sealstructslot.unwrap_unchecked(),
             }
         }
     }

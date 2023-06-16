@@ -78,7 +78,7 @@ use crate::{
         convar::{
             ConVar, ConVarMallocType, ConVarRegisterType, FnChangeCallback_t, FCVAR_NEVER_AS_STRING,
         },
-        plugin_abi::{ObjectType_CONVAR, PluginEngineData},
+        plugin_abi::{ObjectType, PluginEngineData},
     },
     to_sq_string,
 };
@@ -160,10 +160,10 @@ impl ConVarStruct {
         get_engine_data().map(move |engine| Self::new(engine, obj_func))
     }
 
-    fn new(engine: &EngineData, obj_func: unsafe extern "C" fn(i32) -> *mut c_void) -> Self {
+    fn new(engine: &EngineData, obj_func: unsafe extern "C" fn(ObjectType) -> *mut c_void) -> Self {
         let convar_classes = &engine.convar;
 
-        let convar = unsafe { mem::transmute::<_, *mut ConVar>(obj_func(ObjectType_CONVAR)) };
+        let convar = unsafe { mem::transmute::<_, *mut ConVar>(obj_func(ObjectType::CONVAR)) };
 
         unsafe {
             addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)

@@ -42,7 +42,7 @@ macro_rules! call_sq_function {
                             args_amount += 1; // I know this runtime bloat but this the only way, proc marcos are hard
                         )*
 
-                        let result = if ($sqfunctions.sq_call)($sqvm, args_amount, true as u32, true as u32) == -1 {
+                        let result = if ($sqfunctions.sq_call)($sqvm, args_amount, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR  {
                             Err($crate::wrappers::errors::CallError::FunctionFailedToExecute)
                         } else {
                             Ok(())
@@ -80,7 +80,7 @@ macro_rules! call_sq_object_function {
                         args_amount += 1; // I know this runtime bloat but this the only way, proc marcos are hard
                     )*
 
-                    let result = if ($sqfunctions.sq_call)($sqvm, args_amount, true as u32, true as u32) == -1 {
+                    let result = if ($sqfunctions.sq_call)($sqvm, args_amount, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR {
                         Err($crate::wrappers::errors::CallError::FunctionFailedToExecute)
                     } else {
                         Ok(())
