@@ -1,29 +1,29 @@
 //! wrappers for structs that are passed to the plugin
 
 use log::SetLoggerError;
-use once_cell::sync::OnceCell;
 use std::ffi::CStr;
 use std::fmt::Display;
 
 use super::engine::EngineData;
-use super::squirrel::FUNCTION_SQ_REGISTER;
-use crate::bindings::plugin_abi::{CreateObjectFunc, PluginInitFuncs, PluginNorthstarData};
-use crate::bindings::squirrelclasstypes::{SQFunction, ScriptContext};
-use crate::nslog;
-
-#[doc(hidden)]
-pub static CREATE_OBJECT_FUNC: OnceCell<CreateObjectFunc> = OnceCell::new();
+use crate::{
+    bindings::plugin_abi::{PluginInitFuncs, PluginNorthstarData},
+    bindings::squirrelclasstypes::{SQFunction, ScriptContext},
+    mid::northstar::CREATE_OBJECT_FUNC,
+    nslog,
+    high::squirrel::FUNCTION_SQ_REGISTER,
+};
 
 pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
-/// cpp name, sq name, types, return, func
-pub type SQFuncInfo = (
-    &'static str,
-    &'static str,
-    &'static str,
-    &'static str,
-    ScriptVmType,
-    SQFunction,
-);
+
+/// holds infomation about a sq function for it to be registered corretly
+pub struct SQFuncInfo {
+    pub cpp_func_name: &'static str,
+    pub sq_func_name: &'static str,
+    pub types: &'static str,
+    pub return_type: &'static str,
+    pub vm: ScriptVmType,
+    pub function: SQFunction,
+}
 
 /// All the possible vm types titanfall 2 has
 ///

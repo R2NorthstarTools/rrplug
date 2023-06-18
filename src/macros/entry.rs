@@ -11,7 +11,11 @@ macro_rules! entry {
             use $crate::plugin::Plugin;
             use $crate::bindings::{plugin_abi, squirrelclasstypes, squirreldatatypes};
             use $crate::log;
-            use $crate::wrappers::{northstar, squirrel};
+            use $crate::{high,mid};
+            use mid::squirrel::SQFUNCTIONS;
+            use high::{northstar::ScriptVmType,engine::EngineData};
+
+            use std::ffi::CString;
 
             static PLUGIN: $crate::OnceCell<$plugin> = $crate::OnceCell::new();
 
@@ -24,7 +28,7 @@ macro_rules! entry {
                 let mut plugin: $plugin = $crate::plugin::Plugin::new();
 
                 let plugin_data = unsafe {
-                    $crate::wrappers::northstar::PluginData::new(
+                    $crate::high::northstar::PluginData::new(
                         plugin_init_funcs,
                         plugin_northstar_data,
                     )
@@ -53,7 +57,7 @@ macro_rules! entry {
                     }
                 };
 
-                _ = squirrel::SQFUNCTIONS.client.set((*funcs).into())
+                _ = SQFUNCTIONS.client.set((*funcs).into())
             }
 
             #[no_mangle]
@@ -69,7 +73,7 @@ macro_rules! entry {
                     }
                 };
 
-                _ = squirrel::SQFUNCTIONS.server.set((*funcs).into())
+                _ = SQFUNCTIONS.server.set((*funcs).into())
             }
 
             #[no_mangle]
@@ -78,15 +82,15 @@ macro_rules! entry {
                 context: squirrelclasstypes::ScriptContext,
                 sqvm: *mut squirreldatatypes::CSquirrelVM,
             ) {
-                let context = std::convert::Into::<northstar::ScriptVmType>::into(context);
+                let context = std::convert::Into::<high::northstar::ScriptVmType>::into(context);
                 log::info!("PLUGIN_INFORM_SQVM_CREATED called {}", context);
 
-                let mut locked_register_functions = squirrel::FUNCTION_SQ_REGISTER.lock();
+                let mut locked_register_functions = high::squirrel::FUNCTION_SQ_REGISTER.lock();
 
                 let sq_functions = match context {
-                    northstar::ScriptVmType::Server => squirrel::SQFUNCTIONS.server.wait(),
-                    northstar::ScriptVmType::Client => squirrel::SQFUNCTIONS.client.wait(),
-                    northstar::ScriptVmType::Ui => squirrel::SQFUNCTIONS.client.wait(),
+                    ScriptVmType::Server => SQFUNCTIONS.server.wait(),
+                    ScriptVmType::Client => SQFUNCTIONS.client.wait(),
+                    ScriptVmType::Ui => SQFUNCTIONS.client.wait(),
                     _ => {
                         log::error!("invalid ScriptContext");
                         return;
@@ -95,15 +99,15 @@ macro_rules! entry {
 
                 let sq_register_func = sq_functions.register_squirrel_func;
 
-                for (cpp_func_name, sq_func_name, types, returntype, _, func) in
+                for func_info in
                     locked_register_functions
                         .iter_mut()
                         .map(|f| f())
-                        .filter(|info| info.4.is_right_vm(&context))
+                        .filter(|info| info.vm.is_right_vm(&context))
                 {
-                    log::info!("Registering {context} function {sq_func_name} with types: {types}"); // TODO: context int to str
+                    log::info!("Registering {context} function {} with types: {}", func_info.sq_func_name, func_info.types);
 
-                    let esq_returntype = match returntype.split('<').collect::<Vec<&str>>()[0] {
+                    let esq_returntype = match func_info.return_type.split('<').collect::<Vec<&str>>()[0] {
                         "bool" => squirrelclasstypes::eSQReturnType::Boolean,
                         "float" => squirrelclasstypes::eSQReturnType::Float,
                         "vector" => squirrelclasstypes::eSQReturnType::Vector,
@@ -119,55 +123,37 @@ macro_rules! entry {
                     };
 
                     // shouldn't be unwraping here but I will say : why did you name your function like this?
-                    let sq_func_name = Box::new(std::ffi::CString::new(sq_func_name).unwrap());
-                    let help_test = Box::new(std::ffi::CString::new("what help").unwrap());
-                    let cpp_func_name = Box::new(std::ffi::CString::new(cpp_func_name).unwrap());
-                    let returntype = Box::new(std::ffi::CString::new(returntype).unwrap());
-                    let types = Box::new(std::ffi::CString::new(types).unwrap());
+                    let sq_func_name = CString::new(func_info.sq_func_name).unwrap();
+                    let cpp_func_name = CString::new("what help").unwrap();
+                    let help_test = CString::new(func_info.cpp_func_name).unwrap();
+                    let returntype = CString::new(func_info.return_type).unwrap();
+                    let types = CString::new(func_info.types).unwrap();
 
-                    let sq_func_name_ptr = Box::leak(sq_func_name).as_ptr();
-                    let cpp_func_name_ptr = Box::leak(cpp_func_name).as_ptr();
-                    let help_test_ptr = Box::leak(help_test).as_ptr();
-                    let returntype_ptr = Box::leak(returntype).as_ptr();
-                    let types_ptr = Box::leak(types).as_ptr();
-
-                    let reg = Box::new(std::mem::MaybeUninit::<
+                    let mut reg = std::mem::MaybeUninit::<
                         squirrelclasstypes::SQFuncRegistration,
-                    >::zeroed());
-                    let struct_ptr = Box::leak(reg).as_mut_ptr();
+                    >::zeroed();
+                    let struct_ptr = reg.as_mut_ptr();
 
                     unsafe {
-                        std::ptr::addr_of_mut!((*struct_ptr).squirrelFuncName).write(sq_func_name_ptr);
-                        std::ptr::addr_of_mut!((*struct_ptr).cppFuncName).write(cpp_func_name_ptr);
-                        std::ptr::addr_of_mut!((*struct_ptr).helpText).write(help_test_ptr);
-                        std::ptr::addr_of_mut!((*struct_ptr).returnTypeString).write(returntype_ptr);
+                        std::ptr::addr_of_mut!((*struct_ptr).squirrelFuncName).write(sq_func_name.as_ptr());
+                        std::ptr::addr_of_mut!((*struct_ptr).cppFuncName).write(cpp_func_name.as_ptr());
+                        std::ptr::addr_of_mut!((*struct_ptr).helpText).write(help_test.as_ptr());
+                        std::ptr::addr_of_mut!((*struct_ptr).returnTypeString).write(returntype.as_ptr());
                         std::ptr::addr_of_mut!((*struct_ptr).returnType).write(esq_returntype);
-                        std::ptr::addr_of_mut!((*struct_ptr).argTypes).write(types_ptr);
-                        std::ptr::addr_of_mut!((*struct_ptr).funcPtr).write(func);
+                        std::ptr::addr_of_mut!((*struct_ptr).argTypes).write(types.as_ptr());
+                        std::ptr::addr_of_mut!((*struct_ptr).funcPtr).write(func_info.function);
                     };
 
-                    debug_assert!(!sq_func_name_ptr.is_null());
-                    debug_assert!(!cpp_func_name_ptr.is_null());
-                    debug_assert!(!help_test_ptr.is_null());
-                    debug_assert!(!returntype_ptr.is_null());
-                    debug_assert!(!types_ptr.is_null());
                     debug_assert!(!struct_ptr.is_null());
                     debug_assert!(!sqvm.is_null());
 
                     unsafe {
                         sq_register_func(sqvm, struct_ptr, 1);
-
-                        _ = Box::from_raw(struct_ptr);
-                        _ = *std::ffi::CStr::from_ptr(sq_func_name_ptr);
-                        _ = *std::ffi::CStr::from_ptr(cpp_func_name_ptr);
-                        _ = *std::ffi::CStr::from_ptr(help_test_ptr);
-                        _ = *std::ffi::CStr::from_ptr(returntype_ptr);
-                        _ = *std::ffi::CStr::from_ptr(types_ptr);
                     }
                 }
 
                 let handle =
-                    $crate::wrappers::squirrel::CSquirrelVMHandle::<<$plugin as Plugin>::SaveType>::new(
+                    high::squirrel::CSquirrelVMHandle::<<$plugin as Plugin>::SaveType>::new(
                         sqvm, context,
                     );
 
@@ -177,7 +163,7 @@ macro_rules! entry {
             #[no_mangle]
             #[export_name = "PLUGIN_INFORM_SQVM_DESTROYED"]
             extern "C" fn plugin_inform_sqvm_destroyed(context: squirrelclasstypes::ScriptContext) {
-                let context = std::convert::Into::<northstar::ScriptVmType>::into(context);
+                let context = std::convert::Into::<ScriptVmType>::into(context);
                 PLUGIN.wait().on_sqvm_destroyed(context);
             }
 
@@ -193,26 +179,26 @@ macro_rules! entry {
                         let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
                         let engine_result = match engine_dll.as_ref() {
                             Some(engine_dll) => {
-                                match $crate::wrappers::engine::ENGINE_DATA
-                                    .set($crate::wrappers::engine::EngineData::new(&*engine_dll))
+                                match mid::engine::ENGINE_DATA
+                                    .set(EngineData::new(&*engine_dll))
                                 {
                                     // maybe use as_ref later
-                                    Ok(_) => northstar::EngineLoadType::Engine(
-                                        $crate::wrappers::engine::ENGINE_DATA.wait(),
+                                    Ok(_) => high::northstar::EngineLoadType::Engine(
+                                        mid::engine::ENGINE_DATA.wait(),
                                     ),
-                                    Err(_) => northstar::EngineLoadType::EngineFailed,
+                                    Err(_) => high::northstar::EngineLoadType::EngineFailed,
                                 }
                             }
-                            None => northstar::EngineLoadType::EngineFailed,
+                            None => high::northstar::EngineLoadType::EngineFailed,
                         };
                         PLUGIN.wait().on_engine_load(&engine_result, dll_ptr)
                     },
                     plugin_abi::PluginLoadDLL::SERVER => PLUGIN
                         .wait()
-                        .on_engine_load(&northstar::EngineLoadType::Server, dll_ptr),
+                        .on_engine_load(&high::northstar::EngineLoadType::Server, dll_ptr),
                     plugin_abi::PluginLoadDLL::CLIENT => PLUGIN
                         .wait()
-                        .on_engine_load(&northstar::EngineLoadType::Client, dll_ptr)
+                        .on_engine_load(&high::northstar::EngineLoadType::Client, dll_ptr)
                 }
             }
 

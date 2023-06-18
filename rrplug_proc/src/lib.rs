@@ -1,13 +1,14 @@
 extern crate proc_macro;
 
-use proc_macro::TokenStream;
+use proc_macro::{TokenStream};
+use syn::__private::TokenStream2;
 use quote::{format_ident, quote, ToTokens};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
     self, parse_macro_input, FnArg, Ident, ItemFn, Result as SynResult, ReturnType, Stmt, Token,
-    Type,
+    Type, parse_quote,
 };
 
 struct Arg {
@@ -15,6 +16,7 @@ struct Arg {
     arg: Ident,
 }
 
+// TODO: rewrite this with string literals since this garbage
 impl Parse for Arg {
     fn parse(input: ParseStream) -> SynResult<Self> {
         let ident = input.parse()?;
@@ -115,7 +117,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
 
-    // type, name, token stream
+    /// type, name, token stream
     fn match_input(
         arg: &FnArg,
         sq_stack_pos: i32,
@@ -158,7 +160,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     let name = t.clone().pat.to_token_stream();
                     let tk = quote! {
                         let #name = unsafe {
-                            rrplug::wrappers::vector::Vector3::from( (sq_functions.sq_getvector)(sqvm, #sq_stack_pos) )
+                            rrplug::high::vector::Vector3::from( (sq_functions.sq_getvector)(sqvm, #sq_stack_pos) )
                         };
                     }
                     .into();
@@ -170,7 +172,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     let sqty = recursive_type_match(*t.ty)?;
                     let tk = quote! {
                         let mut #name = unsafe {
-                            let mut obj = Box::new(std::mem::MaybeUninit::<SQObject>::zeroed());
+                            let mut obj = Box::new(std::mem::MaybeUninit::<SQObject>::zeroed()); // TODO: import SQObject maybe? 
                             (sq_functions.sq_getobject)(sqvm, #sq_stack_pos, obj.as_mut_ptr());
                             obj
                         };
@@ -217,16 +219,43 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         sig,
         block,
     } = input;
-    let mut stmts = block.stmts;
+
+    let stmts = block.stmts;
+    let mut sub_stms = Vec::new();
     let mut sqtypes = String::new();
     let ident = &sig.ident;
     let input = &sig.inputs;
+    let input_vec = input
+        .iter().map(|arg| 
+            if let FnArg::Typed(t) = arg.clone() {
+                 if let Type::BareFn(_) = &*t.ty {
+                    let name = t.clone().pat.to_token_stream();
+                    parse_quote!(mut #name: Box<std::mem::MaybeUninit<SQObject>> )
+                 }
+                 else {
+                    arg.to_owned()
+                }
+
+        } else {
+            arg.to_owned()
+        } );
+    let input_var_names: Vec<TokenStream2> = input.iter().cloned()
+        .filter_map(|input| if let FnArg::Typed(t) = input { Some(t) } else { None } )
+        .map::<TokenStream2,_>(|t| t.pat.into_token_stream().into() )
+        .collect();
     let output = &sig.output;
-    let default_sq_output = "-> rrplug::bindings::squirrelclasstypes::SQRESULT";
-    let mut default_sq_output: ReturnType = syn::parse_str(default_sq_output).expect("boom");
+    let (ouput_type,ouput_parsing) = match output.clone() {
+        ReturnType::Default => (parse_quote!(()),quote!(rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NULL)),
+        ReturnType::Type(_, t) => 
+        (t,quote!({
+            use rrplug::high::squirrel_traits::PushToSquirrelVm;
+            output.push_to_sqvm(sqvm, sq_functions);
+            rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
+        })),
+    };
     let func_name = ident.to_string();
+    let sq_functions_func: Ident = format_ident!("sq_func_{}", func_name.clone());
     let mut export_name = ident.to_string();
-    let cpp_ident = format_ident!("info_{}", func_name.clone());
 
     let mut sq_stack_pos = 1;
     let mut sq_gets_stmts = Vec::new();
@@ -297,12 +326,11 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
     sq_gets_stmts.reverse();
     for s in sq_gets_stmts {
-        stmts.insert(0, s);
+        sub_stms.insert(0, s);
     }
 
     let mut script_vm_func = "client";
     let mut script_vm = "Client";
-    let mut is_message = false;
 
     for arg in args {
         let input = arg.arg.to_string();
@@ -323,10 +351,6 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 script_vm = "Client";
                 script_vm_func = "client";
             }
-            "SQMessage" => {
-                is_message = true;
-                default_sq_output = ReturnType::Default;
-            } // this has to be finshed some day, rn asycn fn calls with i32 return don't cause problems
             "ExportName" => export_name = input,
             "ReturnOverwrite" => out = out,
             _ => {
@@ -339,28 +363,44 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
     let script_vm_type = format_ident!("{script_vm}");
-    let script_vm_func = format_ident!("{script_vm_func}" );
+    let script_vm_func = format_ident!("{script_vm_func}");
 
     let tk = quote! {let sq_functions = SQFUNCTIONS.#script_vm_func.wait();}.into();
-    push_stmts!(stmts, tk);
-
-    let mut info_func = quote! {
-        #vis const fn #cpp_ident () -> rrplug::wrappers::northstar::SQFuncInfo {
-
-            (#func_name, #export_name, #sqtypes, #out, rrplug::wrappers::northstar::ScriptVmType::#script_vm_type, Some(#ident) )
-        }
-    };
-
-    if is_message {
-        info_func = quote!("");
-    }
+    push_stmts!(sub_stms, tk);
 
     let out: TokenStream = quote! {
-        extern "C" fn #ident (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) #default_sq_output {
-            #(#stmts)*
+        #[doc(hidden)]
+        #vis extern "C" fn #sq_functions_func (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
+            
+            #(#sub_stms)*
+            
+            #[allow(clippy::boxed_local)]
+            fn inner_function( sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM, sq_functions: &SquirrelFunctionsUnwraped #(, #input_vec)* ) -> Result<#ouput_type,String> {
+                #(#stmts)*
+            }
+
+            match inner_function( sqvm, sq_functions #(, #input_var_names)* ) {
+                Ok(output) => {
+                    #ouput_parsing
+                },
+                Err(err) => {
+                    let err = rrplug::to_sq_string!(err);
+                    unsafe { (sq_functions.sq_raiseerror)(sqvm, err.as_ptr()) };
+                    rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR 
+                }
+            }
         }
 
-        #info_func
+        #vis const fn #ident () -> rrplug::high::northstar::SQFuncInfo {
+            rrplug::high::northstar::SQFuncInfo{ 
+                cpp_func_name: #func_name, 
+                sq_func_name: #export_name, 
+                types: #sqtypes, 
+                return_type: #out, 
+                vm: ScriptVmType::#script_vm_type, 
+                function: Some( #sq_functions_func ),
+            }
+        }
     }.into();
 
     out
@@ -396,19 +436,22 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
         block,
     } = input;
 
-    let mut stmts = block.stmts;
+    let stmts = block.stmts;
     let ident = &sig.ident;
-
-    let tk = quote! {
-        let command = rrplug::Lazy::<rrplug::wrappers::concommands::CCommandResult,_>::new( || rrplug::wrappers::concommands::CCommandResult::from(command) );
-    }
-        .into();
-    let new_stmt = parse_macro_input!(tk as Stmt);
-    stmts.insert(0, new_stmt);
+    let input = &sig.inputs;
+    let output = &sig.output;
+    
+    // TODO: allow the users to manipulate the input of the inner function
 
     quote! {
-        #vis extern "C" fn #ident (command: *const rrplug::bindings::command::CCommand) {
-            #(#stmts)*
+        #vis unsafe extern "C" fn #ident (ccommand: *const rrplug::bindings::command::CCommand) {
+            fn inner_function ( #input ) #output {
+                #(#stmts)*
+            }
+
+            let ccommand = rrplug::high::concommands::CCommandResult::new(ccommand);
+
+            _ = inner_function(ccommand);
         }
     }
     .into()
@@ -431,30 +474,24 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
         block,
     } = input;
 
-    let mut stmts = block.stmts;
+    let stmts = block.stmts;
     let ident = &sig.ident;
-
-    let tk = quote! {
-        let convar: Option<rrplug::wrappers::convars::ConVarStruct> = None;
-    }
-    .into();
-    let new_stmt = parse_macro_input!(tk as Stmt);
-    stmts.insert(0, new_stmt);
-
-    let tk = quote! {
-        let old_value = unsafe { std::ffi::CStr::from_ptr(old_value).to_string_lossy().to_string() };
-    }
-    .into();
-    let new_stmt = parse_macro_input!(tk as Stmt);
-    stmts.insert(0, new_stmt);
+    let input = &sig.inputs;
+    let output = &sig.output;
 
     quote! {
-        #vis extern "C" fn #ident (
+        #vis unsafe extern "C" fn #ident (
             convar: *mut rrplug::bindings::convar::ConVar,
             old_value: *const ::std::os::raw::c_char,
             float_old_value: f32
         ) {
-            #(#stmts)*
+            fn inner_function ( #input ) #output {
+                #(#stmts)*
+            }
+
+            let old_value = std::ffi::CStr::from_ptr(old_value).to_string_lossy().to_string();
+
+            _ = inner_function(old_value,float_old_value);
         }
     }
     .into()

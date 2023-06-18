@@ -1,6 +1,6 @@
 use std::any::Any;
 
-use crate::wrappers::{
+use crate::high::{
     northstar::{EngineLoadType, PluginData, ScriptVmType},
     squirrel::CSquirrelVMHandle,
 };

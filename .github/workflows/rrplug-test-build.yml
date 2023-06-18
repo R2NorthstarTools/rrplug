@@ -24,7 +24,6 @@ jobs:
         key: whar
     - name: Build
       run: |
-        rustup override set nightly
         cargo build --all-features
     - name: Check clippy
       run: |

@@ -67,19 +67,14 @@ use std::{
     ptr::addr_of_mut,
 };
 
-use super::{
-    engine::{get_engine_data, EngineData},
-    errors::RegisterError,
-    northstar::CREATE_OBJECT_FUNC,
-};
+use super::engine::EngineData;
 use crate::{
     bindings::{
-        command::ConCommandBase,
-        convar::{
-            ConVar, ConVarMallocType, ConVarRegisterType, FnChangeCallback_t, FCVAR_NEVER_AS_STRING,
-        },
-        plugin_abi::{ObjectType, PluginEngineData},
+        convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
+        plugin_abi::ObjectType,
     },
+    errors::RegisterError,
+    mid::{engine::get_engine_data, northstar::CREATE_OBJECT_FUNC},
     to_sq_string,
 };
 
@@ -446,24 +441,3 @@ unsafe impl Sync for ConVarStruct {}
 unsafe impl Sync for ConVar {}
 unsafe impl Send for ConVarStruct {}
 unsafe impl Send for ConVar {}
-
-pub(crate) struct ConVarClasses {
-    convar_vtable: *mut c_void,
-    convar_register: ConVarRegisterType,
-    iconvar_vtable: *mut ConCommandBase,
-    convar_malloc: ConVarMallocType,
-}
-
-impl ConVarClasses {
-    pub fn new(raw: &PluginEngineData) -> Self {
-        let convar_malloc: ConVarMallocType = unsafe { mem::transmute(raw.conVarMalloc) };
-        let iconvar_vtable = unsafe { mem::transmute(raw.IConVar_Vtable) };
-        let convar_register: ConVarRegisterType = unsafe { mem::transmute(raw.conVarRegister) };
-        Self {
-            convar_vtable: raw.ConVar_Vtable,
-            iconvar_vtable,
-            convar_register,
-            convar_malloc,
-        }
-    }
-}

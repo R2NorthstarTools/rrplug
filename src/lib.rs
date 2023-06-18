@@ -83,13 +83,19 @@
 //! ```
 //!
 
+// #![warn(missing_docs)]
+
+#[allow(missing_docs)]
 pub mod bindings;
+pub mod errors;
+pub mod high;
+pub mod low;
 pub mod macros;
+pub mod mid;
 #[doc(hidden)]
 pub mod nslog;
 pub mod plugin;
 pub mod prelude;
-pub mod wrappers;
 
 // could be changed to sqexternal also add low, med and high
 #[doc(hidden)]
@@ -105,13 +111,15 @@ mod test {
     use rrplug_proc::*;
 
     #[convar]
-    fn test_convar() {}
+    fn test_convar(_old_string: String, _old_float: f32) -> () {}
 
     #[concommand]
-    fn test_concommand() {}
+    fn test_concommand(mut command: CCommandResult) {
+        log::info!("test {:?}", command.get_args());
+    }
 
     #[sqfunction(VM=Server)]
-    fn test_sqfunction() {
-        crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NULL
+    fn test_sqfunction(_test3: String, _test2: i32) -> String {
+        Ok("ok".into())
     }
 }

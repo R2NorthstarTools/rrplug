@@ -9,43 +9,24 @@ use std::{
     mem::{transmute, MaybeUninit},
 };
 
-use super::{
-    errors::{CallError, SQCompileError},
-    northstar::{FuncSQFuncInfo, ScriptVmType},
-    vector::Vector3,
-};
+use super::northstar::{FuncSQFuncInfo, ScriptVmType};
 use crate::{
     bindings::{
         squirrelclasstypes::{CompileBufferState, SQRESULT},
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQObject},
         unwraped::SquirrelFunctionsUnwraped,
     },
-    to_sq_string,
+    errors::{CallError, SQCompileError},
+    to_sq_string, low::squirrel::SQFUNCTIONS,
 };
 
 #[doc(hidden)]
 pub static FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
 
-/// functions that used to interact with the sqvm
-///
-/// client functions are both for ui and client vms
-pub static SQFUNCTIONS: SqFunctions = SqFunctions {
-    client: OnceCell::new(),
-    server: OnceCell::new(),
-};
-
 type CSquirrelVMStatic = Mutex<OnceCell<CSquirrelVMHandle<Saved>>>;
 pub static SV_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
 pub static CL_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
 pub static UI_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
-
-/// functions that used to interact with the sqvm
-///
-/// client functions are both for ui and client vms
-pub struct SqFunctions {
-    pub client: OnceCell<SquirrelFunctionsUnwraped>,
-    pub server: OnceCell<SquirrelFunctionsUnwraped>,
-}
 
 #[derive(Debug)] // super cringe
 
@@ -246,6 +227,16 @@ pub fn call_sq_function(
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
 /// this only allows calls without args use the marco [`crate::call_sq_object_function`] instead if you want args
+///
+/// ## Example
+///
+/// ```
+/// #[sqfunction(VM=Server)]
+/// fn call_sqvm_function(func: Fn()) {
+///     call_sq_object_function(sqvm, sq_functions, func);
+///     SQRESULT::SQRESULT_NULL
+/// }
+/// ```
 pub fn call_sq_object_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
@@ -273,6 +264,14 @@ fn _call_sq_object_function(
 }
 
 /// compiles a string and runs it on the provided sqvm
+///
+/// ## Example
+///
+/// ``` no_run
+///
+/// compile_string(sqvm, sqfunctions, true, "print(\"helloworld\")");
+///
+/// ```
 pub fn compile_string(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
@@ -308,174 +307,6 @@ pub fn compile_string(
             }
         } else {
             Err(SQCompileError::CompileError)
-        }
-    }
-}
-
-pub fn push_sq_array<T>(
-    sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
-    arguments: Vec<T>,
-) where
-    T: PushToSquirrelVm,
-{
-    unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
-
-    for e in arguments.into_iter() {
-        e.push_to_sqvm(sqvm, sqfunctions);
-        unsafe { (sqfunctions.sq_arrayappend)(sqvm, -2) };
-    }
-}
-
-pub fn push_sq_float(
-    sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
-    float: impl Into<f32>,
-) {
-    unsafe { (sqfunctions.sq_pushfloat)(sqvm, float.into()) };
-}
-
-pub fn push_sq_int(
-    sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
-    int: impl Into<i32>,
-) {
-    unsafe { (sqfunctions.sq_pushinteger)(sqvm, int.into()) };
-}
-
-pub fn push_sq_bool(sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped, boolen: bool) {
-    unsafe { (sqfunctions.sq_pushbool)(sqvm, boolen as u32) };
-}
-
-pub fn push_sq_string(
-    sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
-    string: impl Into<String>,
-) {
-    // boxing this would be a good idea and leaking; altough we don't need to?
-    let cstring = to_sq_string!(string.into());
-    // its impossble for it to crash since we replace null with space if it does it must be reported
-    unsafe { (sqfunctions.sq_pushstring)(sqvm, cstring.as_ptr(), -1) }; // why -1?
-}
-
-pub fn push_sq_vector(
-    sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
-    vector: Vector3,
-) {
-    unsafe { (sqfunctions.sq_pushvector)(sqvm, (&vector).into()) };
-}
-
-pub fn push_sq_object(
-    sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
-    mut object: MaybeUninit<SQObject>,
-) {
-    unsafe { (sqfunctions.sq_pushobject)(sqvm, object.as_mut_ptr()) };
-}
-
-pub trait PushToSquirrelVm {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped);
-}
-
-impl PushToSquirrelVm for String {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        push_sq_string(sqvm, sqfunctions, self)
-    }
-}
-
-impl PushToSquirrelVm for i32 {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        push_sq_int(sqvm, sqfunctions, self)
-    }
-}
-
-impl PushToSquirrelVm for f32 {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        push_sq_float(sqvm, sqfunctions, self)
-    }
-}
-
-impl PushToSquirrelVm for bool {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        push_sq_bool(sqvm, sqfunctions, self)
-    }
-}
-
-impl PushToSquirrelVm for Vector3 {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        push_sq_vector(sqvm, sqfunctions, self)
-    }
-}
-
-impl PushToSquirrelVm for MaybeUninit<SQObject> {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        push_sq_object(sqvm, sqfunctions, self)
-    }
-}
-
-impl PushToSquirrelVm for Box<dyn Iterator<Item = String>> {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
-
-        for e in self {
-            e.push_to_sqvm(sqvm, sqfunctions);
-            unsafe { (sqfunctions.sq_arrayappend)(sqvm, -2) };
-        }
-    }
-}
-
-impl PushToSquirrelVm for Box<dyn Iterator<Item = i32>> {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
-
-        for e in self {
-            e.push_to_sqvm(sqvm, sqfunctions);
-            unsafe { (sqfunctions.sq_arrayappend)(sqvm, -2) };
-        }
-    }
-}
-
-impl PushToSquirrelVm for Box<dyn Iterator<Item = f32>> {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
-
-        for e in self {
-            e.push_to_sqvm(sqvm, sqfunctions);
-            unsafe { (sqfunctions.sq_arrayappend)(sqvm, -2) };
-        }
-    }
-}
-
-impl PushToSquirrelVm for Box<dyn Iterator<Item = bool>> {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
-
-        for e in self {
-            e.push_to_sqvm(sqvm, sqfunctions);
-            unsafe { (sqfunctions.sq_arrayappend)(sqvm, -2) };
-        }
-    }
-}
-
-impl PushToSquirrelVm for Box<dyn Iterator<Item = Vector3>> {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
-
-        for e in self {
-            e.push_to_sqvm(sqvm, sqfunctions);
-            unsafe { (sqfunctions.sq_arrayappend)(sqvm, -2) };
-        }
-    }
-}
-
-impl PushToSquirrelVm for Box<dyn Iterator<Item = MaybeUninit<SQObject>>> {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
-        unsafe { (sqfunctions.sq_newarray)(sqvm, 0) }
-
-        for e in self {
-            e.push_to_sqvm(sqvm, sqfunctions);
-            unsafe { (sqfunctions.sq_arrayappend)(sqvm, -2) };
         }
     }
 }

@@ -1,8 +1,17 @@
 pub use crate::entry;
 pub use crate::plugin::Plugin;
-pub use crate::wrappers::northstar::PluginData;
-pub use crate::wrappers::squirrel::{SQFUNCTIONS,Save,NoSave};
+pub use crate::{
+    bindings::unwraped::SquirrelFunctionsUnwraped,
+    high::{
+        concommands::CCommandResult,
+        northstar::{EngineLoadType, PluginData, ScriptVmType},
+        squirrel::{CSquirrelVMHandle, NoSave, Save},
+    },
+    mid::squirrel::SQFUNCTIONS,
+};
 pub use log;
+
+// consider adding more stuff ^
 
 /// puts a thread on sleep in milliseconds
 pub fn wait(milliseconds: u64) {

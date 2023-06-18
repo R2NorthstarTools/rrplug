@@ -38,31 +38,35 @@
 //! }
 //! ```
 
-use super::northstar::CREATE_OBJECT_FUNC;
 use std::ffi::CStr;
-use std::os::raw::c_void;
-use std::ptr;
 
-use crate::bindings::command::{CCommand, ConCommand, ConCommandConstructorType};
-use crate::bindings::plugin_abi::ObjectType;
-use crate::to_sq_string;
-
-use super::errors::RegisterError;
+use crate::bindings::command::CCommand;
 
 /// [`CCommandResult`] gets all the usefull stuff from [`*const CCommand`] and puts in this safe struct
-#[derive(Debug, Default)]
 pub struct CCommandResult {
-    pub args: Vec<String>,
-    pub command: String,
+    ccommand: Option<CCommand>,
+    args: Option<Vec<String>>,
+    command: Option<String>,
 }
 
-impl From<*const CCommand> for CCommandResult {
-    fn from(value: *const CCommand) -> Self {
-        let ccommand = match unsafe { value.as_ref() } {
-            Some(c) => c,
-            None => return Self::default(),
-        };
-        let ccommand = *ccommand;
+impl CCommandResult {
+    pub fn new(ccommand: *const CCommand) -> Self {
+        match unsafe { ccommand.as_ref() } {
+            Some(c) => Self {
+                ccommand: Some(*c),
+                args: None,
+                command: None,
+            },
+            None => Self {
+                ccommand: None,
+                args: Some(Vec::new()),
+                command: Some(String::new()),
+            },
+        }
+    }
+
+    fn parse(&mut self) {
+        let ccommand = self.ccommand.unwrap();
 
         let (args, command) = unsafe {
             if ccommand.m_nArgv0Size == 0 {
@@ -79,25 +83,39 @@ impl From<*const CCommand> for CCommandResult {
             }
         };
 
-        Self { args, command }
+        (self.args, self.command) = (Some(args), Some(command));
+    }
+
+    pub fn get_args(&mut self) -> &[String] {
+        if self.args.is_none() {
+            self.parse()
+        }
+
+        match &self.args {
+            Some(args) => args,
+            None => unreachable!(),
+        }
+    }
+
+    pub fn get_command(&mut self) -> &str {
+        if self.command.is_none() {
+            self.parse()
+        }
+
+        match &self.command {
+            Some(command) => command,
+            None => unreachable!(),
+        }
     }
 }
 
-pub struct RegisterConCommands {
-    reg_func: ConCommandConstructorType,
-}
-
+// maybe this will work in the future
+/*
 impl RegisterConCommands {
-    pub(crate) unsafe fn new(ptr: *const c_void) -> Self {
-        let reg_func: ConCommandConstructorType = std::mem::transmute(ptr);
-
-        Self { reg_func }
-    }
-
-    pub(crate) fn register_concommand(
+    pub(crate) fn register_concommand<T: Fn(CCommandResult)>(
         &self,
         name: String,
-        callback: extern "C" fn(arg1: *const CCommand),
+        callback: T,
         help_string: String,
         flags: i32,
     ) -> Result<(), RegisterError> {
@@ -117,7 +135,7 @@ impl RegisterConCommands {
             self.reg_func.unwrap()(
                 command,
                 name_ptr,
-                Some(callback),
+                Some(ccommand_trampoline::<T>),
                 help_string_ptr,
                 flags,
                 ptr::null_mut(),
@@ -126,3 +144,8 @@ impl RegisterConCommands {
         Ok(())
     }
 }
+
+extern "C" fn ccommand_trampoline<const T: fn(CCommandResult)>(ccommand: *const CCommand) {
+    ccommand_trampoline(ccommand.into())
+}
+ */
