@@ -1,15 +1,15 @@
+///! the plugin system will look for a exported function to pass stuff to
+///!
+///! this exported function and others are created by the `entry` macro
+///!
+///! it takes your plugin struct and calls specific function for each event
+
 use std::any::Any;
 
 use crate::high::{
     northstar::{EngineLoadType, PluginData, ScriptVmType},
     squirrel::CSquirrelVMHandle,
 };
-
-///! the plugin system will look for a exported function to pass stuff to
-///!
-///! this exported function and others are created by the `entry` macro
-///!
-///! it takes your plugin struct and calls specific function for each event
 
 /// Trait for defining the callbacks and entry point of the plugin
 ///
