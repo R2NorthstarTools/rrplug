@@ -155,7 +155,8 @@ pub fn async_call_sq_function<T>(
     let sqfunctions = match context {
         ScriptVmType::Server => SQFUNCTIONS.server.get(),
         _ => SQFUNCTIONS.client.get(),
-    }.expect("SQFUNCTIONS should be initialized at this point");
+    }
+    .expect("SQFUNCTIONS should be initialized at this point");
 
     let c_callback = callback.as_ref().map(|_| {
         callback_trampoline::<T>

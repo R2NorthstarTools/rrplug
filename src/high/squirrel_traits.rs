@@ -101,6 +101,5 @@ get_from_sqvm! {
     get_sq_array::<Vec<f32>>(|obj| Some(unsafe{ obj._VAL.asFloat }));
     get_sq_array::<Vec<bool>>(|obj| Some(unsafe{ obj._VAL.asInteger != 0 }) );
     get_sq_array::<Vec<MaybeUninit<SQObject>>>(|obj| Some(std::mem::MaybeUninit::new(*obj))); // might not be sound since the stuff inside ptrs is not copied
+    get_sq_array::<Vec<Vector3>>(|obj| Some((obj as *const SQObject).into()));
 }
-// get_sq_array::<Vec<Vector3>>(|obj| obj.asVector.into()); // not a thing
-// atuaclly might just be a *const f32 so transmute::<_,*const f32>(obj._VAL)

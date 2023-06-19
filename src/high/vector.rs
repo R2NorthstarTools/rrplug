@@ -5,6 +5,8 @@
 
 use std::ops::{Add, Div, Mul, Sub};
 
+use crate::bindings::squirreldatatypes::{SQObject, SQVector};
+
 /// the repersention of the source engine's vector
 ///
 /// This is a copied struct since in reality its much more unsafe
@@ -27,12 +29,32 @@ impl Default for Vector3 {
 }
 
 impl From<*mut f32> for Vector3 {
+    #[inline]
     fn from(value: *mut f32) -> Self {
         unsafe { *std::mem::transmute::<*mut f32, *const Self>(value) }
     }
 }
 
+impl From<SQVector> for Vector3 {
+    #[inline]
+    fn from(value: SQVector) -> Self {
+        Vector3 {
+            x: value.x,
+            y: value.y,
+            z: value.z,
+        }
+    }
+}
+
+impl From<*const SQObject> for Vector3 {
+    #[inline]
+    fn from(value: *const SQObject) -> Self {
+        unsafe { std::mem::transmute::<_, SQVector>(*value) }.into()
+    }
+}
+
 impl Into<*const f32> for &Vector3 {
+    #[inline]
     fn into(self) -> *const f32 {
         self as *const Vector3 as *const f32 // do we need to leak it?, uh wait we can't leak this, I think the caller is responsible for the memeory
     }

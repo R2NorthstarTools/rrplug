@@ -13,6 +13,7 @@ pub struct EngineData {
     pub(crate) concommands: RegisterConCommands,
     pub(crate) convar: ConVarClasses,
     pub(crate) low: PluginEngineData,
+    // pub(crate) cvar: ,
 }
 
 // don't forget about CVar class

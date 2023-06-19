@@ -29,7 +29,7 @@ macro_rules! call_sq_function {
         {
             {
                 use $crate::high::squirrel_traits::PushToSquirrelVm; // weird
-                let mut args_amount = 1;
+                const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg ())),*]) as i32;
 
                 let mut obj = Box::new(std::mem::MaybeUninit::<$crate::bindings::squirreldatatypes::SQObject>::zeroed());
                 let ptr = obj.as_mut_ptr();
@@ -49,10 +49,9 @@ macro_rules! call_sq_function {
 
                         $(
                             $arg.push_to_sqvm($sqvm, $sqfunctions);
-                            args_amount += 1; // I know this runtime bloat but this the only way, proc marcos are hard
                         )*
 
-                        if ($sqfunctions.sq_call)($sqvm, args_amount, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR  {
+                        if ($sqfunctions.sq_call)($sqvm, ARGS_AMOUNT, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR  {
                             Err($crate::errors::CallError::FunctionFailedToExecute)
                         } else {
                             Ok(())
@@ -68,7 +67,7 @@ macro_rules! call_sq_function {
 ///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
-/// macro version of [`call_sq_object_function`], used to call a function with args
+/// macro version of [`crate::high::squirrel::call_sq_object_function`], used to call a function with args
 /// returns `Result<(), CallError>`
 ///
 /// ## example
@@ -86,7 +85,7 @@ macro_rules! call_sq_object_function {
         {
             {
                 use $crate::high::squirrel_traits::PushToSquirrelVm; // weird
-                let mut args_amount = 1;
+                const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg ())),*]) as i32;
 
                 let ptr = $obj.as_mut_ptr();
                 unsafe {
@@ -95,10 +94,9 @@ macro_rules! call_sq_object_function {
 
                     $(
                         $arg.push_to_sqvm($sqvm, $sqfunctions);
-                        args_amount += 1; // I know this runtime bloat but this the only way, proc marcos are hard
                     )*
 
-                    let result = if ($sqfunctions.sq_call)($sqvm, args_amount, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR {
+                    let result = if ($sqfunctions.sq_call)($sqvm, ARGS_AMOUNT, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR {
                         Err($crate::errors::CallError::FunctionFailedToExecute)
                     } else {
                         Ok(())
@@ -118,11 +116,39 @@ macro_rules! call_sq_object_function {
 ///
 /// ## example
 /// ```no_run
-/// call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).map_err(|err| err.to_string())?;
+/// call_sq_function!(ScriptVmType::Client, "SomeSQFunc", 9347, "Test");
 /// ```
 #[macro_export]
 macro_rules! async_call_sq_function {
-    ($sqvm:expr, $sqfunctions:expr, $function_name:expr, $( $arg:expr ),* ) => {};
+    ($context:expr, $function_name:expr, $( $arg:expr ),* ) => (
+        $crate::high::squirrel::async_call_sq_function(
+            $context,
+            $function_name,
+            Some( Box::new( |sqvm,sqfunctions| {
+                use $crate::high::squirrel_traits::PushToSquirrelVm;
+                $(
+                    $arg.push_to_sqvm(sqvm, sqfunctions);
+                )*
+
+                $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg ())),*]) as i32
+            } )),
+        )
+    );
+}
+
+/// internal macro used in counting args in some macros
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __replace_expr {
+    ($_t:tt $sub:expr) => {
+        $sub
+    };
+}
+
+/// internal const function to count args in some macros
+#[doc(hidden)]
+pub const fn __arg_count_helper<const N: usize>(_: [(); N]) -> usize {
+    N
 }
 
 #[cfg(test)]
@@ -132,14 +158,17 @@ mod test {
     use rrplug_proc::*;
 
     use rrplug::bindings::squirreldatatypes::SQObject;
-    use rrplug::{call_sq_function, call_sq_object_function};
+    use rrplug::{async_call_sq_function, call_sq_function, call_sq_object_function};
 
     #[sqfunction(VM = "Server")]
     fn test_call_funcs(func: fn(String)) -> String {
         call_sq_object_function!(sqvm, sq_functions, func, "test".to_string())
             .map_err(|err| err.to_string())?;
 
-        call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).map_err(|err| err.to_string())?;
+        call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347, 3892, 23423)
+            .map_err(|err| err.to_string())?;
+
+        async_call_sq_function!(ScriptVmType::Server, "SomeSQFunc", "test".to_string(), 9347);
 
         Ok("test".to_string())
     }
