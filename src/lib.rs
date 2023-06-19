@@ -97,11 +97,11 @@ pub mod nslog;
 pub mod plugin;
 pub mod prelude;
 
-// could be changed to sqexternal also add low, med and high
+// could be changed to sqexternal
 #[doc(hidden)]
 pub use log;
 #[doc(hidden)]
-pub use once_cell::{sync::OnceCell, unsync::Lazy};
+pub use once_cell::sync::OnceCell;
 pub use rrplug_proc::{concommand, convar, sqfunction};
 
 #[cfg(test)]
@@ -114,11 +114,11 @@ mod test {
     fn test_convar(_old_string: String, _old_float: f32) -> () {}
 
     #[concommand]
-    fn test_concommand(mut command: CCommandResult) {
+    fn test_concommand(command: CCommandResult) {
         log::info!("test {:?}", command.get_args());
     }
 
-    #[sqfunction(VM=Server)]
+    #[sqfunction(VM = "Server", ExportName = "test")]
     fn test_sqfunction(_test3: String, _test2: i32) -> String {
         Ok("ok".into())
     }

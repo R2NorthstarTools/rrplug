@@ -19,9 +19,7 @@ use crate::high::{
 pub trait Plugin: Any + Sync {
     type SaveType;
 
-    fn new() -> Self;
-
-    fn initialize(&mut self, plugin_data: &PluginData);
+    fn new(plugin_data: &PluginData) -> Self;
 
     fn main(&self);
 

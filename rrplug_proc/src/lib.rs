@@ -8,12 +8,12 @@ use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
     self, parse_macro_input, FnArg, Ident, ItemFn, Result as SynResult, ReturnType, Stmt, Token,
-    Type, parse_quote,
+    Type, parse_quote, LitStr,
 };
 
 struct Arg {
     ident: Ident,
-    arg: Ident,
+    arg: LitStr,
 }
 
 // TODO: rewrite this with string literals since this garbage
@@ -333,7 +333,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut script_vm = "Client";
 
     for arg in args {
-        let input = arg.arg.to_string();
+        let input = arg.arg.to_token_stream().to_string().replace('"', "");
         match &arg.ident.to_string()[..] {
             "VM" if input.to_uppercase().ends_with("UI") => {
                 script_vm = "Ui";
@@ -350,6 +350,10 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             "VM" if input.to_uppercase().ends_with("CLIENT") => {
                 script_vm = "Client";
                 script_vm_func = "client";
+            }
+            "VM" => {
+                let fmt = format!("invalid VM {}", input);
+                return quote!{ compile_error!(#fmt) }.into();
             }
             "ExportName" => export_name = input,
             "ReturnOverwrite" => out = out,
@@ -369,7 +373,19 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     push_stmts!(sub_stms, tk);
 
     let out: TokenStream = quote! {
+        #vis const fn #ident () -> rrplug::high::northstar::SQFuncInfo {
+            rrplug::high::northstar::SQFuncInfo{ 
+                cpp_func_name: #func_name, 
+                sq_func_name: #export_name, 
+                types: #sqtypes, 
+                return_type: #out, 
+                vm: ScriptVmType::#script_vm_type, 
+                function: Some( #sq_functions_func ),
+            }
+        }
+
         #[doc(hidden)]
+        #[doc = "generated ffi function for #func_name"]
         #vis extern "C" fn #sq_functions_func (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
             
             #(#sub_stms)*
@@ -388,17 +404,6 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     unsafe { (sq_functions.sq_raiseerror)(sqvm, err.as_ptr()) };
                     rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR 
                 }
-            }
-        }
-
-        #vis const fn #ident () -> rrplug::high::northstar::SQFuncInfo {
-            rrplug::high::northstar::SQFuncInfo{ 
-                cpp_func_name: #func_name, 
-                sq_func_name: #export_name, 
-                types: #sqtypes, 
-                return_type: #out, 
-                vm: ScriptVmType::#script_vm_type, 
-                function: Some( #sq_functions_func ),
             }
         }
     }.into();

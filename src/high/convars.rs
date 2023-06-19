@@ -150,7 +150,7 @@ impl ConVarStruct {
     ///
     /// Would only fail if something goes wrong with northstar
     pub fn try_new() -> Option<Self> {
-        let obj_func = (*CREATE_OBJECT_FUNC.wait())?;
+        let obj_func = (*CREATE_OBJECT_FUNC.get()?)?;
 
         get_engine_data().map(move |engine| Self::new(engine, obj_func))
     }

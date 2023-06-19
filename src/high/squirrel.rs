@@ -17,7 +17,8 @@ use crate::{
         unwraped::SquirrelFunctionsUnwraped,
     },
     errors::{CallError, SQCompileError},
-    to_sq_string, low::squirrel::SQFUNCTIONS,
+    mid::squirrel::SQFUNCTIONS,
+    to_sq_string,
 };
 
 #[doc(hidden)]
@@ -149,12 +150,12 @@ pub fn async_call_sq_function<T>(
     function_name: impl Into<String>,
     callback: Option<Box<T>>,
 ) where
-    T: FnOnce(*mut HSquirrelVM) -> i32,
+    T: FnOnce(*mut HSquirrelVM, &'static SquirrelFunctionsUnwraped) -> i32,
 {
     let sqfunctions = match context {
-        ScriptVmType::Server => SQFUNCTIONS.server.wait(),
-        _ => SQFUNCTIONS.client.wait(),
-    };
+        ScriptVmType::Server => SQFUNCTIONS.server.get(),
+        _ => SQFUNCTIONS.client.get(),
+    }.expect("SQFUNCTIONS should be initialized at this point");
 
     let c_callback = callback.as_ref().map(|_| {
         callback_trampoline::<T>
@@ -162,7 +163,7 @@ pub fn async_call_sq_function<T>(
     });
 
     let userdata: *mut c_void = match callback {
-        Some(callback) => Box::into_raw(callback) as *mut c_void,
+        Some(callback) => Box::into_raw(Box::new((callback, sqfunctions))) as *mut c_void,
         None => std::ptr::null_mut(),
     };
 
@@ -182,12 +183,13 @@ pub fn async_call_sq_function<T>(
         userdata: *mut c_void,
     ) -> i32
     where
-        T: FnOnce(*mut HSquirrelVM) -> i32,
+        T: FnOnce(*mut HSquirrelVM, &'static SquirrelFunctionsUnwraped) -> i32,
     {
-        match transmute::<_, *mut T>(userdata).as_mut() {
+        match transmute::<_, *mut (Box<T>, &'static SquirrelFunctionsUnwraped)>(userdata).as_mut() {
             Some(closure) => {
-                let boxed_closure: Box<T> = Box::from_raw(closure);
-                (*boxed_closure)(sqvm)
+                let boxed_tuple: Box<(Box<T>, &'static SquirrelFunctionsUnwraped)> =
+                    Box::from_raw(closure);
+                (*boxed_tuple.0)(sqvm, (*boxed_tuple).1)
             }
             None => 0,
         }

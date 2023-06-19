@@ -42,70 +42,45 @@ use std::ffi::CStr;
 
 use crate::bindings::command::CCommand;
 
-/// [`CCommandResult`] gets all the usefull stuff from [`*const CCommand`] and puts in this safe struct
+/// [`CCommandResult`] gets all the usefull stuff from [`*const CCommand`] and puts in this struct
+#[derive(Debug, Default)]
 pub struct CCommandResult {
-    ccommand: Option<CCommand>,
-    args: Option<Vec<String>>,
-    command: Option<String>,
+    args: Vec<String>,
+    command: String,
 }
 
 impl CCommandResult {
-    pub fn new(ccommand: *const CCommand) -> Self {
-        match unsafe { ccommand.as_ref() } {
-            Some(c) => Self {
-                ccommand: Some(*c),
-                args: None,
-                command: None,
-            },
-            None => Self {
-                ccommand: None,
-                args: Some(Vec::new()),
-                command: Some(String::new()),
-            },
-        }
-    }
-
-    fn parse(&mut self) {
-        let ccommand = self.ccommand.unwrap();
-
-        let (args, command) = unsafe {
-            if ccommand.m_nArgv0Size == 0 {
-                (Vec::new(), "".to_string())
-            } else {
-                let buffer = ccommand.m_pArgSBuffer.to_vec().as_ptr();
-                let whole_command = CStr::from_ptr(buffer).to_string_lossy().to_string();
-                let mut whole_command = whole_command.split_whitespace();
-
-                let command = whole_command.next().unwrap_or_default().into();
-                let args = whole_command.map(|a| a.to_string()).collect();
-
-                (args, command)
-            }
+    /// this function shouldn't be used by the end user
+    ///
+    /// # Safety
+    ///
+    /// should be safe if the input is correct
+    pub unsafe fn new(ccommand: *const CCommand) -> Self {
+        let ccommand = match ccommand.as_ref() {
+            Some(c) => c,
+            None => return Self::default(),
         };
 
-        (self.args, self.command) = (Some(args), Some(command));
+        if ccommand.m_nArgv0Size == 0 {
+            Self::default()
+        } else {
+            let buffer = ccommand.m_pArgSBuffer.as_ptr();
+            let whole_command = CStr::from_ptr(buffer).to_string_lossy().to_string();
+            let mut whole_command = whole_command.split_whitespace();
+
+            let command = whole_command.next().unwrap_or_default().into();
+            let args = whole_command.map(|a| a.to_string()).collect();
+
+            Self { args, command }
+        }
     }
 
-    pub fn get_args(&mut self) -> &[String] {
-        if self.args.is_none() {
-            self.parse()
-        }
-
-        match &self.args {
-            Some(args) => args,
-            None => unreachable!(),
-        }
+    pub fn get_args(&self) -> &[String] {
+        &self.args
     }
 
     pub fn get_command(&mut self) -> &str {
-        if self.command.is_none() {
-            self.parse()
-        }
-
-        match &self.command {
-            Some(command) => command,
-            None => unreachable!(),
-        }
+        &self.command
     }
 }
 

@@ -36,7 +36,8 @@ impl RegisterConCommands {
 
         let command: *mut ConCommand = unsafe {
             std::mem::transmute((CREATE_OBJECT_FUNC
-                .wait()
+                .get()
+                .ok_or(RegisterError::NoneFunction)?
                 .ok_or(RegisterError::NoneFunction))?(
                 ObjectType::CONCOMMANDS
             ))

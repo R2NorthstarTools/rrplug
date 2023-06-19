@@ -7,18 +7,28 @@ use crate::{
     },
 };
 
-/// "safely" calls any function defined on the sqvm
+/// calls any function defined on the sqvm
 ///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
-/// macro version of [`call_sq_function`], used to call a function with args
+/// macro version of [`crate::high::squirrel::call_sq_function`], used to call a function with args
 /// returns `Result<(), CallError>`
+///
+/// ## example
+/// ```no_run
+/// #[sqfunction(VM="Server")]
+/// fn test_call_funcs() {
+///     call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).map_err(|err| err.to_string())?;
+///
+///     Ok(())
+/// }
+/// ```
 #[macro_export]
 macro_rules! call_sq_function {
     ($sqvm:expr, $sqfunctions:expr, $function_name:expr, $( $arg:expr ),* ) => (
         {
             {
-                use rrplug::high::squirrel_traits::PushToSquirrelVm; // weird
+                use $crate::high::squirrel_traits::PushToSquirrelVm; // weird
                 let mut args_amount = 1;
 
                 let mut obj = Box::new(std::mem::MaybeUninit::<$crate::bindings::squirreldatatypes::SQObject>::zeroed());
@@ -54,18 +64,28 @@ macro_rules! call_sq_function {
     )
 }
 
-/// "safely" calls any function defined on the sqvm from its [`SQObject`]
+/// calls any function defined on the sqvm from its [`SQObject`]
 ///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
 /// macro version of [`call_sq_object_function`], used to call a function with args
 /// returns `Result<(), CallError>`
+///
+/// ## example
+/// ```no_run
+/// #[sqfunction(VM="Server")]
+/// fn test_call_funcs(func: fn(String)) {
+///     call_sq_object_function!(sqvm, sq_functions, func, "test".to_string()).map_err(|err| err.to_string())?;
+///
+///     Ok(())
+/// }
+/// ```
 #[macro_export]
 macro_rules! call_sq_object_function {
     ($sqvm:expr, $sqfunctions:expr, $obj:expr, $( $arg:expr ),* ) => (
         {
             {
-                use rrplug::high::squirrel_traits::PushToSquirrelVm; // weird
+                use $crate::high::squirrel_traits::PushToSquirrelVm; // weird
                 let mut args_amount = 1;
 
                 let ptr = $obj.as_mut_ptr();
@@ -91,6 +111,20 @@ macro_rules! call_sq_object_function {
     )
 }
 
+/// calls any function defined on the sqvm
+/// the call will happen on the next engine frame
+///
+/// macro version of [`crate::high::squirrel::async_call_sq_function`], used to call a function with args
+///
+/// ## example
+/// ```no_run
+/// call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).map_err(|err| err.to_string())?;
+/// ```
+#[macro_export]
+macro_rules! async_call_sq_function {
+    ($sqvm:expr, $sqfunctions:expr, $function_name:expr, $( $arg:expr ),* ) => {};
+}
+
 #[cfg(test)]
 mod test {
     use crate as rrplug;
@@ -100,55 +134,13 @@ mod test {
     use rrplug::bindings::squirreldatatypes::SQObject;
     use rrplug::{call_sq_function, call_sq_object_function};
 
-    #[sqfunction(VM=Server)]
-    fn test_call_funcse(func: fn(String)) -> String {
-        call_sq_object_function!(sqvm, sq_functions, func, "test".to_string()).unwrap();
+    #[sqfunction(VM = "Server")]
+    fn test_call_funcs(func: fn(String)) -> String {
+        call_sq_object_function!(sqvm, sq_functions, func, "test".to_string())
+            .map_err(|err| err.to_string())?;
 
-        call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).unwrap();
+        call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).map_err(|err| err.to_string())?;
 
         Ok("test".to_string())
     }
-
-    #[doc(hidden)]
-extern "C" fn sq_func_test_call_funcs(
-    sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM,
-) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
-    let sq_functions = SQFUNCTIONS.server.wait();
-    let mut func = unsafe {
-        let mut obj = Box::new(std::mem::MaybeUninit::<SQObject>::zeroed());
-        (sq_functions.sq_getobject)(sqvm, 1i32, obj.as_mut_ptr());
-        obj
-    };
-    fn inner_function(
-        sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM,
-        sq_functions: &SquirrelFunctionsUnwraped,
-        mut func: Box<std::mem::MaybeUninit<SQObject>>,
-    ) -> Result<String, String> {
-        call_sq_object_function!(sqvm, sq_functions, func, "test".to_string()).unwrap();
-        call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).unwrap();
-        Ok("test".to_string())
-    }
-    match inner_function(sqvm, sq_functions, func) {
-        Ok(output) => {
-            use rrplug::high::squirrel_traits::PushToSquirrelVm;
-            output.push_to_sqvm(sqvm, sq_functions);
-            rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
-        }
-        Err(err) => {
-            let err = rrplug::to_sq_string!(err);
-            unsafe { (sq_functions.sq_raiseerror)(sqvm, err.as_ptr()) };
-            rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR
-        }
-    }
-}
-const fn test_call_funcs() -> rrplug::high::northstar::SQFuncInfo {
-    rrplug::high::northstar::SQFuncInfo {
-        cpp_func_name: "test_call_funcs",
-        sq_func_name: "test_call_funcs",
-        types: "void functionref( string ) func",
-        return_type: "string",
-        vm: ScriptVmType::Server,
-        function: Some(sq_func_test_call_funcs),
-    }
-}
 }

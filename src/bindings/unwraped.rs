@@ -125,6 +125,8 @@ pub type RegisterSquirrelFuncType_External_unwraped = unsafe extern "C" fn(
     funcReg: *mut SQFuncRegistration,
     unknown: ::std::os::raw::c_char,
 ) -> i64;
+
+#[derive(Debug)]
 pub struct SquirrelFunctionsUnwraped {
     pub register_squirrel_func: register_squirrel_func_unwraped,
     pub sq_defconst: sq_defconstType_unwraped,

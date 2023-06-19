@@ -4,8 +4,11 @@
 #[macro_export]
 macro_rules! entry {
     ( $plugin:ident ) => {
+        #[allow(unused_imports)]
         #[doc(hidden)]
-        mod exports {
+        pub(crate) use exports::PLUGIN;
+        #[doc(hidden)]
+        pub(crate) mod exports {
             use super::$plugin;
 
             use $crate::plugin::Plugin;
@@ -17,7 +20,7 @@ macro_rules! entry {
 
             use std::ffi::CString;
 
-            static PLUGIN: $crate::OnceCell<$plugin> = $crate::OnceCell::new();
+            pub static PLUGIN: $crate::OnceCell<$plugin> = $crate::OnceCell::new();
 
             #[no_mangle]
             #[export_name = "PLUGIN_INIT"]
@@ -25,8 +28,6 @@ macro_rules! entry {
                 plugin_init_funcs: *const plugin_abi::PluginInitFuncs,
                 plugin_northstar_data: *const plugin_abi::PluginNorthstarData,
             ) {
-                let mut plugin: $plugin = $crate::plugin::Plugin::new();
-
                 let plugin_data = unsafe {
                     $crate::high::northstar::PluginData::new(
                         plugin_init_funcs,
@@ -37,9 +38,13 @@ macro_rules! entry {
                 plugin_data.init_logger();
                 log::info!("plugin logging initialized");
 
-                plugin.initialize(&plugin_data);
+                let plugin: $plugin = $crate::plugin::Plugin::new(&plugin_data);
 
-                _ = PLUGIN.set(plugin);
+                if PLUGIN.set(plugin).is_err() {
+                    panic!("PLUGIN failed initialization")
+                }
+
+                log::info!( "plugin static initialized : {}", PLUGIN.get().is_some() );
 
                 std::thread::spawn(move || PLUGIN.wait().main());
             }
@@ -53,11 +58,12 @@ macro_rules! entry {
                         log::error!(
                             "failed to get SquirrelFunctions from ptr in PLUGIN_INIT_SQVM_CLIENT"
                         );
-                        return;
+                        panic!("failed to get SquirrelFunctions from ptr in PLUGIN_INIT_SQVM_CLIENT")
                     }
                 };
 
-                _ = SQFUNCTIONS.client.set((*funcs).into())
+                SQFUNCTIONS.client.set((*funcs).into()).expect("SQFUNCTIONS.client should be initialized once");
+                log::info!("Client SquirrelFunctions acquired!");
             }
 
             #[no_mangle]
@@ -69,11 +75,14 @@ macro_rules! entry {
                         log::error!(
                             "failed to get SquirrelFunctions from ptr in PLUGIN_INIT_SQVM_SERVER"
                         );
-                        return;
+                        panic!("failed to get SquirrelFunctions from ptr in PLUGIN_INIT_SQVM_SERVER")
                     }
                 };
 
-                _ = SQFUNCTIONS.server.set((*funcs).into())
+
+
+                SQFUNCTIONS.server.set((*funcs).into()).expect("SQFUNCTIONS.server should be initialized once");
+                log::info!("Server SquirrelFunctions acquired!");
             }
 
             #[no_mangle]
@@ -88,14 +97,14 @@ macro_rules! entry {
                 let mut locked_register_functions = high::squirrel::FUNCTION_SQ_REGISTER.lock();
 
                 let sq_functions = match context {
-                    ScriptVmType::Server => SQFUNCTIONS.server.wait(),
-                    ScriptVmType::Client => SQFUNCTIONS.client.wait(),
-                    ScriptVmType::Ui => SQFUNCTIONS.client.wait(),
+                    ScriptVmType::Server => SQFUNCTIONS.server.get(),
+                    ScriptVmType::Client => SQFUNCTIONS.client.get(),
+                    ScriptVmType::Ui => SQFUNCTIONS.client.get(),
                     _ => {
                         log::error!("invalid ScriptContext");
                         return;
                     }
-                };
+                }.expect("SQFUNCTIONS should be initialized at this point");
 
                 let sq_register_func = sq_functions.register_squirrel_func;
 
@@ -194,10 +203,10 @@ macro_rules! entry {
                         PLUGIN.wait().on_engine_load(&engine_result, dll_ptr)
                     },
                     plugin_abi::PluginLoadDLL::SERVER => PLUGIN
-                        .wait()
+                    .wait()
                         .on_engine_load(&high::northstar::EngineLoadType::Server, dll_ptr),
                     plugin_abi::PluginLoadDLL::CLIENT => PLUGIN
-                        .wait()
+                    .wait()
                         .on_engine_load(&high::northstar::EngineLoadType::Client, dll_ptr)
                 }
             }
@@ -220,11 +229,9 @@ mod test_entry {
     impl Plugin for Test {
         type SaveType = Save;
 
-        fn new() -> Self {
+        fn new(_plugin_data: &PluginData) -> Self {
             Self {}
         }
-
-        fn initialize(&mut self, _plugin_data: &PluginData) {}
 
         fn main(&self) {}
     }
