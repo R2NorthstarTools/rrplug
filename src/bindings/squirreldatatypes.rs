@@ -1559,7 +1559,46 @@ pub struct HSquirrelVM {
 }
 impl std::fmt::Debug for HSquirrelVM {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("HSquirrelVM").field("vftable", &self.vftable).field("uiRef", &self.uiRef).field("gap_8", &self.gap_8).field("_toString", &self._toString).field("_roottable_pointer", &self._roottable_pointer).field("pointer_28", &self.pointer_28).field("ci", &self.ci).field("_callstack", &self._callstack).field("_callsstacksize", &self._callsstacksize).field("_stackbase", &self._stackbase).field("_stackOfCurrentFunction", &self._stackOfCurrentFunction).field("sharedState", &self.sharedState).field("pointer_58", &self.pointer_58).field("pointer_60", &self.pointer_60).field("_top", &self._top).field("_stack", &self._stack).field("gap_78", &self.gap_78).field("_vargvstack", &self._vargvstack).field("gap_88", &self.gap_88).field("temp_reg", &"unparsable").field("gapA0", &self.gapA0).field("pointer_A8", &self.pointer_A8).field("gap_B0", &self.gap_B0).field("_roottable_object", &"unparsable").field("_lasterror", &"unparsable").field("_errorHandler", &"unparsable").field("field_E8", &self.field_E8).field("traps", &self.traps).field("gap_F4", &self.gap_F4).field("_nnativecalls", &self._nnativecalls).field("_suspended", &self._suspended).field("_suspended_root", &self._suspended_root).field("_callstacksize", &self._callstacksize).field("_suspended_target", &self._suspended_target).field("trapAmount", &self.trapAmount).field("_suspend_varargs", &self._suspend_varargs).field("unknown_field_11C", &self.unknown_field_11C).field("object_120", &"unparsable").finish()
+        f.debug_struct("HSquirrelVM")
+            .field("vftable", &self.vftable)
+            .field("uiRef", &self.uiRef)
+            .field("gap_8", &self.gap_8)
+            .field("_toString", &self._toString)
+            .field("_roottable_pointer", &self._roottable_pointer)
+            .field("pointer_28", &self.pointer_28)
+            .field("ci", &self.ci)
+            .field("_callstack", &self._callstack)
+            .field("_callsstacksize", &self._callsstacksize)
+            .field("_stackbase", &self._stackbase)
+            .field("_stackOfCurrentFunction", &self._stackOfCurrentFunction)
+            .field("sharedState", &self.sharedState)
+            .field("pointer_58", &self.pointer_58)
+            .field("pointer_60", &self.pointer_60)
+            .field("_top", &self._top)
+            .field("_stack", &self._stack)
+            .field("gap_78", &self.gap_78)
+            .field("_vargvstack", &self._vargvstack)
+            .field("gap_88", &self.gap_88)
+            .field("temp_reg", &"unparsable")
+            .field("gapA0", &self.gapA0)
+            .field("pointer_A8", &self.pointer_A8)
+            .field("gap_B0", &self.gap_B0)
+            .field("_roottable_object", &"unparsable")
+            .field("_lasterror", &"unparsable")
+            .field("_errorHandler", &"unparsable")
+            .field("field_E8", &self.field_E8)
+            .field("traps", &self.traps)
+            .field("gap_F4", &self.gap_F4)
+            .field("_nnativecalls", &self._nnativecalls)
+            .field("_suspended", &self._suspended)
+            .field("_suspended_root", &self._suspended_root)
+            .field("_callstacksize", &self._callstacksize)
+            .field("_suspended_target", &self._suspended_target)
+            .field("trapAmount", &self.trapAmount)
+            .field("_suspend_varargs", &self._suspend_varargs)
+            .field("unknown_field_11C", &self.unknown_field_11C)
+            .field("object_120", &"unparsable")
+            .finish()
     }
 }
 #[test]
@@ -3669,7 +3708,7 @@ fn bindgen_test_layout_SQCompiler() {
     );
 }
 #[repr(C)]
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct CSquirrelVM {
     pub gap_0: [::std::os::raw::c_uchar; 8usize],
     pub sqvm: *mut HSquirrelVM,

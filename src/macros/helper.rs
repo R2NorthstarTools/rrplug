@@ -2,9 +2,9 @@
 macro_rules! offset_struct {
     ( $v:vis struct $struct_name:ident { $( $name:ident : $t:ty where offset($offset:literal)),*, } ) => {
 
-        $v struct $struct_name {
+        $v union $struct_name {
             $(
-                $v $name: $crate::bindings::OffsetSructField::<$t,$offset>,
+                $v $name: std::mem::ManuallyDrop<$crate::bindings::OffsetSructField::<$t,$offset>>,
             )*
         }
     };
@@ -16,8 +16,8 @@ macro_rules! impl_vmethod {
         impl $class {
             #[allow(clippy::missing_safety_doc)]
             pub unsafe fn $name( &self, $($arg_name: $arg),* ) -> $output {
-                (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>(self.vtable_adr.add($offset)))(
-                    std::mem::transmute(self.vtable_adr),
+                (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>((&**self.vtable_adr)[$offset]))(
+                    self.vtable_adr as *const c_void,
                     $( $arg_name, )*
                 )
             }

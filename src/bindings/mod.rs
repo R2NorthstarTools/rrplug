@@ -7,6 +7,7 @@ pub mod squirrelclasstypes;
 pub mod squirreldatatypes;
 pub mod unwraped;
 
+#[repr(C)]
 pub struct OffsetSructField<T, const U: usize> {
     _pad: [::std::os::raw::c_char; U],
     value: T,

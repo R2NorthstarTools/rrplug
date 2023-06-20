@@ -10,6 +10,8 @@ use crate::bindings::{
         CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObject, SQStackInfos,
     },
 };
+
+use super::entity::CBasePlayer;
 pub type sq_schedule_call_externalType_unwraped = unsafe extern "C" fn(
     context: ScriptContext,
     funcname: *const ::std::os::raw::c_char,
@@ -107,7 +109,7 @@ pub type sq_getentityfrominstanceType_unwraped =
         sqvm: *mut CSquirrelVM,
         pInstance: *mut SQObject,
         ppEntityConstant: *mut *mut ::std::os::raw::c_char,
-    ) -> *mut ::std::os::raw::c_void;
+    ) -> *mut CBasePlayer;
 pub type sq_GetEntityConstantType_unwraped =
     unsafe extern "C" fn() -> *mut *mut ::std::os::raw::c_char;
 pub type sq_getfunctionType_unwraped = unsafe extern "C" fn(

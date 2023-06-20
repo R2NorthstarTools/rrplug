@@ -6,17 +6,17 @@ use super::{
     convar::ConVar,
 };
 
-type SizeHint = extern "C" fn();
+type Vtable = [*const c_void; 100];
 
 pub struct RawCVar {
-    vtable_adr: *const SizeHint,
+    vtable_adr: *const *const Vtable,
 }
 
 #[doc(hidden)]
 impl From<*const c_void> for RawCVar {
     fn from(vtable_adr: *const c_void) -> Self {
         Self {
-            vtable_adr: vtable_adr as *const SizeHint,
+            vtable_adr: vtable_adr as *const *const Vtable,
         }
     }
 }
@@ -29,14 +29,14 @@ impl_vmethods! {
 }
 
 pub struct RawCvarIterator {
-    vtable_adr: *const SizeHint,
+    vtable_adr: *const *const Vtable,
 }
 
 #[doc(hidden)]
 impl From<*const c_void> for RawCvarIterator {
     fn from(vtable_adr: *const c_void) -> Self {
         Self {
-            vtable_adr: vtable_adr as *const SizeHint,
+            vtable_adr: vtable_adr as *const *const Vtable,
         }
     }
 }

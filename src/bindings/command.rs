@@ -4,7 +4,12 @@
 pub use root::*;
 
 #[doc(hidden)]
-#[allow(non_snake_case, non_camel_case_types, non_upper_case_globals, clippy::missing_safety_doc)]
+#[allow(
+    non_snake_case,
+    non_camel_case_types,
+    non_upper_case_globals,
+    clippy::missing_safety_doc
+)]
 pub mod root {
     #[allow(unused_imports)]
     use self::super::root;

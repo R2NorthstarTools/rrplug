@@ -63,7 +63,7 @@ macro_rules! entry {
                 };
 
                 SQFUNCTIONS.client.set((*funcs).into()).expect("SQFUNCTIONS.client should be initialized once");
-                log::info!("Client SquirrelFunctions acquired!");
+                log::debug!("Client SquirrelFunctions acquired!");
             }
 
             #[no_mangle]
@@ -82,7 +82,7 @@ macro_rules! entry {
 
 
                 SQFUNCTIONS.server.set((*funcs).into()).expect("SQFUNCTIONS.server should be initialized once");
-                log::info!("Server SquirrelFunctions acquired!");
+                log::debug!("Server SquirrelFunctions acquired!");
             }
 
             #[no_mangle]

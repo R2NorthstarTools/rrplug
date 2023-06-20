@@ -1050,13 +1050,11 @@ pub mod root {
         #[link_name = "\u{1}?conVarRegister@@3P6AXPEAVConVar@@PEBD1H1_NM2MPEAX@ZEA"]
         pub static mut conVarRegister: root::ConVarRegisterType;
     }
-    pub type ConVarMallocType =
-        unsafe extern "C" fn(
-            pConVarMaloc: *mut ::std::os::raw::c_void,
-            a2: ::std::os::raw::c_int,
-            a3: ::std::os::raw::c_int,
-        )
-    ;
+    pub type ConVarMallocType = unsafe extern "C" fn(
+        pConVarMaloc: *mut ::std::os::raw::c_void,
+        a2: ::std::os::raw::c_int,
+        a3: ::std::os::raw::c_int,
+    );
     extern "C" {
         #[link_name = "\u{1}?conVarMalloc@@3P6AXPEAXHH@ZEA"]
         pub static mut conVarMalloc: root::ConVarMallocType;

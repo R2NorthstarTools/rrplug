@@ -9,7 +9,7 @@ use super::{squirrelclasstypes::*, squirreldatatypes::CSquirrelVM};
 pub enum PluginLoadDLL {
     ENGINE = 0,
     CLIENT,
-	SERVER,
+    SERVER,
 }
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -574,9 +574,8 @@ fn bindgen_test_layout_LogMsg() {
 pub type loggerfunc_t = ::std::option::Option<unsafe extern "C" fn(msg: *mut LogMsg)>;
 pub type PLUGIN_RELAY_INVITE_TYPE =
     ::std::option::Option<unsafe extern "C" fn(invite: *const ::std::os::raw::c_char)>;
-pub type CreateObjectFunc = ::std::option::Option<
-    unsafe extern "C" fn(type_: ObjectType) -> *mut ::std::os::raw::c_void,
->;
+pub type CreateObjectFunc =
+    ::std::option::Option<unsafe extern "C" fn(type_: ObjectType) -> *mut ::std::os::raw::c_void>;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct PluginNorthstarData {
@@ -772,9 +771,8 @@ pub type PLUGIN_INIT_TYPE = ::std::option::Option<
 >;
 pub type PLUGIN_INIT_SQVM_TYPE =
     ::std::option::Option<unsafe extern "C" fn(funcs: *mut SquirrelFunctions)>;
-pub type PLUGIN_INFORM_SQVM_CREATED_TYPE = ::std::option::Option<
-    unsafe extern "C" fn(context: ScriptContext, sqvm: *mut CSquirrelVM),
->;
+pub type PLUGIN_INFORM_SQVM_CREATED_TYPE =
+    ::std::option::Option<unsafe extern "C" fn(context: ScriptContext, sqvm: *mut CSquirrelVM)>;
 pub type PLUGIN_INFORM_SQVM_DESTROYED_TYPE =
     ::std::option::Option<unsafe extern "C" fn(context: ScriptContext)>;
 pub type PLUGIN_INFORM_DLL_LOAD_TYPE = ::std::option::Option<
