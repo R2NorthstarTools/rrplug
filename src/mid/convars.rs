@@ -1,6 +1,16 @@
 use std::{ffi::c_void, mem};
 
-use crate::bindings::{convar::{ConVarRegisterType, ConVarMallocType}, command::ConCommandBase, plugin_abi::PluginEngineData};
+use crate::{
+    bindings::{
+        command::ConCommandBase,
+        convar::{ConVar, ConVarMallocType, ConVarRegisterType},
+        cvar::RawCVar,
+        plugin_abi::PluginEngineData,
+    },
+    to_sq_string,
+};
+
+use super::engine::get_engine_data;
 
 pub struct ConVarClasses {
     pub convar_vtable: *mut c_void,
@@ -11,9 +21,9 @@ pub struct ConVarClasses {
 
 impl ConVarClasses {
     pub(crate) unsafe fn new(raw: &PluginEngineData) -> Self {
-        let convar_malloc: ConVarMallocType =  mem::transmute(raw.conVarMalloc);
-        let iconvar_vtable =  mem::transmute(raw.IConVar_Vtable);
-        let convar_register: ConVarRegisterType =  mem::transmute(raw.conVarRegister);
+        let convar_malloc: ConVarMallocType = mem::transmute(raw.conVarMalloc);
+        let iconvar_vtable = mem::transmute(raw.IConVar_Vtable);
+        let convar_register: ConVarRegisterType = mem::transmute(raw.conVarRegister);
         Self {
             convar_vtable: raw.ConVar_Vtable,
             iconvar_vtable,
@@ -21,4 +31,13 @@ impl ConVarClasses {
             convar_malloc,
         }
     }
+}
+
+pub fn find_convar_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static mut ConVar> {
+    let name = to_sq_string!(name);
+    unsafe { cvar.find_convar(name.as_ptr()).as_mut() }
+}
+
+pub fn find_convar(name: &str) -> Option<&'static mut ConVar> {
+    find_convar_with_cvar(name, &get_engine_data()?.cvar)
 }

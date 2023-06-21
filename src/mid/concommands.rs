@@ -2,13 +2,16 @@ use std::ffi::c_void;
 
 use crate::{
     bindings::{
-        command::{CCommand, ConCommand, ConCommandConstructorType},
+        command::{CCommand, ConCommand, ConCommandBase, ConCommandConstructorType},
+        cvar::RawCVar,
         plugin_abi::ObjectType,
     },
     errors::RegisterError,
     mid::northstar::CREATE_OBJECT_FUNC,
     to_sq_string,
 };
+
+use super::engine::get_engine_data;
 
 pub struct RegisterConCommands {
     pub reg_func: ConCommandConstructorType,
@@ -55,4 +58,25 @@ impl RegisterConCommands {
         };
         Ok(())
     }
+}
+
+pub fn find_concommand_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static mut ConCommand> {
+    let name = to_sq_string!(name);
+    unsafe { cvar.find_concommand(name.as_ptr()).as_mut() }
+}
+
+pub fn find_concommand(name: &str) -> Option<&'static mut ConCommand> {
+    find_concommand_with_cvar(name, &get_engine_data()?.cvar)
+}
+
+pub fn find_concommand_base_with_cvar(
+    name: &str,
+    cvar: &RawCVar,
+) -> Option<&'static mut ConCommandBase> {
+    let name = to_sq_string!(name);
+    unsafe { cvar.find_command_base(name.as_ptr()).as_mut() }
+}
+
+pub fn find_concommand_base(name: &str) -> Option<&'static mut ConCommandBase> {
+    find_concommand_base_with_cvar(name, &get_engine_data()?.cvar)
 }

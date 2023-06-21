@@ -74,7 +74,10 @@ use crate::{
         plugin_abi::ObjectType,
     },
     errors::RegisterError,
-    mid::{engine::get_engine_data, northstar::CREATE_OBJECT_FUNC},
+    mid::{
+        engine::{get_engine_data, ENGINE_DATA},
+        northstar::CREATE_OBJECT_FUNC,
+    },
     to_sq_string,
 };
 
@@ -139,10 +142,8 @@ impl ConVarRegister {
 ///
 /// it is not safe to call any of its functions outside of titanfall's engine callbacks to plugins
 /// and may result in a crash
-///
-/// [`Sync`] and [`Send`] will be removed once plugins v3 will be real
 pub struct ConVarStruct {
-    inner: *mut ConVar,
+    inner: &'static mut ConVar,
 }
 
 impl ConVarStruct {
@@ -152,36 +153,40 @@ impl ConVarStruct {
     pub fn try_new() -> Option<Self> {
         let obj_func = (*CREATE_OBJECT_FUNC.get()?)?;
 
-        get_engine_data().map(move |engine| Self::new(engine, obj_func))
+        get_engine_data().map(move |engine| unsafe { Self::new(engine, obj_func) })
     }
 
-    fn new(engine: &EngineData, obj_func: unsafe extern "C" fn(ObjectType) -> *mut c_void) -> Self {
+    unsafe fn new(
+        engine: &EngineData,
+        obj_func: unsafe extern "C" fn(ObjectType) -> *mut c_void,
+    ) -> Self {
         let convar_classes = &engine.convar;
 
-        let convar = unsafe { mem::transmute::<_, *mut ConVar>(obj_func(ObjectType::CONVAR)) };
+        let convar = mem::transmute::<_, *mut ConVar>(obj_func(ObjectType::CONVAR));
 
-        unsafe {
-            addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
-                .write(convar_classes.convar_vtable);
+        addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
+            .write(convar_classes.convar_vtable);
 
-            addr_of_mut!((*convar).m_ConCommandBase.s_pConCommandBases)
-                .write(convar_classes.iconvar_vtable);
+        addr_of_mut!((*convar).m_ConCommandBase.s_pConCommandBases)
+            .write(convar_classes.iconvar_vtable);
 
-            #[allow(clippy::crosspointer_transmute)] // its what c++ this->convar_malloc is
-            (convar_classes.convar_malloc)(mem::transmute(addr_of_mut!((*convar).m_pMalloc)), 0, 0);
-            // Allocate new memory for ConVar.
+        #[allow(clippy::crosspointer_transmute)] // its what c++ this->convar_malloc is
+        (convar_classes.convar_malloc)(mem::transmute(addr_of_mut!((*convar).m_pMalloc)), 0, 0);
+        // Allocate new memory for ConVar.
+
+        Self {
+            inner: &mut *convar, // no way this is invalid
         }
-        Self { inner: convar }
     }
 
-    pub fn register(&self, register_info: ConVarRegister) -> Result<(), RegisterError> {
+    pub fn register(&mut self, register_info: ConVarRegister) -> Result<(), RegisterError> {
         let engine_data = get_engine_data().ok_or(RegisterError::NoneFunction)?;
 
         self.private_register(register_info, engine_data)
     }
 
     pub(crate) fn private_register(
-        &self,
+        &mut self,
         register_info: ConVarRegister,
         engine_data: &EngineData,
     ) -> Result<(), RegisterError> {
@@ -230,13 +235,28 @@ impl ConVarStruct {
         Ok(())
     }
 
+    pub fn find_convar_by_name(name: &str) -> Option<Self> {
+        let name = to_sq_string!(name);
+
+        Some(Self {
+            inner: unsafe {
+                ENGINE_DATA
+                    .get()?
+                    .cvar
+                    .find_convar(name.as_ptr())
+                    .as_mut()?
+            },
+        })
+    }
+
     /// get the name of the convar
     ///
     /// only really safe on the titanfall thread
     pub fn get_name(&self) -> String {
         unsafe {
-            let cstr = CStr::from_ptr((*self.inner).m_ConCommandBase.m_pszName);
-            cstr.to_string_lossy().to_string()
+            CStr::from_ptr(self.inner.m_ConCommandBase.m_pszName)
+                .to_string_lossy()
+                .to_string()
         }
     }
 
@@ -245,7 +265,7 @@ impl ConVarStruct {
     /// only safe on the titanfall thread
     pub fn get_value(&self) -> ConVarValues {
         unsafe {
-            let value = &(*self.inner).m_Value;
+            let value = &self.inner.m_Value;
 
             let string = if !value.m_pszString.is_null()
                 && !self.has_flag(
@@ -275,7 +295,7 @@ impl ConVarStruct {
     /// only safe on the titanfall thread
     pub fn get_value_string(&self) -> Option<String> {
         unsafe {
-            let value = &(*self.inner).m_Value;
+            let value = &self.inner.m_Value;
 
             if value.m_pszString.is_null()
                 || self.has_flag(
@@ -298,22 +318,18 @@ impl ConVarStruct {
     ///
     /// only safe on the titanfall thread
     pub fn get_value_i32(&self) -> i32 {
-        unsafe {
-            let value = &(*self.inner).m_Value;
+        let value = &self.inner.m_Value;
 
-            value.m_nValue
-        }
+        value.m_nValue
     }
 
     /// get the value as a f32
     ///
     /// only safe on the titanfall thread
     pub fn get_value_f32(&self) -> f32 {
-        unsafe {
-            let value = &(*self.inner).m_Value;
+        let value = &self.inner.m_Value;
 
-            value.m_fValue
-        }
+        value.m_fValue
     }
 
     /// set the int value of the convar
@@ -322,13 +338,13 @@ impl ConVarStruct {
     /// only safe on the titanfall thread
     pub fn set_value_i32(&self, new_value: i32) {
         unsafe {
-            let value = &(*self.inner).m_Value;
+            let value = &self.inner.m_Value;
 
             if value.m_nValue == new_value {
                 return;
             }
 
-            let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
+            let vtable_adr = self.inner.m_ConCommandBase.m_pConCommandBaseVTable as usize;
             let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
             let set_value_int = vtable_array[14];
             // the index for SetValue for ints; weird stuff
@@ -345,13 +361,13 @@ impl ConVarStruct {
     /// only safe on the titanfall thread
     pub fn set_value_f32(&self, new_value: f32) {
         unsafe {
-            let value = &(*self.inner).m_Value;
+            let value = &self.inner.m_Value;
 
             if value.m_fValue == new_value {
                 return;
             }
 
-            let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
+            let vtable_adr = self.inner.m_ConCommandBase.m_pConCommandBaseVTable as usize;
             let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
             let set_value_float = vtable_array[13];
             // the index for SetValue for floats; weird stuff
@@ -371,7 +387,7 @@ impl ConVarStruct {
                 return;
             }
 
-            let vtable_adr = (*self.inner).m_ConCommandBase.m_pConCommandBaseVTable as usize;
+            let vtable_adr = self.inner.m_ConCommandBase.m_pConCommandBaseVTable as usize;
             let vtable_array = *(vtable_adr as *const [*const std::ffi::c_void; 21]);
             let set_value_string = vtable_array[12];
             // the index for SetValue for strings; weird stuff
@@ -387,56 +403,47 @@ impl ConVarStruct {
     ///
     /// only safe on the titanfall thread
     pub fn get_help_text(&self) -> String {
-        unsafe {
-            let help = (*self.inner).m_ConCommandBase.m_pszHelpString;
-            CStr::from_ptr(help).to_string_lossy().to_string()
-        }
+        let help = self.inner.m_ConCommandBase.m_pszHelpString;
+        unsafe { CStr::from_ptr(help).to_string_lossy().to_string() }
     }
 
     /// returns [`true`] if the convar is registered
     ///
     /// only safe on the titanfall thread
     pub fn is_registered(&self) -> bool {
-        unsafe { (*self.inner).m_ConCommandBase.m_bRegistered }
+        self.inner.m_ConCommandBase.m_bRegistered
     }
 
     /// returns [`true`] if the given flags are set for this convar
     ///
     /// only safe on the titanfall thread
     pub fn has_flag(&self, flags: i32) -> bool {
-        unsafe { (*self.inner).m_ConCommandBase.m_nFlags & flags != 0 }
+        self.inner.m_ConCommandBase.m_nFlags & flags != 0
     }
 
     /// adds flags to the convar
     ///
     /// only safe on the titanfall thread
     pub fn add_flags(&mut self, flags: i32) {
-        unsafe { (*self.inner).m_ConCommandBase.m_nFlags |= flags }
+        self.inner.m_ConCommandBase.m_nFlags |= flags
     }
 
     /// removes flags from the convar
     ///
     /// only safe on the titanfall thread
     pub fn remove_flags(&mut self, flags: i32) {
-        unsafe { (*self.inner).m_ConCommandBase.m_nFlags |= !flags }
+        self.inner.m_ConCommandBase.m_nFlags |= !flags
     }
 
     /// exposes the raw pointer to the [`ConVar`] class
     ///
     /// # Safety
     /// its safe unless you start iteracting with the raw pointer
-    pub unsafe fn get_raw_convar_ptr(&self) -> *mut ConVar {
+    pub unsafe fn get_raw_convar_ptr(&mut self) -> *mut ConVar {
         self.inner
     }
 }
 
-impl From<*mut ConVar> for ConVarStruct {
-    fn from(value: *mut ConVar) -> Self {
-        Self { inner: value }
-    }
-}
-
-// this must be revert once plugins v3 is out or not
 unsafe impl Sync for ConVarStruct {}
 unsafe impl Sync for ConVar {}
 unsafe impl Send for ConVarStruct {}

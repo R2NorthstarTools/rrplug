@@ -1,7 +1,7 @@
 //! engine related abstractions and functions
 
 use crate::{
-    bindings::{command::CCommand, plugin_abi::PluginEngineData},
+    bindings::{command::CCommand, cvar::RawCVar, plugin_abi::PluginEngineData},
     errors::RegisterError,
     mid::{concommands::RegisterConCommands, convars::ConVarClasses},
 };
@@ -13,19 +13,23 @@ pub struct EngineData {
     pub(crate) concommands: RegisterConCommands,
     pub(crate) convar: ConVarClasses,
     pub(crate) low: PluginEngineData,
-    // pub(crate) cvar: ,
+    pub(crate) cvar: RawCVar,
 }
+
+unsafe impl Send for EngineData {}
+unsafe impl Sync for EngineData {}
 
 // don't forget about CVar class
 
 impl EngineData {
     /// # Safety
     ///
-    /// hoping that the void ptr point to the right stuff
+    /// hoping that the void ptrs point to the right stuff
     pub unsafe fn new(raw: &PluginEngineData) -> Self {
         Self {
             concommands: RegisterConCommands::new(raw.ConCommandConstructor),
             convar: ConVarClasses::new(raw),
+            cvar: RawCVar::from(raw.g_pCVar.cast_const()),
             low: *raw,
         }
     }
@@ -53,7 +57,7 @@ impl EngineData {
     ) -> Result<(), RegisterError> {
         use super::convars::{ConVarRegister, ConVarStruct};
 
-        let convar = ConVarStruct::try_new().ok_or(RegisterError::NoneResult)?;
+        let mut convar = ConVarStruct::try_new().ok_or(RegisterError::NoneResult)?;
         let register_info = ConVarRegister::new(name, default_value, flags, help_string);
         convar.private_register(register_info, self)
     }

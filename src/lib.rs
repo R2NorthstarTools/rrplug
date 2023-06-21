@@ -113,6 +113,9 @@ mod test {
     #[convar]
     fn test_convar(_old_string: String, _old_float: f32) -> () {}
 
+    #[convar]
+    fn test_convar_noargs() -> () {}
+
     #[concommand]
     fn test_concommand(command: CCommandResult) {
         log::info!("test {:?}", command.get_args());

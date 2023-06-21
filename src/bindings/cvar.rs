@@ -22,9 +22,9 @@ impl From<*const c_void> for RawCVar {
 }
 
 impl_vmethods! {
-    pub fn find_command_base( command_name: *const c_char ) -> *const ConCommandBase, for RawCVar, offset 14;
-    pub fn find_convar( convar_name: *const c_char ) -> *const ConVar, for RawCVar, offset 16;
-    pub fn find_concommand( concommand_name: *const c_char ) -> *const ConCommand, for RawCVar, offset 18;
+    pub fn find_command_base( command_name: *const c_char ) -> *mut ConCommandBase, for RawCVar, offset 14;
+    pub fn find_convar( convar_name: *const c_char ) -> *mut ConVar, for RawCVar, offset 16;
+    pub fn find_concommand( concommand_name: *const c_char ) -> *mut ConCommand, for RawCVar, offset 18;
     pub fn get_cvar_raw_interator() -> *const ConCommandBase, for RawCVar, offset 41;
 }
 

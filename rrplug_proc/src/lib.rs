@@ -445,6 +445,20 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let ident = &sig.ident;
     let input = &sig.inputs;
     let output = &sig.output;
+
+    let inner_call = if input.iter().count() != 0 {
+        quote!{
+            let ccommand = rrplug::high::concommands::CCommandResult::new(ccommand);
+
+            _ = inner_function(ccommand);
+        }
+    } else {
+        quote!{
+            _ = ccommand; // so it doesn't complain about unused varibles
+
+            _ = inner_function();
+        }
+    };
     
     // TODO: allow the users to manipulate the input of the inner function
 
@@ -454,9 +468,7 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 #(#stmts)*
             }
 
-            let ccommand = rrplug::high::concommands::CCommandResult::new(ccommand);
-
-            _ = inner_function(ccommand);
+            #inner_call
         }
     }
     .into()
@@ -484,6 +496,20 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = &sig.inputs;
     let output = &sig.output;
 
+    let inner_call = if input.iter().count() != 0 {
+        quote!{
+            let old_value = std::ffi::CStr::from_ptr(old_value).to_string_lossy().to_string();
+
+            _ = inner_function(old_value,float_old_value);
+        }
+    } else {
+        quote!{
+            _ = (old_value,float_old_value); // so it doesn't complain about unused varibles
+
+            _ = inner_function();
+        }
+    };
+
     quote! {
         #vis unsafe extern "C" fn #ident (
             convar: *mut rrplug::bindings::convar::ConVar,
@@ -494,9 +520,7 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 #(#stmts)*
             }
 
-            let old_value = std::ffi::CStr::from_ptr(old_value).to_string_lossy().to_string();
-
-            _ = inner_function(old_value,float_old_value);
+            #inner_call
         }
     }
     .into()
