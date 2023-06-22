@@ -197,15 +197,13 @@ pub fn input_mapping(
 }
 
 pub fn filter_args(input: &FnArg) -> Option<FnArg> {
-    let (ty, pt) = match input {
+    let mut input = input.clone();
+    match &mut input {
         FnArg::Receiver(_) => None?,
-        FnArg::Typed(t) => (maybe_change(&t.ty), t.to_owned()),
+        FnArg::Typed(t) => t.ty = maybe_change(&t.ty),
     };
 
-    let attrs = &pt.attrs;
-    let pat = &pt.pat;
-
-    Some(parse_quote!(#(#attrs)* #pat: #ty ))
+    Some(input)
 }
 
 pub fn get_arg_type(input: &FnArg) -> Result<Box<Type>, String> {
@@ -220,7 +218,9 @@ pub fn get_arg_type(input: &FnArg) -> Result<Box<Type>, String> {
 
 fn maybe_change(ty: &Type) -> Box<Type> {
     match *ty {
-        Type::BareFn(_) => Box::new(parse_quote!(rrplug::high::squirrel::SQClosureHandle)),
+        Type::BareFn(_) => Box::new(parse_quote!(
+            rrplug::high::squirrel::SQHandle<rrplug::bindings::squirreldatatypes::SQClosure>
+        )),
         _ => Box::new(ty.clone()),
     }
 }

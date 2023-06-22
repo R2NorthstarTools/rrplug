@@ -4,7 +4,7 @@ use proc_macro::{TokenStream};
 use quote::{format_ident, quote, ToTokens};
 use syn::{
     self, parse_macro_input, FnArg, Ident, ItemFn, ReturnType, Stmt,
-    parse_quote, __private::TokenStream2,
+    parse_quote,
 };
 
 #[macro_use]
@@ -43,9 +43,10 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = &sig.inputs;
     let input_vec = input
         .iter().filter_map(|arg| filter_args(arg));
-    let input_var_names: Vec<TokenStream2> = input.iter().cloned()
-        .filter_map(|input| if let FnArg::Typed(t) = input { Some(t) } else { None } )
-        .map::<TokenStream2,_>(|t| t.pat.into_token_stream().into() )
+    let input_var_names: Vec<Ident> = input.iter().cloned()
+        .filter_map(|_input| if let FnArg::Typed(t) = _input { Some(t) } else { None } )
+        .map(|t| t.pat.into_token_stream().to_string().replace("mut", "").replace(" ", "")) // not the best solution
+        .map(|ident| format_ident!("{ident}")  )
         .collect();
     let output = &sig.output;
     let (ouput_type,ouput_parsing) = match output.clone() {
@@ -128,17 +129,6 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     push_stmts!(sub_stms, tk);
 
     let out: TokenStream = quote! {
-        #vis const fn #ident () -> rrplug::high::northstar::SQFuncInfo {
-            rrplug::high::northstar::SQFuncInfo{ 
-                cpp_func_name: #func_name, 
-                sq_func_name: #export_name, 
-                types: #sqtypes, 
-                return_type: #out, 
-                vm: ScriptVmType::#script_vm_type, 
-                function: Some( #sq_functions_func ),
-            }
-        }
-
         #[doc(hidden)]
         #[doc = "generated ffi function for #func_name"]
         #vis extern "C" fn #sq_functions_func (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
@@ -159,6 +149,17 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     unsafe { (sq_functions.sq_raiseerror)(sqvm, err.as_ptr()) };
                     rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR 
                 }
+            }
+        }
+
+        #vis const fn #ident () -> rrplug::high::northstar::SQFuncInfo {
+            rrplug::high::northstar::SQFuncInfo{ 
+                cpp_func_name: #func_name, 
+                sq_func_name: #export_name, 
+                types: #sqtypes, 
+                return_type: #out, 
+                vm: ScriptVmType::#script_vm_type, 
+                function: Some( #sq_functions_func ),
             }
         }
     }.into();

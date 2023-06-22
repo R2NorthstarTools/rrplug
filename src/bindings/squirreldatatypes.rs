@@ -49,7 +49,7 @@ pub enum SQObjectType {
     OT_ASSET = 134218752,
     OT_THREAD = 134221824,
     OT_FUNCPROTO = 134225920,
-    OT_CLAAS = 134234112,
+    OT_CLASS = 134234112,
     OT_STRUCT = 136314880,
     OT_WEAKREF = 134283264,
     OT_TABLE = 167772192,
@@ -74,6 +74,11 @@ pub union SQObjectValue {
     pub asUserdata: *mut SQUserData,
     pub asStructInstance: *mut SQStructInstance,
 }
+impl std::fmt::Debug for SQObjectValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("SQObjectValue: unk union field")
+    }
+} 
 #[test]
 fn bindgen_test_layout_SQObjectValue() {
     const UNINIT: ::std::mem::MaybeUninit<SQObjectValue> = ::std::mem::MaybeUninit::uninit();
@@ -283,7 +288,7 @@ fn bindgen_test_layout_SQVector() {
     );
 }
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct SQObject {
     pub _Type: SQObjectType,
     pub structNumber: ::std::os::raw::c_int,

@@ -153,6 +153,7 @@ pub const fn __arg_count_helper<const N: usize>(_: [(); N]) -> usize {
 
 #[cfg(test)]
 mod test {
+    #![allow(unused_mut)]
     use crate as rrplug;
     use rrplug::prelude::*;
     use rrplug_proc::*;
@@ -160,14 +161,14 @@ mod test {
     use rrplug::{async_call_sq_function, call_sq_function, call_sq_object_function};
 
     #[sqfunction(VM = "Server")]
-    fn test_call_funcs2(func: fn(String)) -> String {
+    fn test_call_funcs2(mut func: fn(String), test: String) -> String {
         call_sq_object_function!(sqvm, sq_functions, func, "test".to_string())
             .map_err(|err| err.to_string())?;
 
         call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347, 3892, 23423)
             .map_err(|err| err.to_string())?;
 
-        async_call_sq_function!(ScriptVmType::Server, "SomeSQFunc", "test".to_string(), 9347);
+        async_call_sq_function!(ScriptVmType::Server, "SomeSQFunc", test, 9347);
 
         Ok("test".to_string())
     }

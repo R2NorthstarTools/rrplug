@@ -5,7 +5,7 @@ pub use crate::{
     high::{
         concommands::CCommandResult,
         northstar::{EngineLoadType, PluginData, ScriptVmType},
-        squirrel::{CSquirrelVMHandle, NoSave, Save},
+        squirrel::{CSquirrelVMHandle},
     },
     mid::squirrel::SQFUNCTIONS,
 };

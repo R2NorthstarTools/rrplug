@@ -17,15 +17,13 @@ use crate::high::{
 ///
 /// it is unsafe to run any titanfall engine functions on it
 pub trait Plugin: Any + Sync {
-    type SaveType;
-
     fn new(plugin_data: &PluginData) -> Self;
 
     fn main(&self);
 
     fn on_engine_load(&self, _engine: &EngineLoadType, _dll_ptr: *const std::ffi::c_void) {}
 
-    fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle<Self::SaveType>) {}
+    fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle) {}
 
     fn on_sqvm_destroyed(&self, _context: ScriptVmType) {}
 

@@ -8,9 +8,9 @@ use super::engine::EngineData;
 use crate::{
     bindings::plugin_abi::{PluginInitFuncs, PluginNorthstarData},
     bindings::squirrelclasstypes::{SQFunction, ScriptContext},
+    high::squirrel::FUNCTION_SQ_REGISTER,
     mid::northstar::CREATE_OBJECT_FUNC,
     nslog,
-    high::squirrel::FUNCTION_SQ_REGISTER,
 };
 
 pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
@@ -28,7 +28,7 @@ pub struct SQFuncInfo {
 /// All the possible vm types titanfall 2 has
 ///
 /// `UiClient` is used for function registration on both vms
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ScriptVmType {
     Server,
     Client,

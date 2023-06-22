@@ -2,19 +2,18 @@
 
 //! squirrel vm related function and statics
 
-use once_cell::sync::OnceCell;
-use parking_lot::{Mutex, RwLock, RwLockReadGuard};
-use std::{
-    ffi::c_void,
-    marker::PhantomData,
-    mem::{transmute, MaybeUninit},
-};
+use parking_lot::Mutex;
+use std::{ffi::c_void, marker::PhantomData, mem::transmute};
 
-use super::northstar::{FuncSQFuncInfo, ScriptVmType};
+use super::{
+    northstar::{FuncSQFuncInfo, ScriptVmType},
+    squirrel_traits::IsSQObject,
+    Handle,
+};
 use crate::{
     bindings::{
         squirrelclasstypes::{CompileBufferState, SQRESULT},
-        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQObject},
+        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
         unwraped::SquirrelFunctionsUnwraped,
     },
     errors::{CallError, SQCompileError},
@@ -25,71 +24,23 @@ use crate::{
 #[doc(hidden)]
 pub static FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
 
-type CSquirrelVMRead<'a> = RwLockReadGuard<'a, OnceCell<CSquirrelVMHandle<Saved>>>;
-type CSquirrelVMStatic = RwLock<OnceCell<CSquirrelVMHandle<Saved>>>;
-static SV_CS_VM: CSquirrelVMStatic = RwLock::new(OnceCell::new());
-static CL_CS_VM: CSquirrelVMStatic = RwLock::new(OnceCell::new());
-static UI_CS_VM: CSquirrelVMStatic = RwLock::new(OnceCell::new());
-
 #[derive(Debug)]
-pub struct Save;
-
-#[derive(Debug)]
-pub struct NoSave;
-
-#[derive(Debug)]
-pub struct Saved;
-
-#[derive(Debug)]
-pub struct CSquirrelVMHandle<T> {
+pub struct CSquirrelVMHandle {
     handle: *mut CSquirrelVM,
     vm_type: ScriptVmType,
-    marker: PhantomData<T>,
 }
 
-impl CSquirrelVMHandle<Save> {
+impl CSquirrelVMHandle {
+    /// **should** not be used outside of the [`crate::entry`] macro
+    #[doc(hidden)]
     pub fn new(handle: *mut CSquirrelVM, vm_type: ScriptVmType) -> Self {
-        Self::_save(handle, vm_type);
-
-        Self {
-            handle,
-            vm_type,
-            marker: PhantomData::<Save>,
-        }
-    }
-}
-
-impl CSquirrelVMHandle<NoSave> {
-    pub fn new(handle: *mut CSquirrelVM, vm_type: ScriptVmType) -> Self {
-        Self {
-            handle,
-            vm_type,
-            marker: PhantomData::<NoSave>,
-        }
+        Self { handle, vm_type }
     }
 
-    pub fn save(&self) {
-        Self::_save(self.handle, self.vm_type);
-    }
-
-    // gets the [`CSquirrel`] from the handle
-    pub fn get_cs_sqvm(&self) -> *mut CSquirrelVM {
-        self.handle
-    }
-}
-
-impl CSquirrelVMHandle<Saved> {
-    // gets the [`CSquirrel`] from the handle
-    pub fn get_cs_sqvm(&self) -> *mut CSquirrelVM {
-        self.handle
-    }
-}
-
-impl<T> CSquirrelVMHandle<T> {
     /// defines a constant on the sqvm
     ///
     /// Like `SERVER`, `CLIENT`, `UI`, etc
-    pub fn define_sq_constant(&self, name: String, value: bool) {
+    pub fn define_sq_constant(&self, name: String, value: i32) {
         let sqfunctions = if self.vm_type == ScriptVmType::Server {
             SQFUNCTIONS.server.wait()
         } else {
@@ -99,7 +50,7 @@ impl<T> CSquirrelVMHandle<T> {
         // not sure if I need to leak this
         let name = to_sq_string!(name);
 
-        unsafe { (sqfunctions.sq_defconst)(self.handle, name.as_ptr(), value as i32) }
+        unsafe { (sqfunctions.sq_defconst)(self.handle, name.as_ptr(), value) }
     }
 
     /// gets the raw pointer to [`HSquirrelVM`]
@@ -108,72 +59,68 @@ impl<T> CSquirrelVMHandle<T> {
     /// assumes its valid
     ///
     /// it is not valid after sqvm destruction
-    pub unsafe fn get_sqvm(&self) -> *mut HSquirrelVM {
-        (*self.handle).sqvm
+    pub unsafe fn get_sqvm(&self) -> Handle<*mut HSquirrelVM> {
+        Handle::internal_new((*self.handle).sqvm)
+    }
+    /// gets the raw pointer to [`CSquirrelVM`]
+    ///
+    /// # Safety
+    ///
+    /// the pointer itself may be invalid (highly unlikely)
+    pub unsafe fn get_cs_sqvm(&self) -> Handle<*mut CSquirrelVM> {
+        Handle::internal_new(self.handle)
     }
 
     /// gets the type of the sqvm :D
     pub fn get_context(&self) -> ScriptVmType {
         self.vm_type
     }
+}
 
-    pub fn get_saved<'a>(vm_type: ScriptVmType) -> CSquirrelVMRead<'a> {
-        let save_static = match vm_type {
-            ScriptVmType::Server => &SV_CS_VM,
-            ScriptVmType::Client => &CL_CS_VM,
-            ScriptVmType::Ui => &UI_CS_VM,
-            _ => &UI_CS_VM, // impossible to reach
-        };
-        save_static.read()
+/// runtime check for [`SQObject`] types
+pub struct SQHandle<H: IsSQObject> {
+    inner: SQObject,
+    marker: PhantomData<H>,
+}
+
+impl<H: IsSQObject> SQHandle<H> {
+    pub fn new(value: SQObject) -> Result<Self, SQObject> {
+        let ty = value._Type;
+        if ty == H::OT_TYPE || ty == H::RT_TYPE {
+            Ok(Self {
+                inner: value,
+                marker: PhantomData,
+            })
+        } else {
+            Err(value)
+        }
+    }
+    /// # Safety
+    ///
+    /// this breaks the type guarantees provided by this struct
+    pub unsafe fn new_unchecked(value: SQObject) -> Self {
+        Self {
+            inner: value,
+            marker: PhantomData,
+        }
     }
 
-    pub fn get_saved_sv<'a>() -> CSquirrelVMRead<'a> {
-        SV_CS_VM.read()
+    pub fn get(&self) -> &SQObject {
+        &self.inner
     }
 
-    pub fn get_saved_cl<'a>() -> CSquirrelVMRead<'a> {
-        CL_CS_VM.read()
+    pub fn get_mut(&mut self) -> &mut SQObject {
+        &mut self.inner
     }
 
-    pub fn get_saved_ui<'a>() -> CSquirrelVMRead<'a> {
-        UI_CS_VM.read()
-    }
-
-    pub(super) fn _save(handle: *mut CSquirrelVM, vm_type: ScriptVmType) {
-        let save_handle = CSquirrelVMHandle {
-            handle,
-            vm_type,
-            marker: PhantomData::<Saved>,
-        };
-
-        let save_static = match vm_type {
-            ScriptVmType::Server => &SV_CS_VM,
-            ScriptVmType::Client => &CL_CS_VM,
-            ScriptVmType::Ui => &UI_CS_VM,
-            _ => &UI_CS_VM, // impossible to reach
-        };
-
-        let mut lock = save_static.write();
-        _ = lock.take();
-        lock.set(save_handle)
-            .expect("somehow we failed to set a new CSquirrelVM"); // this is impossible because of the previous line;
+    pub fn take(self) -> SQObject {
+        self.inner
     }
 }
 
-unsafe impl Sync for CSquirrelVMHandle<Saved> {}
-unsafe impl Send for CSquirrelVMHandle<Saved> {}
-
-pub struct SQClosureHandle {
-    closure: SQObject,
-}
-
-impl SQClosureHandle {
-    pub(crate) fn new(closure: SQObject) -> Self {
-        Self { closure }
-    }
-
-    pub fn as_mut_ptr(&self) -> *mut SQObject {
-        (&self.closure as *const SQObject).cast_mut()
+impl SQHandle<SQClosure> {
+    pub fn as_mut_ptr(&mut self) -> *mut SQObject {
+        &mut self.inner as *mut SQObject
     }
 }
 
@@ -278,7 +225,7 @@ pub fn call_sq_function(
 pub fn call_sq_object_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
-    mut obj: MaybeUninit<SQObject>,
+    mut obj: SQHandle<SQClosure>,
 ) -> Result<(), CallError> {
     _call_sq_object_function(sqvm, sqfunctions, obj.as_mut_ptr())
 }

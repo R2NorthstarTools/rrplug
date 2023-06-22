@@ -2,17 +2,20 @@
 
 use std::mem::MaybeUninit;
 
-use super::{squirrel::SQClosureHandle, vector::Vector3};
+use super::{squirrel::SQHandle, vector::Vector3};
 use crate::{
     bindings::{
         entity::CBasePlayer,
-        squirreldatatypes::{HSquirrelVM, SQObject},
+        squirreldatatypes::{
+            HSquirrelVM, SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger,
+            SQNativeClosure, SQObject, SQObjectType, SQString, SQStructInstance, SQTable,
+        },
         unwraped::SquirrelFunctionsUnwraped,
     },
     mid::squirrel::{
-        get_sq_array, get_sq_bool, get_sq_float, get_sq_int, get_sq_object,
-        get_sq_string, get_sq_vector, push_sq_array, push_sq_bool, push_sq_float, push_sq_int,
-        push_sq_object, push_sq_string, push_sq_vector,
+        get_sq_array, get_sq_bool, get_sq_float, get_sq_int, get_sq_object, get_sq_string,
+        get_sq_vector, push_sq_array, push_sq_bool, push_sq_float, push_sq_int, push_sq_object,
+        push_sq_string, push_sq_vector,
     },
 };
 
@@ -134,7 +137,7 @@ impl GetFromSquirrelVm for &mut CBasePlayer {
     }
 }
 
-impl GetFromSquirrelVm for SQClosureHandle {
+impl GetFromSquirrelVm for SQHandle<SQClosure> {
     fn get_from_sqvm(
         sqvm: *mut HSquirrelVM,
         sqfunctions: &SquirrelFunctionsUnwraped,
@@ -143,8 +146,40 @@ impl GetFromSquirrelVm for SQClosureHandle {
         unsafe {
             let mut obj = std::mem::MaybeUninit::<SQObject>::uninit(); // TODO: import SQObject maybe?
             (sqfunctions.sq_getobject)(sqvm, stack_pos, obj.as_mut_ptr());
-            SQClosureHandle::new(obj.assume_init())
+            Self::new(obj.assume_init()).expect("the SQObject wasn't a closure")
         }
     }
 }
 // Get From SQObject Trait
+
+// Markers
+
+macro_rules! is_sq_object {
+    ( $( $object:ty,RT: $rt:expr,OT: $ot:expr );*; ) => { $(
+
+        impl IsSQObject for $object {
+            const OT_TYPE: SQObjectType = $ot;
+            const RT_TYPE: SQObjectType = $rt;
+        }
+    )* }
+}
+
+pub trait IsSQObject {
+    const OT_TYPE: SQObjectType;
+    const RT_TYPE: SQObjectType;
+}
+
+is_sq_object! {
+    SQTable, RT: SQObjectType::RT_TABLE, OT: SQObjectType::OT_TABLE;
+    SQString, RT: SQObjectType::RT_STRING, OT: SQObjectType::OT_STRING;
+    SQFunctionProto, RT: SQObjectType::RT_FUNCPROTO, OT: SQObjectType::OT_FUNCPROTO;
+    SQClosure, RT: SQObjectType::RT_CLOSURE, OT: SQObjectType::OT_CLOSURE;
+    SQStructInstance, RT: SQObjectType::RT_INSTANCE, OT: SQObjectType::OT_INSTANCE;
+    SQNativeClosure, RT: SQObjectType::RT_NATIVECLOSURE, OT: SQObjectType::OT_NATIVECLOSURE;
+    SQArray, RT: SQObjectType::RT_ARRAY, OT: SQObjectType::OT_ARRAY;
+    SQFloat, RT: SQObjectType::RT_FLOAT, OT: SQObjectType::OT_FLOAT;
+    SQInteger, RT: SQObjectType::RT_INTEGER, OT: SQObjectType::OT_INTEGER;
+    SQBool, RT: SQObjectType::RT_BOOL, OT: SQObjectType::OT_BOOL;
+}
+
+// not a thing? SQStructDef, RT: SQObjectType::, OT: SQObjectType::;

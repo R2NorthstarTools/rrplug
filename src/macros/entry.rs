@@ -162,7 +162,7 @@ macro_rules! entry {
                 }
 
                 let handle =
-                    high::squirrel::CSquirrelVMHandle::<<$plugin as Plugin>::SaveType>::new(
+                    high::squirrel::CSquirrelVMHandle::new(
                         sqvm, context,
                     );
 
@@ -227,8 +227,6 @@ mod test_entry {
     pub struct Test;
 
     impl Plugin for Test {
-        type SaveType = Save;
-
         fn new(_plugin_data: &PluginData) -> Self {
             Self {}
         }
