@@ -157,11 +157,10 @@ mod test {
     use rrplug::prelude::*;
     use rrplug_proc::*;
 
-    use rrplug::bindings::squirreldatatypes::SQObject;
     use rrplug::{async_call_sq_function, call_sq_function, call_sq_object_function};
 
     #[sqfunction(VM = "Server")]
-    fn test_call_funcs(func: fn(String)) -> String {
+    fn test_call_funcs2(func: fn(String)) -> String {
         call_sq_object_function!(sqvm, sq_functions, func, "test".to_string())
             .map_err(|err| err.to_string())?;
 

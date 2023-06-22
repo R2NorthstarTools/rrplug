@@ -3,9 +3,10 @@
 //! squirrel vm related function and statics
 
 use once_cell::sync::OnceCell;
-use parking_lot::Mutex;
+use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 use std::{
     ffi::c_void,
+    marker::PhantomData,
     mem::{transmute, MaybeUninit},
 };
 
@@ -24,26 +25,26 @@ use crate::{
 #[doc(hidden)]
 pub static FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
 
-type CSquirrelVMStatic = Mutex<OnceCell<CSquirrelVMHandle<Saved>>>;
-pub static SV_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
-pub static CL_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
-pub static UI_CS_VM: CSquirrelVMStatic = Mutex::new(OnceCell::new());
+type CSquirrelVMRead<'a> = RwLockReadGuard<'a, OnceCell<CSquirrelVMHandle<Saved>>>;
+type CSquirrelVMStatic = RwLock<OnceCell<CSquirrelVMHandle<Saved>>>;
+static SV_CS_VM: CSquirrelVMStatic = RwLock::new(OnceCell::new());
+static CL_CS_VM: CSquirrelVMStatic = RwLock::new(OnceCell::new());
+static UI_CS_VM: CSquirrelVMStatic = RwLock::new(OnceCell::new());
 
-#[derive(Debug)] // super cringe
-
+#[derive(Debug)]
 pub struct Save;
-#[derive(Debug)] // super cringe
 
+#[derive(Debug)]
 pub struct NoSave;
-#[derive(Debug)] // super cringe
 
+#[derive(Debug)]
 pub struct Saved;
 
 #[derive(Debug)]
 pub struct CSquirrelVMHandle<T> {
     handle: *mut CSquirrelVM,
     vm_type: ScriptVmType,
-    marker: std::marker::PhantomData<T>,
+    marker: PhantomData<T>,
 }
 
 impl CSquirrelVMHandle<Save> {
@@ -53,7 +54,7 @@ impl CSquirrelVMHandle<Save> {
         Self {
             handle,
             vm_type,
-            marker: std::marker::PhantomData::<Save>,
+            marker: PhantomData::<Save>,
         }
     }
 }
@@ -63,7 +64,7 @@ impl CSquirrelVMHandle<NoSave> {
         Self {
             handle,
             vm_type,
-            marker: std::marker::PhantomData::<NoSave>,
+            marker: PhantomData::<NoSave>,
         }
     }
 
@@ -82,8 +83,6 @@ impl CSquirrelVMHandle<Saved> {
     pub fn get_cs_sqvm(&self) -> *mut CSquirrelVM {
         self.handle
     }
-
-    // pub fn get
 }
 
 impl<T> CSquirrelVMHandle<T> {
@@ -118,11 +117,33 @@ impl<T> CSquirrelVMHandle<T> {
         self.vm_type
     }
 
+    pub fn get_saved<'a>(vm_type: ScriptVmType) -> CSquirrelVMRead<'a> {
+        let save_static = match vm_type {
+            ScriptVmType::Server => &SV_CS_VM,
+            ScriptVmType::Client => &CL_CS_VM,
+            ScriptVmType::Ui => &UI_CS_VM,
+            _ => &UI_CS_VM, // impossible to reach
+        };
+        save_static.read()
+    }
+
+    pub fn get_saved_sv<'a>() -> CSquirrelVMRead<'a> {
+        SV_CS_VM.read()
+    }
+
+    pub fn get_saved_cl<'a>() -> CSquirrelVMRead<'a> {
+        CL_CS_VM.read()
+    }
+
+    pub fn get_saved_ui<'a>() -> CSquirrelVMRead<'a> {
+        UI_CS_VM.read()
+    }
+
     pub(super) fn _save(handle: *mut CSquirrelVM, vm_type: ScriptVmType) {
         let save_handle = CSquirrelVMHandle {
             handle,
             vm_type,
-            marker: std::marker::PhantomData::<Saved>,
+            marker: PhantomData::<Saved>,
         };
 
         let save_static = match vm_type {
@@ -132,15 +153,29 @@ impl<T> CSquirrelVMHandle<T> {
             _ => &UI_CS_VM, // impossible to reach
         };
 
-        let mut lock = save_static.lock();
+        let mut lock = save_static.write();
         _ = lock.take();
         lock.set(save_handle)
-            .expect("someone we failed to set a new CSquirrelVM"); // this is impossible because of the previous line;
+            .expect("somehow we failed to set a new CSquirrelVM"); // this is impossible because of the previous line;
     }
 }
 
 unsafe impl Sync for CSquirrelVMHandle<Saved> {}
 unsafe impl Send for CSquirrelVMHandle<Saved> {}
+
+pub struct SQClosureHandle {
+    closure: SQObject,
+}
+
+impl SQClosureHandle {
+    pub(crate) fn new(closure: SQObject) -> Self {
+        Self { closure }
+    }
+
+    pub fn as_mut_ptr(&self) -> *mut SQObject {
+        (&self.closure as *const SQObject).cast_mut()
+    }
+}
 
 /// "safely" calls any function defined on the sqvm
 ///

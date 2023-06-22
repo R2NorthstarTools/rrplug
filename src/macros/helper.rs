@@ -4,7 +4,7 @@ macro_rules! offset_struct {
 
         $v union $struct_name {
             $(
-                $v $name: std::mem::ManuallyDrop<$crate::bindings::OffsetSructField::<$t,$offset>>,
+                $v $name: std::mem::ManuallyDrop<$crate::bindings::OffsetStructField::<$t,$offset>>,
             )*
         }
     };

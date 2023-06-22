@@ -30,6 +30,19 @@ pub struct SqFunctions {
     pub server: OnceCell<SquirrelFunctionsUnwraped>,
 }
 
+// maybe this will work in the future
+// const fn get_sq_function<const T: i8>() -> &'static OnceCell<SquirrelFunctionsUnwraped> {
+//     const SERVER: i8 = ScriptVmType::Server as i8;
+//     const CLIENT: i8 = ScriptVmType::Client as i8;
+//     const UI: i8 = ScriptVmType::Ui as i8;
+//     match T {
+//         SERVER => &SQFUNCTIONS.server,
+//         CLIENT => &SQFUNCTIONS.client,
+//         UI => &SQFUNCTIONS.client,
+//         _ => unreachable!(),
+//     }
+// }
+
 #[inline]
 pub fn push_sq_array<T>(
     sqvm: *mut HSquirrelVM,
@@ -92,14 +105,10 @@ pub fn push_sq_object(
 }
 
 #[inline]
-pub fn get_sq_array<T,F>(
-    sqvm: *mut HSquirrelVM,
-    stack_pos: i32,
-    transformer: F
-) -> Vec<T>
+pub fn get_sq_array<T, F>(sqvm: *mut HSquirrelVM, stack_pos: i32, transformer: F) -> Vec<T>
 where
     T: PushToSquirrelVm,
-    F: Fn(&SQObject) -> Option<T>
+    F: Fn(&SQObject) -> Option<T>,
 {
     unsafe {
         let sqvm_ref = sqvm.as_ref().expect("ok how is this sqvm invalid");
@@ -120,7 +129,6 @@ where
             .filter_map(transformer)
             .collect()
     }
-
 }
 
 #[inline]

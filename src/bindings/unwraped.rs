@@ -10,8 +10,8 @@ use crate::bindings::{
         CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObject, SQStackInfos,
     },
 };
-
 use super::entity::CBasePlayer;
+
 pub type sq_schedule_call_externalType_unwraped = unsafe extern "C" fn(
     context: ScriptContext,
     funcname: *const ::std::os::raw::c_char,
