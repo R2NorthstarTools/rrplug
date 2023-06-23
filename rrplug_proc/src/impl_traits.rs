@@ -39,14 +39,14 @@ pub fn get_from_sqvm_impl_struct(input: DeriveInput) -> TokenStream {
                 use rrplug::{high::squirrel_traits::GetFromSQObject,bindings::squirreldatatypes::SQObject};
                 let sqstruct = unsafe { 
                     let sqvm = sqvm.as_ref().expect("sqvm has to be valid");
-                    ((*sqvm._stackOfCurrentFunction.add(1))
+                    ((*sqvm._stackOfCurrentFunction.add(stack_pos as usize))
                         ._VAL
                         .asStructInstance)
                         .as_ref()
                         .expect("provided struct was invalid")
                 };
 
-                debug_assert_eq!(#field_amount, sqstruct.size, "the size of the struct instance({}) didn't match the size {}({})", sqstruct.size, stringify!(#ident), #field_amount);
+                debug_assert_eq!(#field_amount, sqstruct.size, "the size of the struct instance({}) didn't match the size of {}({})", sqstruct.size, stringify!(#ident), #field_amount);
 
                 let data = &sqstruct.data as *const SQObject; // this static array is dynamic in reality
                 let mut iter = (0..sqstruct.size)

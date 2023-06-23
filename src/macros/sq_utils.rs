@@ -31,7 +31,7 @@ macro_rules! call_sq_function {
                 use $crate::high::squirrel_traits::PushToSquirrelVm; // weird
                 const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg ())),*]) as i32;
 
-                let mut obj = Box::new(std::mem::MaybeUninit::<$crate::bindings::squirreldatatypes::SQObject>::zeroed());
+                let mut obj = std::mem::MaybeUninit::<$crate::bindings::squirreldatatypes::SQObject>::zeroed();
                 let ptr = obj.as_mut_ptr();
 
                 let function_name = $crate::to_sq_string!(std::convert::Into::<String>::into($function_name));

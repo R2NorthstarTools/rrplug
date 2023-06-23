@@ -198,8 +198,8 @@ pub fn get_sq_function_object(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     function_name: impl Into<String>,
-) -> Result<Box<MaybeUninit<SQObject>>, CallError> {
-    let mut obj = Box::new(MaybeUninit::<SQObject>::zeroed());
+) -> Result<SQObject, CallError> {
+    let mut obj = MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
 
     let function_name = to_sq_string!(function_name.into());
@@ -213,6 +213,6 @@ pub fn get_sq_function_object(
             function_name.to_string_lossy().into(),
         )) // totaly safe :clueless:
     } else {
-        Ok(obj)
+        Ok(unsafe { obj.assume_init() })
     }
 }

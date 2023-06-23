@@ -189,7 +189,7 @@ pub fn call_sq_function(
     sqfunctions: &SquirrelFunctionsUnwraped,
     function_name: impl Into<String>,
 ) -> Result<(), CallError> {
-    let mut obj = Box::new(std::mem::MaybeUninit::<SQObject>::zeroed());
+    let mut obj = std::mem::MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
 
     let function_name = to_sq_string!(function_name.into());
