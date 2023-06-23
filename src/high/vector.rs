@@ -38,7 +38,7 @@ impl From<*mut f32> for Vector3 {
 impl From<SQVector> for Vector3 {
     #[inline]
     fn from(value: SQVector) -> Self {
-        Vector3 {
+        Self {
             x: value.x,
             y: value.y,
             z: value.z,
@@ -62,7 +62,7 @@ impl Into<*const f32> for &Vector3 {
 
 impl From<(f32, f32, f32)> for Vector3 {
     fn from(value: (f32, f32, f32)) -> Self {
-        Vector3 {
+        Self {
             x: value.0,
             y: value.1,
             z: value.2,
@@ -72,7 +72,7 @@ impl From<(f32, f32, f32)> for Vector3 {
 
 impl From<(f32, f32)> for Vector3 {
     fn from(value: (f32, f32)) -> Self {
-        Vector3 {
+        Self {
             x: value.0,
             y: value.1,
             z: 0.,
@@ -82,7 +82,7 @@ impl From<(f32, f32)> for Vector3 {
 
 impl From<[f32; 3]> for Vector3 {
     fn from(value: [f32; 3]) -> Self {
-        Vector3 {
+        Self {
             x: value[0],
             y: value[1],
             z: value[2],
@@ -92,7 +92,7 @@ impl From<[f32; 3]> for Vector3 {
 
 impl From<[f32; 2]> for Vector3 {
     fn from(value: [f32; 2]) -> Self {
-        Vector3 {
+        Self {
             x: value[0],
             y: value[1],
             z: 0.,

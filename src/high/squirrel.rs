@@ -119,7 +119,7 @@ impl<H: IsSQObject> SQHandle<H> {
 }
 
 impl SQHandle<SQClosure> {
-    pub fn as_mut_ptr(&mut self) -> *mut SQObject {
+    pub fn as_callable(&mut self) -> *mut SQObject {
         &mut self.inner as *mut SQObject
     }
 }
@@ -227,7 +227,7 @@ pub fn call_sq_object_function(
     sqfunctions: &SquirrelFunctionsUnwraped,
     mut obj: SQHandle<SQClosure>,
 ) -> Result<(), CallError> {
-    _call_sq_object_function(sqvm, sqfunctions, obj.as_mut_ptr())
+    _call_sq_object_function(sqvm, sqfunctions, obj.as_callable())
 }
 
 #[inline] // let rust decide I just follow dry :)

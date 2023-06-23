@@ -1,7 +1,7 @@
 pub use crate::entry;
 pub use crate::plugin::Plugin;
 pub use crate::{
-    bindings::unwraped::SquirrelFunctionsUnwraped,
+    bindings::{squirreldatatypes::HSquirrelVM,unwraped::SquirrelFunctionsUnwraped},
     high::{
         concommands::CCommandResult,
         northstar::{EngineLoadType, PluginData, ScriptVmType},

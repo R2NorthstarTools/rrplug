@@ -243,49 +243,47 @@ pub fn get_sqtype(ty: &Box<Type>) -> String {
     match &**ty {
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
             "bool".to_string()
-        }
+        },
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => {
             "int".to_string()
-        }
+        },
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => {
             "float".to_string()
-        }
+        },
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
             "string".to_string()
-        }
+        },
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vector3" => {
             "vector".to_string()
-        }
+        },
+        Type::Path(type_path) if type_path.to_token_stream().to_string() == "CBasePlayer" => {
+            "entity".to_string()
+        },
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<String>" =>
         {
             "array<string>".to_string()
-        }
+        },
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<Vector3>" =>
         {
             "array<vector>".to_string()
-        }
+        },
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<bool>" =>
         {
             "array<bool>".to_string()
-        }
+        },
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<i32>" =>
         {
             "array<int>".to_string()
-        }
+        },
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<f32>" =>
         {
             "array<float>".to_string()
-        }
-        Type::Path(type_path)
-            if type_path.to_token_stream().to_string().replace(' ', "") == "CBasePlayer" =>
-        {
-            "entity".to_string()
-        }
+        },
         Type::BareFn(fun) => {
             let head_types = format!("{} functionref( ", get_sqoutput(&fun.output));
             let mut func_args = String::new();
@@ -295,7 +293,7 @@ pub fn get_sqtype(ty: &Box<Type>) -> String {
             }
 
             format!("{head_types}{func_args})")
-        }
+        },
         _ => "var".to_string(),
     }
 }

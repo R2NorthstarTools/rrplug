@@ -1,19 +1,17 @@
 extern crate proc_macro;
 
-use proc_macro::{TokenStream};
+use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    self, parse_macro_input, FnArg, Ident, ItemFn, ReturnType, Stmt,
-    parse_quote,
+    self, parse_macro_input, parse_quote, DeriveInput, FnArg, Ident, ItemFn, ReturnType, Stmt,
 };
 
 #[macro_use]
 pub(crate) mod parsing;
+pub(crate) mod impl_traits;
 
-use parsing::{input_mapping,get_sqoutput, Args};
-
-use crate::parsing::{filter_args};
-
+use impl_traits::{ impl_struct_or_enum, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum, get_from_sqvm_impl_enum, get_from_sqvm_impl_struct, get_from_sqobject_impl_enum};
+use parsing::{filter_args, get_sqoutput, input_mapping, Args};
 /// proc marco for generating compatible functions with the sqvm
 ///
 ///  ### abstractions
@@ -41,22 +39,40 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sqtypes = String::new();
     let ident = &sig.ident;
     let input = &sig.inputs;
-    let input_vec = input
-        .iter().filter_map(|arg| filter_args(arg));
-    let input_var_names: Vec<Ident> = input.iter().cloned()
-        .filter_map(|_input| if let FnArg::Typed(t) = _input { Some(t) } else { None } )
-        .map(|t| t.pat.into_token_stream().to_string().replace("mut", "").replace(" ", "")) // not the best solution
-        .map(|ident| format_ident!("{ident}")  )
+    let input_vec = input.iter().filter_map(|arg| filter_args(arg));
+    let input_var_names: Vec<Ident> = input
+        .iter()
+        .cloned()
+        .filter_map(|_input| {
+            if let FnArg::Typed(t) = _input {
+                Some(t)
+            } else {
+                None
+            }
+        })
+        .map(|t| {
+            t.pat
+                .into_token_stream()
+                .to_string()
+                .replace("mut", "")
+                .replace(" ", "")
+        }) // not the best solution
+        .map(|ident| format_ident!("{ident}"))
         .collect();
     let output = &sig.output;
-    let (ouput_type,ouput_parsing) = match output.clone() {
-        ReturnType::Default => (parse_quote!(()),quote!(rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NULL)),
-        ReturnType::Type(_, t) => 
-        (t,quote!({
-            use rrplug::high::squirrel_traits::PushToSquirrelVm;
-            output.push_to_sqvm(sqvm, sq_functions);
-            rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
-        })),
+    let (ouput_type, ouput_parsing) = match output.clone() {
+        ReturnType::Default => (
+            parse_quote!(()),
+            quote!(rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NULL),
+        ),
+        ReturnType::Type(_, t) => (
+            t,
+            quote!({
+                use rrplug::high::squirrel_traits::PushToSquirrelVm;
+                output.push_to_sqvm(sqvm, sq_functions);
+                rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_NOTNULL
+            }),
+        ),
     };
     let func_name = ident.to_string();
     let sq_functions_func: Ident = format_ident!("sq_func_{}", func_name.clone());
@@ -109,7 +125,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
             "VM" => {
                 let fmt = format!("invalid VM {}", input);
-                return quote!{ compile_error!(#fmt) }.into();
+                return quote! { compile_error!(#fmt) }.into();
             }
             "ExportName" => export_name = input,
             "ReturnOverwrite" => out = out,
@@ -203,19 +219,19 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let output = &sig.output;
 
     let inner_call = if input.iter().count() != 0 {
-        quote!{
+        quote! {
             let ccommand = rrplug::high::concommands::CCommandResult::new(ccommand);
 
             _ = inner_function(ccommand);
         }
     } else {
-        quote!{
+        quote! {
             _ = ccommand; // so it doesn't complain about unused varibles
 
             _ = inner_function();
         }
     };
-    
+
     // TODO: allow the users to manipulate the input of the inner function
 
     quote! {
@@ -253,13 +269,13 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let output = &sig.output;
 
     let inner_call = if input.iter().count() != 0 {
-        quote!{
+        quote! {
             let old_value = std::ffi::CStr::from_ptr(old_value).to_string_lossy().to_string();
 
             _ = inner_function(old_value,float_old_value);
         }
     } else {
-        quote!{
+        quote! {
             _ = (old_value,float_old_value); // so it doesn't complain about unused varibles
 
             _ = inner_function();
@@ -280,4 +296,25 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     }
     .into()
+}
+
+#[proc_macro_derive(GetFromSquirrelVm)]
+pub fn get_from_sqvm_macro(item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as DeriveInput);
+
+    impl_struct_or_enum(input, get_from_sqvm_impl_struct, get_from_sqvm_impl_enum)
+}
+
+#[proc_macro_derive(PushToSquirrelVm)]
+pub fn push_to_sqvm_macro(item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as DeriveInput);
+
+    impl_struct_or_enum(input, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum)
+}
+
+#[proc_macro_derive(GetFromSQObject)]
+pub fn get_from_sqobject_macro(item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as DeriveInput);
+
+    get_from_sqobject_impl_enum(input)
 }

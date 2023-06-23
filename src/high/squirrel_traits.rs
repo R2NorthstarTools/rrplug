@@ -152,6 +152,47 @@ impl GetFromSquirrelVm for SQHandle<SQClosure> {
 }
 // Get From SQObject Trait
 
+pub trait GetFromSQObject {
+    fn get_from_sqobject(obj: &SQObject) -> Self;
+}
+
+impl GetFromSQObject for String {
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        unsafe {
+            std::ffi::CStr::from_ptr(
+                (&obj._VAL.asString.as_ref().unwrap_unchecked()._val) as *const i8,
+            )
+            .to_string_lossy()
+            .into()
+        }
+    }
+}
+impl GetFromSQObject for i32 {
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        unsafe { obj._VAL.asInteger }
+    }
+}
+impl GetFromSQObject for f32 {
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        unsafe { obj._VAL.asFloat }
+    }
+}
+impl GetFromSQObject for bool {
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        unsafe { obj._VAL.asInteger != 0 }
+    }
+}
+impl GetFromSQObject for Vector3 {
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        (obj as *const SQObject).into()
+    }
+}
+
 // Markers
 
 macro_rules! is_sq_object {

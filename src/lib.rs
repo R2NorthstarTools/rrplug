@@ -109,6 +109,7 @@ mod test {
     use crate as rrplug;
     use rrplug::prelude::*;
     use rrplug_proc::*;
+    use rrplug::high::squirrel_traits::{PushToSquirrelVm,GetFromSquirrelVm,GetFromSQObject};
 
     #[convar]
     fn test_convar(_old_string: String, _old_float: f32) -> () {}
@@ -122,7 +123,25 @@ mod test {
     }
 
     #[sqfunction(VM = "Server", ExportName = "test")]
-    fn test_sqfunction(_test3: String, _test2: i32) -> String {
-        Ok("ok".into())
+    fn test_sqfunction(test1: String, test2: i32, test3: TestEnum) -> TestStruct {
+        Ok(TestStruct {
+            a: test1,
+            b: test2,
+            c: test3
+        })
+    }
+    
+    #[derive(PushToSquirrelVm,GetFromSquirrelVm,GetFromSQObject)]
+    #[repr(i32)]
+    enum TestEnum {
+        Wow,
+        Owo
+    }
+
+    #[derive(PushToSquirrelVm,GetFromSquirrelVm)]
+    struct TestStruct {
+        a: String,
+        b: i32,
+        c: TestEnum,
     }
 }

@@ -87,7 +87,7 @@ macro_rules! call_sq_object_function {
                 use $crate::high::squirrel_traits::PushToSquirrelVm; // weird
                 const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg ())),*]) as i32;
 
-                let ptr = $obj.as_mut_ptr();
+                let ptr = $obj.as_callable();
                 unsafe {
                     ($sqfunctions.sq_pushobject)($sqvm, ptr);
                     ($sqfunctions.sq_pushroottable)($sqvm);
