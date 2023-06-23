@@ -1,6 +1,7 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove this later
 
 use std::mem::MaybeUninit;
+pub use rrplug_proc::{GetFromSQObject,PushToSquirrelVm,GetFromSquirrelVm};
 
 use super::{squirrel::SQHandle, vector::Vector3};
 use crate::{

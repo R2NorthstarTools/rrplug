@@ -29,6 +29,8 @@ pub fn get_from_sqvm_impl_struct(input: DeriveInput) -> TokenStream {
 
     quote!(
         impl<#generics> GetFromSquirrelVm for #ident<#generics> {
+            #[allow(clippy::not_unsafe_ptr_arg_deref)] // smth should be done about this
+            #[inline]
             fn get_from_sqvm(
                 sqvm: *mut HSquirrelVM,
                 sqfunctions: &SquirrelFunctionsUnwraped,
@@ -78,6 +80,8 @@ pub fn push_to_sqvm_impl_struct(input: DeriveInput) -> TokenStream {
 
     quote!(
         impl<#generics> PushToSquirrelVm for #ident<#generics> {
+            #[allow(clippy::not_unsafe_ptr_arg_deref)]
+            #[inline]
             fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
                 unsafe {
                     (sqfunctions.sq_pushnewstructinstance)(sqvm, #field_amount);
@@ -120,6 +124,7 @@ pub fn get_from_sqvm_impl_enum(input: DeriveInput) -> TokenStream {
     quote!(
         impl<#generics> GetFromSquirrelVm for #ident<#generics> {
             #[inline]
+            #[allow(clippy::not_unsafe_ptr_arg_deref)]
             fn get_from_sqvm(
                 sqvm: *mut HSquirrelVM,
                 sqfunctions: &SquirrelFunctionsUnwraped,
@@ -150,6 +155,7 @@ pub fn push_to_sqvm_impl_enum(input: DeriveInput) -> TokenStream {
     quote!(
         impl<#generics> PushToSquirrelVm for #ident<#generics> {
             #[inline]
+            #[allow(clippy::not_unsafe_ptr_arg_deref)]
             fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
                 unsafe { rrplug::mid::squirrel::push_sq_int(sqvm, sqfunctions, self as i32) };
             }
@@ -186,6 +192,7 @@ pub fn get_from_sqobject_impl_enum(input: DeriveInput) -> TokenStream {
     quote!(
         impl<#generics> GetFromSQObject for #ident<#generics> {
             #[inline]
+            #[allow(clippy::not_unsafe_ptr_arg_deref)]
             fn get_from_sqobject(obj: &rrplug::bindings::squirreldatatypes::SQObject) -> Self {
                 let value = unsafe { obj._VAL.asInteger };
 

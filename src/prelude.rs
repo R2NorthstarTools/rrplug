@@ -1,5 +1,3 @@
-pub use crate::entry;
-pub use crate::plugin::Plugin;
 pub use crate::{
     bindings::{squirreldatatypes::HSquirrelVM,unwraped::SquirrelFunctionsUnwraped},
     high::{
@@ -8,6 +6,8 @@ pub use crate::{
         squirrel::{CSquirrelVMHandle},
     },
     mid::squirrel::SQFUNCTIONS,
+    plugin::Plugin,
+    entry,
 };
 pub use log;
 
