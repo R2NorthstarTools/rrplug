@@ -79,8 +79,6 @@ macro_rules! entry {
                     }
                 };
 
-
-
                 SQFUNCTIONS.server.set((*funcs).into()).expect("SQFUNCTIONS.server should be initialized once");
                 log::debug!("Server SquirrelFunctions acquired!");
             }
@@ -183,6 +181,7 @@ macro_rules! entry {
                 data: *mut ::std::os::raw::c_void,
                 dll_ptr: *mut ::std::os::raw::c_void,
             ) {
+                let dll_ptr = $crate::mid::engine::DLLPointer::new(dll,dll_ptr);
                 match dll {
                     plugin_abi::PluginLoadDLL::ENGINE => unsafe {
                         let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);

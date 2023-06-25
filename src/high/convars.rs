@@ -84,6 +84,7 @@ use crate::{
 /// the state of the convar in all of its possible types
 ///
 /// value should be valid most of the time
+#[derive(Debug, Default, PartialEq)]
 pub struct ConVarValues {
     pub value: Option<String>,
     pub value_float: f32,

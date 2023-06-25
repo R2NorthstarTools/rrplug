@@ -3,12 +3,14 @@
 ///! this exported function and others are created by the `entry` macro
 ///!
 ///! it takes your plugin struct and calls specific function for each event
-
 use std::any::Any;
 
-use crate::high::{
-    northstar::{EngineLoadType, PluginData, ScriptVmType},
-    squirrel::CSquirrelVMHandle,
+use crate::{
+    high::{
+        northstar::{EngineLoadType, PluginData, ScriptVmType},
+        squirrel::CSquirrelVMHandle,
+    },
+    mid::engine::DLLPointer,
 };
 
 /// Trait for defining the callbacks and entry point of the plugin
@@ -21,7 +23,7 @@ pub trait Plugin: Any + Sync {
 
     fn main(&self);
 
-    fn on_engine_load(&self, _engine: &EngineLoadType, _dll_ptr: *const std::ffi::c_void) {}
+    fn on_engine_load(&self, _engine: &EngineLoadType, _dll_ptr: DLLPointer) {}
 
     fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle) {}
 
