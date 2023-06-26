@@ -1,11 +1,15 @@
 pub use crate::{
-    bindings::{squirreldatatypes::HSquirrelVM, unwraped::SquirrelFunctionsUnwraped},
+    bindings::{
+        plugin_abi::PluginLoadDLL, squirreldatatypes::HSquirrelVM,
+        unwraped::SquirrelFunctionsUnwraped,
+    },
     entry,
     high::{
         concommands::CCommandResult,
         engine::EngineData,
         northstar::{EngineLoadType, PluginData, ScriptVmType},
         squirrel::CSquirrelVMHandle,
+        vector::Vector3,
     },
     mid::{engine::DLLPointer, squirrel::SQFUNCTIONS},
     plugin::Plugin,
