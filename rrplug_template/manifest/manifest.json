@@ -5,6 +5,6 @@
 	"description": "{{description}}",
 	"api_version": "2",
 	"version": "1.0",
-	"run_on_server": {{run_on_client}},
-	"run_on_client": {{run_on_server}}
+	"run_on_server": {{run_on_server}},
+	"run_on_client": {{run_on_client}}
 }
