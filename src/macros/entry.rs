@@ -18,7 +18,7 @@ macro_rules! entry {
             use mid::squirrel::SQFUNCTIONS;
             use high::{northstar::ScriptVmType,engine::EngineData};
 
-            use std::ffi::CString;
+            use std::ffi::{CString,CStr};
 
             pub static PLUGIN: $crate::OnceCell<$plugin> = $crate::OnceCell::new();
 
@@ -177,37 +177,36 @@ macro_rules! entry {
             #[no_mangle]
             #[export_name = "PLUGIN_INFORM_DLL_LOAD"]
             extern "C" fn plugin_inform_dll_load(
-                dll: plugin_abi::PluginLoadDLL,
+                dll: *const ::std::os::raw::c_char,
                 data: *mut ::std::os::raw::c_void,
                 dll_ptr: *mut ::std::os::raw::c_void,
             ) {
-                let dll_ptr = $crate::mid::engine::DLLPointer::new(dll,dll_ptr);
-                match dll {
-                    plugin_abi::PluginLoadDLL::ENGINE => unsafe {
-                        let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
-                        let engine_result = match engine_dll.as_ref() {
-                            Some(engine_dll) => {
-                                match mid::engine::ENGINE_DATA
-                                    .set(EngineData::new(&*engine_dll))
-                                {
-                                    // maybe use as_ref later
-                                    Ok(_) => high::northstar::EngineLoadType::Engine(
-                                        mid::engine::ENGINE_DATA.wait(),
-                                    ),
-                                    Err(_) => high::northstar::EngineLoadType::EngineFailed,
-                                }
+                let dll_string = unsafe { CStr::from_ptr(dll) }.to_string_lossy().to_string();
+
+                log::info!("dll found {dll_string}");
+
+                let dll_str: &str = &dll_string;
+                let dll = match dll_str {
+                    "engine.dll" => {
+                        unsafe {
+                            let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
+                            match engine_dll.as_ref() {
+                                Some(engine_dll) => _ = mid::engine::ENGINE_DATA.set(EngineData::new(engine_dll)),
+                                None => panic!("the plugin sys provided null engine data!"),
                             }
-                            None => high::northstar::EngineLoadType::EngineFailed,
-                        };
-                        PLUGIN.wait().on_engine_load(&engine_result, dll_ptr)
-                    },
-                    plugin_abi::PluginLoadDLL::SERVER => PLUGIN
-                    .wait()
-                        .on_engine_load(&high::northstar::EngineLoadType::Server, dll_ptr),
-                    plugin_abi::PluginLoadDLL::CLIENT => PLUGIN
-                    .wait()
-                        .on_engine_load(&high::northstar::EngineLoadType::Client, dll_ptr)
-                }
+                        }
+                        mid::engine::PluginLoadDLL::Engine(mid::engine::ENGINE_DATA.wait())
+
+                    }
+                    "server.dll" => mid::engine::PluginLoadDLL::Server,
+                    "client.dll" => mid::engine::PluginLoadDLL::Client,
+                    _ => mid::engine::PluginLoadDLL::Other(dll_string),
+                };
+
+
+                let dll_ptr = $crate::mid::engine::DLLPointer::new(&dll, dll_ptr);
+
+                PLUGIN.wait().on_engine_load(&dll, &dll_ptr);
             }
 
             #[no_mangle]

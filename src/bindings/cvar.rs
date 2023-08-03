@@ -8,6 +8,7 @@ use super::{
 
 type Vtable = [*const c_void; 100];
 
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct RawCVar {
     vtable_adr: *const *const Vtable,
 }

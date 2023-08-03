@@ -13,6 +13,7 @@ use crate::{
 
 use super::engine::get_engine_data;
 
+#[derive(Debug,Hash,PartialEq, Eq, PartialOrd, Ord)]
 pub struct RegisterConCommands {
     pub reg_func: ConCommandConstructorType,
 }

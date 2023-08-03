@@ -4,7 +4,6 @@ use log::SetLoggerError;
 use std::ffi::CStr;
 use std::fmt::Display;
 
-use super::engine::EngineData;
 use crate::{
     bindings::plugin_abi::{PluginInitFuncs, PluginNorthstarData},
     bindings::squirrelclasstypes::{SQFunction, ScriptContext},
@@ -76,18 +75,6 @@ impl Into<ScriptContext> for ScriptVmType {
             }
         }
     }
-}
-
-/// All the engine load states northstar has
-///
-/// Each one loads a dll at it stage
-///
-/// `EngineFailed` is an Error
-pub enum EngineLoadType {
-    Engine(&'static EngineData),
-    EngineFailed,
-    Server,
-    Client,
 }
 
 /// Provides Usefull Initilization infomation

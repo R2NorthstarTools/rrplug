@@ -3,10 +3,7 @@ use std::ffi::c_void;
 
 use once_cell::sync::OnceCell;
 
-use crate::{
-    bindings::{cvar::RawCVar, plugin_abi::PluginLoadDLL},
-    high::engine::EngineData,
-};
+use crate::{bindings::cvar::RawCVar, high::engine::EngineData};
 
 use super::{concommands::RegisterConCommands, convars::ConVarClasses};
 
@@ -30,15 +27,23 @@ pub fn get_engine_data() -> Option<&'static EngineData> {
     ENGINE_DATA.get()
 }
 
-pub struct DLLPointer {
-    dll: PluginLoadDLL,
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub enum PluginLoadDLL {
+    Engine(&'static EngineData),
+    Client,
+    Server,
+    Other(String),
+}
+
+pub struct DLLPointer<'a> {
+    dll: &'a PluginLoadDLL,
     ptr: *const c_void,
 }
 
-impl DLLPointer {
+impl<'a> DLLPointer<'a> {
     /// not for public use, made public for [`crate::entry`] macro
     #[doc(hidden)]
-    pub fn new(dll: PluginLoadDLL, ptr: *const c_void) -> Self {
+    pub fn new(dll: &'a PluginLoadDLL, ptr: *const c_void) -> DLLPointer<'a> {
         Self { dll, ptr }
     }
 
@@ -46,7 +51,7 @@ impl DLLPointer {
         self.ptr
     }
 
-    pub fn which_dll(&self) -> PluginLoadDLL {
+    pub fn which_dll(&self) -> &PluginLoadDLL {
         self.dll
     }
 

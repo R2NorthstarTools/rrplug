@@ -9,6 +9,7 @@ use crate::{
 /// Use this struct to register convars and concommands
 ///
 /// only usefull when the convars or concommands features are enabled
+#[derive(Debug, Hash,PartialEq, Eq, PartialOrd, Ord)]
 pub struct EngineData {
     pub(crate) concommands: RegisterConCommands,
     pub(crate) convar: ConVarClasses,

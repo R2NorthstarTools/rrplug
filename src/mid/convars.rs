@@ -12,6 +12,7 @@ use crate::{
 
 use super::engine::get_engine_data;
 
+#[derive(Debug,Hash,PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConVarClasses {
     pub convar_vtable: *mut c_void,
     pub convar_register: ConVarRegisterType,

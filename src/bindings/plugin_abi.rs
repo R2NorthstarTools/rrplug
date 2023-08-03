@@ -6,13 +6,6 @@ use super::{squirrelclasstypes::*, squirreldatatypes::CSquirrelVM};
 
 #[repr(i32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum PluginLoadDLL {
-    ENGINE = 0,
-    CLIENT,
-    SERVER,
-}
-#[repr(i32)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum ObjectType {
     CONCOMMANDS = 0,
     CONVAR = 1,
@@ -681,7 +674,7 @@ fn bindgen_test_layout_PluginInitFuncs() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PluginEngineData {
     pub ConCommandConstructor: *mut ::std::os::raw::c_void,
     pub conVarMalloc: *mut ::std::os::raw::c_void,
@@ -777,7 +770,7 @@ pub type PLUGIN_INFORM_SQVM_DESTROYED_TYPE =
     ::std::option::Option<unsafe extern "C" fn(context: ScriptContext)>;
 pub type PLUGIN_INFORM_DLL_LOAD_TYPE = ::std::option::Option<
     unsafe extern "C" fn(
-        dll: PluginLoadDLL,
+        dll: *const ::std::os::raw::c_char,
         data: *mut ::std::os::raw::c_void,
         dllPtr: *mut ::std::os::raw::c_void,
     ),

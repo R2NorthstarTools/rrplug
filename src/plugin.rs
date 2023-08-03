@@ -7,10 +7,10 @@ use std::any::Any;
 
 use crate::{
     high::{
-        northstar::{EngineLoadType, PluginData, ScriptVmType},
+        northstar::{PluginData, ScriptVmType},
         squirrel::CSquirrelVMHandle,
     },
-    mid::engine::DLLPointer,
+    mid::engine::{DLLPointer,PluginLoadDLL},
 };
 
 /// Trait for defining the callbacks and entry point of the plugin
@@ -23,7 +23,7 @@ pub trait Plugin: Any + Sync {
 
     fn main(&self);
 
-    fn on_engine_load(&self, _engine: &EngineLoadType, _dll_ptr: DLLPointer) {}
+    fn on_engine_load(&self, _engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {}
 
     fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle) {}
 
