@@ -105,6 +105,7 @@ offset_struct! {
         __size: c_void where offset(0x2D727),
         name: [c_char;64] where offset(0x16),
         con_vars: *const c_void where offset(0x258), // TODO: add KeyValues later
+        // net_channel: *const c_void where offset(0x290), this seams to be invalid :/
         signon: SignonState where offset(0x2A0),
         clan_tag: [c_char;16] where offset(0x358),
         fake_player: bool where offset(0x484),

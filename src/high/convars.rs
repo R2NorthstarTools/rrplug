@@ -337,7 +337,7 @@ impl ConVarStruct {
     /// also sets float and string
     ///
     /// only safe on the titanfall thread
-    pub fn set_value_i32(&mut self, new_value: i32) {
+    pub fn set_value_i32(&self, new_value: i32) {
         unsafe {
             let value = &self.inner.m_Value;
 
@@ -360,7 +360,7 @@ impl ConVarStruct {
     /// also sets int and string
     ///
     /// only safe on the titanfall thread
-    pub fn set_value_f32(&mut self, new_value: f32) {
+    pub fn set_value_f32(&self, new_value: f32) {
         unsafe {
             let value = &self.inner.m_Value;
 
@@ -382,7 +382,7 @@ impl ConVarStruct {
     /// set the string value of the convar
     ///
     /// only safe on the titanfall thread
-    pub fn set_value_string(&mut self, new_value: String) {
+    pub fn set_value_string(&self, new_value: String) {
         unsafe {
             if self.has_flag(FCVAR_NEVER_AS_STRING.try_into().unwrap()) {
                 return;

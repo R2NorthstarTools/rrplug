@@ -11,7 +11,7 @@ pub mod vector;
 
 /// allows some tf2 types to be send and sync
 ///
-/// used to store types in a somewhat safe way idk
+/// used to store tf2 pointers across threads
 pub struct Handle<T> {
     inner: T,
 }
