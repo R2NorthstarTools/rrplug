@@ -35,8 +35,16 @@ pub enum PluginLoadDLL {
     Other(String),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum WhichDll<'a> {
+    Engine,
+    Client,
+    Server,
+    Other(&'a str),
+}
+
 pub struct DLLPointer<'a> {
-    dll: &'a PluginLoadDLL,
+    dll: WhichDll<'a>,
     ptr: *const c_void,
 }
 
@@ -44,15 +52,25 @@ impl<'a> DLLPointer<'a> {
     /// not for public use, made public for [`crate::entry`] macro
     #[doc(hidden)]
     pub fn new(dll: &'a PluginLoadDLL, ptr: *const c_void) -> DLLPointer<'a> {
-        Self { dll, ptr }
+        let which_dll = match dll {
+            PluginLoadDLL::Engine(_) => WhichDll::Engine,
+            PluginLoadDLL::Client => WhichDll::Client,
+            PluginLoadDLL::Server => WhichDll::Server,
+            PluginLoadDLL::Other(dll) => WhichDll::Other(dll),
+        };
+
+        Self {
+            dll: which_dll,
+            ptr,
+        }
     }
 
     pub fn get_dll_ptr(&self) -> *const c_void {
         self.ptr
     }
 
-    pub fn which_dll(&self) -> &PluginLoadDLL {
-        self.dll
+    pub fn which_dll(&self) -> &WhichDll {
+        &self.dll
     }
 
     /// # Safety
