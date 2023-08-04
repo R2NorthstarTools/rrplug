@@ -203,6 +203,7 @@ macro_rules! entry {
                 let mut called_dlls = high::engine::CALLED_DLLS.lock();
                 if called_dlls.contains(&dll) {
                     called_dlls.push(dll.clone());
+                    return;
                 }
 
 
