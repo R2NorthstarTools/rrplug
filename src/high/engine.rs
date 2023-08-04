@@ -1,10 +1,16 @@
 //! engine related abstractions and functions
 
+use parking_lot::Mutex;
+
 use crate::{
     bindings::{command::CCommand, cvar::RawCVar, plugin_abi::PluginEngineData},
     errors::RegisterError,
-    mid::{concommands::RegisterConCommands, convars::ConVarClasses},
+    mid::{concommands::RegisterConCommands, convars::ConVarClasses, engine::PluginLoadDLL},
 };
+
+/// internal vec to not call on_dll_load
+#[doc(hidden)]
+pub static CALLED_DLLS: Mutex<Vec<PluginLoadDLL>> = Mutex::new(Vec::new());
 
 /// Use this struct to register convars and concommands
 ///

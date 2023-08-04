@@ -182,9 +182,6 @@ macro_rules! entry {
                 dll_ptr: *mut ::std::os::raw::c_void,
             ) {
                 let dll_string = unsafe { CStr::from_ptr(dll) }.to_string_lossy().to_string();
-
-                log::info!("dll found {dll_string}");
-
                 let dll_str: &str = &dll_string;
                 let dll = match dll_str {
                     "engine.dll" => {
@@ -202,11 +199,16 @@ macro_rules! entry {
                     "client.dll" => mid::engine::PluginLoadDLL::Client,
                     _ => mid::engine::PluginLoadDLL::Other(dll_string),
                 };
+                
+                let mut called_dlls = high::engine::CALLED_DLLS.lock();
+                if called_dlls.contains(&dll) {
+                    called_dlls.push(dll.clone());
+                }
 
 
                 let dll_ptr = $crate::mid::engine::DLLPointer::new(&dll, dll_ptr);
 
-                PLUGIN.wait().on_engine_load(&dll, &dll_ptr);
+                PLUGIN.wait().on_dll_load(&dll, &dll_ptr);
             }
 
             #[no_mangle]

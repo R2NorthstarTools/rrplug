@@ -23,7 +23,7 @@ pub trait Plugin: Any + Sync {
 
     fn main(&self);
 
-    fn on_engine_load(&self, _engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {}
+    fn on_dll_load(&self, _engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {}
 
     fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle) {}
 
