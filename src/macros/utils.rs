@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! engine_functions {
     ( $static_name:ident + $struct_name:ident for $dll:expr => { $($name:ident = $t:ty, at $addr:literal;)* } ) => {
-        pub static $static_name: once_cell::sync::OnceCell<$struct_name> = once_cell::sync::OnceCell::new();
+        pub static $static_name: $crate::OnceCell<$struct_name> = $crate::OnceCell::new();
 
         #[doc(hidden)]
         pub struct $struct_name {
@@ -12,11 +12,6 @@ macro_rules! engine_functions {
         impl $struct_name {
             pub unsafe fn try_init(dll: &$crate::mid::engine::DLLPointer, static_var: &once_cell::sync::OnceCell<Self>) {
                 use $crate::mid::engine::WhichDll;
-
-                // match (dll.which_dll()) {
-                //     $dll if true => {},
-                //     (_) => return,
-                // }
 
                 if &$dll != dll.which_dll() {
                     return

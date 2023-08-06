@@ -28,8 +28,8 @@ macro_rules! call_sq_function {
     ($sqvm:expr, $sqfunctions:expr, $function_name:expr, $( $arg:expr ),* ) => (
         {
             {
-                use $crate::high::squirrel_traits::PushToSquirrelVm; // weird
-                const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg ())),*]) as i32;
+                use $crate::high::squirrel_traits::PushToSquirrelVm;
+                const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg)),*]) as i32;
 
                 let mut obj = std::mem::MaybeUninit::<$crate::bindings::squirreldatatypes::SQObject>::zeroed();
                 let ptr = obj.as_mut_ptr();
@@ -84,19 +84,21 @@ macro_rules! call_sq_object_function {
     ($sqvm:expr, $sqfunctions:expr, $obj:expr, $( $arg:expr ),* ) => (
         {
             {
-                use $crate::high::squirrel_traits::PushToSquirrelVm; // weird
-                const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg ())),*]) as i32;
+                use $crate::high::squirrel_traits::PushToSquirrelVm;
+                const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg)),*]) as i32;
 
+                let sqfunctions = $sqfunctions;
+                let sqvm = $sqvm;
                 let ptr = $obj.as_callable();
                 unsafe {
-                    ($sqfunctions.sq_pushobject)($sqvm, ptr);
-                    ($sqfunctions.sq_pushroottable)($sqvm);
+                    (sqfunctions.sq_pushobject)(sqvm, ptr);
+                    (sqfunctions.sq_pushroottable)(sqvm);
 
                     $(
-                        $arg.push_to_sqvm($sqvm, $sqfunctions);
+                        $arg.push_to_sqvm(sqvm, sqfunctions);
                     )*
 
-                    let result = if ($sqfunctions.sq_call)($sqvm, ARGS_AMOUNT, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR {
+                    let result = if (sqfunctions.sq_call)(sqvm, ARGS_AMOUNT, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR {
                         Err($crate::errors::CallError::FunctionFailedToExecute)
                     } else {
                         Ok(())
@@ -124,13 +126,13 @@ macro_rules! async_call_sq_function {
         $crate::high::squirrel::async_call_sq_function(
             $context,
             $function_name,
-            Some( Box::new( |sqvm,sqfunctions| {
+            Some( Box::new( move |sqvm,sqfunctions| {
                 use $crate::high::squirrel_traits::PushToSquirrelVm;
                 $(
                     $arg.push_to_sqvm(sqvm, sqfunctions);
                 )*
 
-                $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg ())),*]) as i32
+                $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg)),*]) as i32
             } )),
         )
     );
@@ -140,8 +142,8 @@ macro_rules! async_call_sq_function {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __replace_expr {
-    ($_t:tt $sub:expr) => {
-        $sub
+    ($_t:tt) => {
+        ()
     };
 }
 
