@@ -1,7 +1,7 @@
 #[cfg(doc)]
 use crate::{
     bindings::{squirreldatatypes::HSquirrelVM, unwraped::SquirrelFunctionsUnwraped},
-    wrappers::vector::Vector3,
+    high::vector::Vector3,
 };
 
 #[macro_export]

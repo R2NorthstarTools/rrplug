@@ -29,6 +29,7 @@ impl_vmethods! {
     pub fn get_cvar_raw_interator() -> *const ConCommandBase, for RawCVar, offset 41;
 }
 
+#[derive(Debug,Clone)]
 pub struct RawCvarIterator {
     vtable_adr: *const *const Vtable,
 }

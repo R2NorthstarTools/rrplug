@@ -1,10 +1,8 @@
 #[cfg(doc)]
 use crate::{
     bindings::squirreldatatypes::SQObject,
-    wrappers::{
-        errors::CallError,
-        squirrel::{call_sq_function, call_sq_object_function},
-    },
+    errors::CallError,
+    high::squirrel::{call_sq_function, call_sq_object_function},
 };
 
 /// calls any function defined on the sqvm

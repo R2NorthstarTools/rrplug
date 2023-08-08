@@ -95,6 +95,7 @@ offset_struct! {
         zoom_full_start_time: f32 where offset(0x15A4),
         camo_index: i32 where offset(0xA04),
         decal_index: i32 where offset(0xA08),
+        team: i32 where offset(0x5E4),
     }
 }
 
@@ -102,7 +103,8 @@ const PERSISTENCE_MAX_SIZE: usize = 0xDDCD;
 
 offset_struct! {
     pub struct CBaseClient {
-        __size: c_void where offset(0x2D727),
+        __size: () where offset(0x2D728),
+        edict: u16 where offset(0x14),
         name: [c_char;64] where offset(0x16),
         con_vars: *const c_void where offset(0x258), // TODO: add KeyValues later
         // net_channel: *const c_void where offset(0x290), this seams to be invalid :/
@@ -116,8 +118,10 @@ offset_struct! {
 }
 
 #[repr(i32)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SignonState {
-    NONE = 0,        // no state yet; about to connect
+    #[default]
+    NONE = 0, // no state yet; about to connect
     CHALLENGE = 1,   // client challenging server; all OOB packets
     CONNECTED = 2,   // client is connected to server; netchans ready
     NEW = 3,         // just got serverinfo and string tables
@@ -130,8 +134,10 @@ pub enum SignonState {
 }
 
 #[repr(i8)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PersistenceReady {
-    NotReady,
+    #[default]
+    NotReady, // todo: check if this correct
     Ready = 3,
     ReadyRemote,
 }

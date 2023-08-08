@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Display};
+
 pub mod command;
 pub mod convar;
 pub mod cvar;
@@ -40,5 +42,17 @@ impl<T, const U: usize> OffsetStructField<T, U> {
 impl<T: Copy + Clone, const U: usize> OffsetStructField<T, U> {
     pub fn copy_inner(&self) -> T {
         self.value
+    }
+}
+
+impl<T: Debug, const U: usize> Debug for OffsetStructField<T, U> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{:?}", self.value))
+    }
+}
+
+impl<T: Display, const U: usize> Display for OffsetStructField<T, U> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{}", self.value))
     }
 }
