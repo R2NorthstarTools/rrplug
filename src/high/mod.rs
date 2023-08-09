@@ -12,6 +12,7 @@ pub mod vector;
 /// allows some tf2 types to be send and sync
 ///
 /// used to store tf2 pointers across threads
+#[repr(transparent)]
 pub struct Handle<T> {
     inner: T,
 }
@@ -44,6 +45,18 @@ impl<T> Handle<T> {
 impl<T: Clone + Copy> Handle<T> {
     pub fn copy(&self) -> T {
         self.inner
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for Handle<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{:?}", self.inner))
+    }
+}
+
+impl<T: std::fmt::Display> std::fmt::Display for Handle<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{}", self.inner))
     }
 }
 
