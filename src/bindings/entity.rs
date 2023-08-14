@@ -2,9 +2,12 @@ use std::ffi::{c_char, c_void};
 
 use crate::{high::vector::Vector3, offset_struct};
 
+// todo: structure this in a better way
+
 // thx clippy; had to rename evrything manually >:(
 offset_struct! {
     pub struct CBasePlayer {
+        vtable: *const CBasePlayerVtable where offset(0x0),
         player_index: u32 where offset(0x58),
         grapple_active: bool where offset(0x23E8),
         platform_user_id: u32 where offset(0x1D08),
@@ -97,6 +100,23 @@ offset_struct! {
         decal_index: i32 where offset(0xA08),
         team: i32 where offset(0x5E4),
     }
+}
+
+pub type GetVector3Function =
+    unsafe extern "C" fn(*const CBasePlayer, *mut Vector3) -> *mut Vector3;
+
+// not tested
+#[repr(C)]
+pub struct CBasePlayerVtable {
+    unk1: [*const c_void; 133],
+    some_get_origin_varient_02: GetVector3Function,
+    some_get_origin_varient_01: GetVector3Function,
+    get_angles_02: GetVector3Function,
+    get_angles: GetVector3Function,
+    get_eye_position: GetVector3Function,
+    get_center_position: GetVector3Function,
+    some_get_origin_varient_03: GetVector3Function,
+    unk2: [*const c_void; 104],
 }
 
 const PERSISTENCE_MAX_SIZE: usize = 0xDDCD;

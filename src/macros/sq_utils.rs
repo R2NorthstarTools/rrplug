@@ -16,7 +16,7 @@ use crate::{
 /// ```rust
 /// use rpplug::prelude::*;
 /// 
-/// #[sqfunction(VM="Server")]
+/// #[rpplug::sqfunction(VM="Server")]
 /// fn test_call_funcs() {
 ///     call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).map_err(|err| err.to_string())?;
 ///
@@ -74,7 +74,7 @@ macro_rules! call_sq_function {
 /// ```rust
 /// use rpplug::prelude::*;
 /// 
-/// #[sqfunction(VM="Server")]
+/// #[rpplug::sqfunction(VM="Server")]
 /// fn test_call_funcs(func: fn(String)) {
 ///     call_sq_object_function!(sqvm, sq_functions, func, "test".to_string()).map_err(|err| err.to_string())?;
 ///

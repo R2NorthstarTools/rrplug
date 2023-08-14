@@ -9,7 +9,7 @@ pub use crate::{
         vector::Vector3,
     },
     mid::{
-        engine::{DLLPointer, PluginLoadDLL},
+        engine::{DLLPointer, PluginLoadDLL, WhichDll},
         squirrel::SQFUNCTIONS,
     },
     plugin::Plugin,
