@@ -10,7 +10,7 @@ macro_rules! engine_functions {
 
         #[allow(clippy::missing_safety_doc,clippy::useless_transmute)]
         impl $struct_name {
-            pub unsafe fn try_init(dll: &$crate::mid::engine::DLLPointer, static_var: &once_cell::sync::OnceCell<Self>) {
+            pub unsafe fn try_init(dll: &$crate::mid::engine::DLLPointer, static_var: &$crate::OnceCell<Self>) {
                 use $crate::mid::engine::WhichDll;
 
                 if &$dll != dll.which_dll() {
