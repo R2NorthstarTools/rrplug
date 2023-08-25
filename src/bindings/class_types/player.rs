@@ -100,6 +100,8 @@ offset_struct! {
     }
 }
 
+// recheck this 
+
 impl_vmethods! {
     impl OFFSET CPlayer {
         pub fn some_get_origin_varient_02(vector: *mut Vector3) -> *mut Vector3 where offset(133);

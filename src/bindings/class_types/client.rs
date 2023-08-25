@@ -5,7 +5,7 @@ use crate::offset_struct;
 const PERSISTENCE_MAX_SIZE: usize = 0xDDCD;
 
 offset_struct! {
-    pub struct CBaseClient {
+    pub struct CClient {
         __size: () where offset(0x2D728),
         edict: u16 where offset(0x14),
         name: [c_char;64] where offset(0x16),
