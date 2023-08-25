@@ -1,12 +1,12 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove this later
 
+pub use rrplug_proc::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm};
 use std::mem::MaybeUninit;
-pub use rrplug_proc::{GetFromSQObject,PushToSquirrelVm,GetFromSquirrelVm};
 
 use super::{squirrel::SQHandle, vector::Vector3};
 use crate::{
     bindings::{
-        entity::CBasePlayer,
+        cbase::player::CBasePlayer,
         squirreldatatypes::{
             HSquirrelVM, SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger,
             SQNativeClosure, SQObject, SQObjectType, SQString, SQStructInstance, SQTable,

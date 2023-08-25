@@ -3,12 +3,14 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    self, parse_macro_input, parse_quote, DeriveInput, FnArg, Ident, ItemFn, ReturnType, Stmt,
+    self, parse_macro_input, parse_quote, DeriveInput, FnArg, Ident, ItemFn, ReturnType, Stmt, Error as SynError
 };
 
 #[macro_use]
 pub(crate) mod parsing;
 pub(crate) mod impl_traits;
+
+// todo: redo docs for proc macros
 
 use impl_traits::{ impl_struct_or_enum, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum, get_from_sqvm_impl_enum, get_from_sqvm_impl_struct, get_from_sqobject_impl_enum};
 use parsing::{filter_args, get_sqoutput, input_mapping, Args};
@@ -90,10 +92,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
         Err(err) => {
-            return quote! {
-                compile_error!(#err);
-            }
-            .into()
+            return err.to_compile_error().into();
         }
     }
     sq_gets_stmts.reverse();
@@ -130,10 +129,10 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             "ExportName" => export_name = input,
             "ReturnOverwrite" => out = out,
             _ => {
-                let fmt = format!("wrong arg {} or arg {}", input, arg.ident.to_string());
-                return quote! {
-                    compile_error!(#fmt);
-                }
+                return SynError::new(
+                    arg.ident.span(),
+                    format!("wrong arg \"{}\" or arg {}", input, arg.ident.to_string())
+                ).to_compile_error()
                 .into();
             }
         }

@@ -3,13 +3,20 @@ use std::ffi::c_void;
 
 use once_cell::sync::OnceCell;
 
-use crate::{bindings::cvar::RawCVar, high::engine::EngineData};
+use crate::{
+    bindings::{cvar::RawCVar, plugin_abi::PluginEngineData},
+    high::engine::EngineData,
+};
 
 use super::{concommands::RegisterConCommands, convars::ConVarClasses};
 
 pub static ENGINE_DATA: OnceCell<EngineData> = OnceCell::new();
 
 impl EngineData {
+    pub fn get_raw_ptrs(&self) -> &PluginEngineData {
+        &self.low
+    }
+
     pub fn get_convar_ptrs(&self) -> &ConVarClasses {
         &self.convar
     }

@@ -1,13 +1,11 @@
-use std::ffi::{c_char, c_void};
+use std::ffi::c_char;
 
-use crate::{high::vector::Vector3, offset_struct};
-
-// todo: structure this in a better way
+use crate::{high::vector::Vector3, impl_vmethods, offset_struct};
 
 // thx clippy; had to rename evrything manually >:(
 offset_struct! {
     pub struct CBasePlayer {
-        vtable: *const CBasePlayerVtable where offset(0x0),
+        vtable: *const usize where offset(0x0),
         player_index: u32 where offset(0x58),
         grapple_active: bool where offset(0x23E8),
         platform_user_id: u32 where offset(0x1D08),
@@ -101,63 +99,14 @@ offset_struct! {
         team: i32 where offset(0x5E4),
     }
 }
-
-pub type GetVector3Function =
-    unsafe extern "C" fn(*const CBasePlayer, *mut Vector3) -> *mut Vector3;
-
-// not tested
-#[repr(C)]
-pub struct CBasePlayerVtable {
-    unk1: [*const c_void; 133],
-    some_get_origin_varient_02: GetVector3Function,
-    some_get_origin_varient_01: GetVector3Function,
-    get_angles_02: GetVector3Function,
-    get_angles: GetVector3Function,
-    get_eye_position: GetVector3Function,
-    get_center_position: GetVector3Function,
-    some_get_origin_varient_03: GetVector3Function,
-    unk2: [*const c_void; 104],
-}
-
-const PERSISTENCE_MAX_SIZE: usize = 0xDDCD;
-
-offset_struct! {
-    pub struct CBaseClient {
-        __size: () where offset(0x2D728),
-        edict: u16 where offset(0x14),
-        name: [c_char;64] where offset(0x16),
-        con_vars: *const c_void where offset(0x258), // TODO: add KeyValues later
-        // net_channel: *const c_void where offset(0x290), this seams to be invalid :/
-        signon: SignonState where offset(0x2A0),
-        clan_tag: [c_char;16] where offset(0x358),
-        fake_player: bool where offset(0x484),
-        persistence_ready: PersistenceReady where offset(0x4A0),
-        persistence_buffer: [c_char;PERSISTENCE_MAX_SIZE] where offset(0x4FA),
-        uid: [c_char;32] where offset(0xF500),
+impl_vmethods! {
+    impl OFFSET CBasePlayer {
+        pub fn some_get_origin_varient_02(vector: *mut Vector3) -> *mut Vector3 where offset(133);
+        pub fn some_get_origin_varient_01(vector: *mut Vector3) -> *mut Vector3 where offset(134);
+        pub fn get_angles_02(vector: *mut Vector3) -> *mut Vector3 where offset(135);
+        pub fn get_angles(vector: *mut Vector3) -> *mut Vector3 where offset(136);
+        pub fn get_eye_position(vector: *mut Vector3) -> *mut Vector3 where offset(137);
+        pub fn get_center_position(vector: *mut Vector3) -> *mut Vector3 where offset(138);
+        pub fn get_origin(vector: *mut Vector3) -> *mut Vector3 where offset(139);
     }
-}
-
-#[repr(i32)]
-#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub enum SignonState {
-    #[default]
-    NONE = 0, // no state yet; about to connect
-    CHALLENGE = 1,   // client challenging server; all OOB packets
-    CONNECTED = 2,   // client is connected to server; netchans ready
-    NEW = 3,         // just got serverinfo and string tables
-    PRESPAWN = 4,    // received signon buffers
-    GETTINGDATA = 5, // respawn-defined signonstate, assumedly this is for persistence
-    SPAWN = 6,       // ready to receive entity packets
-    FIRSTSNAP = 7,   // another respawn-defined one
-    FULL = 8,        // we are fully connected; first non-delta packet received
-    CHANGELEVEL = 9, // server is changing level; please wait
-}
-
-#[repr(i8)]
-#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
-pub enum PersistenceReady {
-    #[default]
-    NotReady, // todo: check if this correct
-    Ready = 3,
-    ReadyRemote,
 }

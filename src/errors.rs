@@ -49,3 +49,19 @@ impl SQCompileError {
         log::error!("{}", self)
     }
 }
+
+#[derive(Error, Debug, Default, PartialEq)]
+pub enum CStringPtrError {
+    #[default]
+    #[error("literally nothing")]
+    None,
+
+    #[error("invalid string (0)")]
+    Utf8Error(#[from] std::str::Utf8Error),
+}
+
+impl CStringPtrError {
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}

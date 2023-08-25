@@ -3,11 +3,11 @@ use std::fmt::{Debug, Display};
 pub mod command;
 pub mod convar;
 pub mod cvar;
-pub mod entity;
 pub mod plugin_abi;
 pub mod squirrelclasstypes;
 pub mod squirreldatatypes;
 pub mod unwraped;
+pub mod cbase;
 
 #[repr(C)]
 pub struct OffsetStructField<T, const U: usize> {

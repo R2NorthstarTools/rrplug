@@ -49,8 +49,9 @@ pub struct CCommandResult {
     command: String,
 }
 
+// should maybe make this lazy?
 impl CCommandResult {
-    /// this function shouldn't be used by the end user
+    /// this function shouldn't be used by the crate users
     ///
     /// # Safety
     ///
@@ -75,11 +76,19 @@ impl CCommandResult {
         }
     }
 
+    pub fn pop_arg(&mut self) -> Option<String> {
+        self.args.pop()
+    }
+
+    pub fn get_arg(&self, index: usize) -> Option<&str> {
+        self.args.get(index).map(|s| &**s)
+    }
+
     pub fn get_args(&self) -> &[String] {
         &self.args
     }
 
-    pub fn get_command(&mut self) -> &str {
+    pub fn get_command(&self) -> &str {
         &self.command
     }
 }
@@ -123,4 +132,4 @@ impl RegisterConCommands {
 extern "C" fn ccommand_trampoline<const T: fn(CCommandResult)>(ccommand: *const CCommand) {
     ccommand_trampoline(ccommand.into())
 }
- */
+*/

@@ -18,6 +18,24 @@ pub struct Vector3 {
     pub z: f32,
 }
 
+impl Vector3 {
+    pub const ZERO: Self = Self {
+        x: 0.,
+        y: 0.,
+        z: 0.,
+    };
+    pub const MAX: Self = Self {
+        x: f32::MAX,
+        y: f32::MAX,
+        z: f32::MAX,
+    };
+    
+    #[inline]
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
+        Self { x, y, z }
+    }
+}
+
 impl From<*mut f32> for Vector3 {
     #[inline]
     fn from(value: *mut f32) -> Self {
@@ -145,6 +163,25 @@ pub struct QAngle {
     pub y: f32,
     pub z: f32,
     pub w: f32,
+}
+
+impl QAngle {
+    pub const ZERO: Self = Self {
+        x: 0.,
+        y: 0.,
+        z: 0.,
+        w: 0.,
+    };
+    pub const MAX: Self = Self {
+        x: f32::MAX,
+        y: f32::MAX,
+        z: f32::MAX,
+        w: f32::MAX,
+    };
+    #[inline]
+    pub fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
+        Self { x, y, z, w }
+    }
 }
 
 impl From<[f32; 4]> for QAngle {

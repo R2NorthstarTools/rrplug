@@ -73,7 +73,7 @@ use crate::{
         convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
         plugin_abi::ObjectType,
     },
-    errors::RegisterError,
+    errors::{CStringPtrError, RegisterError},
     mid::{
         engine::{get_engine_data, ENGINE_DATA},
         northstar::CREATE_OBJECT_FUNC,
@@ -84,9 +84,9 @@ use crate::{
 /// the state of the convar in all of its possible types
 ///
 /// value should be valid most of the time
-#[derive(Debug, Default, PartialEq)]
-pub struct ConVarValues {
-    pub value: Option<String>,
+#[derive(Debug, PartialEq)]
+pub struct ConVarValues<'a> {
+    pub value: Result<&'a str, CStringPtrError>,
     pub value_float: f32,
     pub value_int: i32,
 }
@@ -274,13 +274,11 @@ impl ConVarStruct {
                         .try_into()
                         .expect("supposed to always work"),
                 ) {
-                Some(
-                    CStr::from_ptr(value.m_pszString)
-                        .to_string_lossy()
-                        .to_string(),
-                )
+                CStr::from_ptr(value.m_pszString)
+                    .to_str()
+                    .map_err(|err| err.into())
             } else {
-                None
+                Err(CStringPtrError::None)
             };
 
             ConVarValues {
@@ -294,7 +292,7 @@ impl ConVarStruct {
     /// get the value as a string
     ///
     /// only safe on the titanfall thread
-    pub fn get_value_string(&self) -> Option<String> {
+    pub fn get_value_string(&self) -> Result<&str, CStringPtrError> {
         unsafe {
             let value = &self.inner.m_Value;
 
@@ -305,13 +303,12 @@ impl ConVarStruct {
                         .expect("supposed to always work"),
                 )
             {
-                return None;
+                return Err(CStringPtrError::None);
             }
 
-            let value = CStr::from_ptr(value.m_pszString)
-                .to_string_lossy()
-                .to_string();
-            Some(value)
+            CStr::from_ptr(value.m_pszString)
+                .to_str()
+                .map_err(|err| err.into())
         }
     }
 
@@ -332,6 +329,8 @@ impl ConVarStruct {
 
         value.m_fValue
     }
+
+    // todo: add exclusive access set_value s aka &mut self
 
     /// set the int value of the convar
     /// also sets float and string

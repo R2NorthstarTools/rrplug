@@ -1,8 +1,9 @@
 use proc_macro::TokenStream;
-use quote::{quote, ToTokens};
+use quote::{quote, spanned::Spanned, ToTokens};
 use syn::{
     self, parse::Parse, parse::ParseStream, punctuated::Punctuated, token::Comma, FnArg, Ident,
     LitStr, Result as SynResult, ReturnType, Token, Type, __private::TokenStream2, parse_quote,
+    spanned::Spanned as SynSpanned, Error as SynError,
 };
 
 pub struct Arg {
@@ -61,7 +62,7 @@ macro_rules! push_stmts {
 }
 
 #[allow(unused)] // TODO! Remove later
-pub fn recursive_type_match(t: Type) -> Result<String, String> {
+pub fn recursive_type_match(t: Type) -> Result<String, SynError> {
     match t {
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
             Ok("bool".into())
@@ -90,9 +91,9 @@ pub fn recursive_type_match(t: Type) -> Result<String, String> {
             Ok(format!("{head_types}{func_args})"))
         }
 
-        _ => Err(format!(
-            "{} type isn't supported",
-            t.into_token_stream().to_string()
+        _ => Err(SynError::new(
+            t.span(),
+            format!("{} type isn't supported", t.into_token_stream().to_string()),
         )),
     }
 }
@@ -102,11 +103,12 @@ pub fn recursive_type_match(t: Type) -> Result<String, String> {
 pub fn match_input(
     arg: &FnArg,
     sq_stack_pos: i32,
-) -> Result<(String, String, TokenStream), String> {
+) -> Result<(String, String, TokenStream), SynError> {
     match arg.to_owned() {
-        FnArg::Receiver(_) => {
-            Err("wtf are you doing? stop this now! rrplug doesn't support impl methods".into())
-        }
+        FnArg::Receiver(_) => Err(SynError::new::<String>(
+            arg.span(),
+            "wtf are you doing? stop this now! rrplug doesn't support impl methods".into(),
+        )),
         FnArg::Typed(t) => match &*t.ty {
             Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
                 let name = t.clone().pat.to_token_stream();
@@ -163,9 +165,12 @@ pub fn match_input(
                 Ok((sqty, name.to_string(), tk))
             }
 
-            _ => Err(format!(
-                "{} type isn't supported",
-                t.ty.into_token_stream().to_string()
+            _ => Err(SynError::new(
+                t.ty.span(),
+                format!(
+                    "{} type isn't supported",
+                    t.ty.into_token_stream().to_string()
+                ),
             )),
         },
     }
@@ -175,7 +180,7 @@ pub fn input_mapping(
     args: &Punctuated<FnArg, Comma>,
     sqtypes: &mut String,
     sq_stack_pos: &mut i32,
-) -> Result<Vec<TokenStream>, String> {
+) -> Result<Vec<TokenStream>, SynError> {
     let mut token_streams: Vec<TokenStream> = Vec::new();
 
     for arg in args.iter() {
@@ -206,11 +211,11 @@ pub fn filter_args(input: &FnArg) -> Option<FnArg> {
     Some(input)
 }
 
-pub fn get_arg_type(input: &FnArg) -> Result<Box<Type>, String> {
+pub fn get_arg_type(input: &FnArg) -> Result<Box<Type>, SynError> {
     match input {
-        FnArg::Receiver(_) => Err(format!(
-            "invalid arg {}",
-            input.to_token_stream().to_string()
+        FnArg::Receiver(_) => Err(SynError::new(
+            input.__span(),
+            format!("invalid arg {}", input.to_token_stream().to_string()),
         )),
         FnArg::Typed(t) => Ok(maybe_change(&t.ty)),
     }
@@ -243,47 +248,47 @@ pub fn get_sqtype(ty: &Box<Type>) -> String {
     match &**ty {
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
             "bool".to_string()
-        },
+        }
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "i32" => {
             "int".to_string()
-        },
+        }
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "f32" => {
             "float".to_string()
-        },
+        }
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "String" => {
             "string".to_string()
-        },
+        }
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vector3" => {
             "vector".to_string()
-        },
+        }
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "CBasePlayer" => {
             "entity".to_string()
-        },
+        }
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<String>" =>
         {
             "array<string>".to_string()
-        },
+        }
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<Vector3>" =>
         {
             "array<vector>".to_string()
-        },
+        }
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<bool>" =>
         {
             "array<bool>".to_string()
-        },
+        }
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<i32>" =>
         {
             "array<int>".to_string()
-        },
+        }
         Type::Path(type_path)
             if type_path.to_token_stream().to_string().replace(' ', "") == "Vec<f32>" =>
         {
             "array<float>".to_string()
-        },
+        }
         Type::BareFn(fun) => {
             let head_types = format!("{} functionref( ", get_sqoutput(&fun.output));
             let mut func_args = String::new();
@@ -293,7 +298,7 @@ pub fn get_sqtype(ty: &Box<Type>) -> String {
             }
 
             format!("{head_types}{func_args})")
-        },
+        }
         _ => "var".to_string(),
     }
 }
