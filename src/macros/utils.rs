@@ -111,13 +111,13 @@ mod test {
 
     engine_functions! {
         ENGINE_FUNCTIONS + EngineFunctions for WhichDll::Engine => {
-            client_array = *const crate::bindings::cbase::client::CBaseClient where offset(0x12A53F90);
+            client_array = *const crate::bindings::class_types::client::CBaseClient where offset(0x12A53F90);
         }
     }
 
     engine_functions! {
         SOME_FUNCTIONS + SomeFunctions for WhichDll::Other("some.dll") => {
-            client_array = *const crate::bindings::cbase::client::CBaseClient where offset(0xdeadbeef);
+            client_array = *const crate::bindings::class_types::client::CBaseClient where offset(0xdeadbeef);
         }
     }
 }

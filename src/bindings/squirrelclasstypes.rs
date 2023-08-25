@@ -410,7 +410,7 @@ pub type sq_getentityfrominstanceType = ::std::option::Option<
         sqvm: *mut CSquirrelVM,
         pInstance: *mut SQObject,
         ppEntityConstant: *mut *mut ::std::os::raw::c_char,
-    ) -> *mut super::cbase::player::CBasePlayer,
+    ) -> *mut super::class_types::player::CPlayer,
 >;
 pub type sq_GetEntityConstantType =
     ::std::option::Option<unsafe extern "C" fn() -> *mut *mut ::std::os::raw::c_char>;

@@ -261,7 +261,7 @@ pub fn get_sqtype(ty: &Box<Type>) -> String {
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "Vector3" => {
             "vector".to_string()
         }
-        Type::Path(type_path) if type_path.to_token_stream().to_string() == "CBasePlayer" => {
+        Type::Path(type_path) if type_path.to_token_stream().to_string() == "CPlayer" => {
             "entity".to_string()
         }
         Type::Path(type_path)

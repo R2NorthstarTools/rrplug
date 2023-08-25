@@ -6,7 +6,7 @@ use std::mem::MaybeUninit;
 use super::{squirrel::SQHandle, vector::Vector3};
 use crate::{
     bindings::{
-        cbase::player::CBasePlayer,
+        class_types::player::CPlayer,
         squirreldatatypes::{
             HSquirrelVM, SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger,
             SQNativeClosure, SQObject, SQObjectType, SQString, SQStructInstance, SQTable,
@@ -110,7 +110,7 @@ get_from_sqvm! {
     get_sq_array::<Vec<Vector3>>(|obj| Some((obj as *const SQObject).into()));
 }
 
-impl GetFromSquirrelVm for &mut CBasePlayer {
+impl GetFromSquirrelVm for &mut CPlayer {
     fn get_from_sqvm(
         sqvm: *mut HSquirrelVM,
         sqfunctions: &SquirrelFunctionsUnwraped,

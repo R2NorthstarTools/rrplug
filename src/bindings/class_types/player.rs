@@ -4,7 +4,7 @@ use crate::{high::vector::Vector3, impl_vmethods, offset_struct};
 
 // thx clippy; had to rename evrything manually >:(
 offset_struct! {
-    pub struct CBasePlayer {
+    pub struct CPlayer {
         vtable: *const usize where offset(0x0),
         player_index: u32 where offset(0x58),
         grapple_active: bool where offset(0x23E8),
@@ -99,11 +99,12 @@ offset_struct! {
         team: i32 where offset(0x5E4),
     }
 }
+
 impl_vmethods! {
-    impl OFFSET CBasePlayer {
+    impl OFFSET CPlayer {
         pub fn some_get_origin_varient_02(vector: *mut Vector3) -> *mut Vector3 where offset(133);
         pub fn some_get_origin_varient_01(vector: *mut Vector3) -> *mut Vector3 where offset(134);
-        pub fn get_angles_02(vector: *mut Vector3) -> *mut Vector3 where offset(135);
+        pub fn eye_angles(vector: *mut Vector3) -> *mut Vector3 where offset(135);
         pub fn get_angles(vector: *mut Vector3) -> *mut Vector3 where offset(136);
         pub fn get_eye_position(vector: *mut Vector3) -> *mut Vector3 where offset(137);
         pub fn get_center_position(vector: *mut Vector3) -> *mut Vector3 where offset(138);
