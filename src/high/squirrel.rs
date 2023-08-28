@@ -8,7 +8,7 @@ use std::{ffi::c_void, marker::PhantomData, mem::transmute};
 use super::{
     northstar::{FuncSQFuncInfo, ScriptVmType},
     squirrel_traits::{GetFromSquirrelVm, IsSQObject},
-    UnnsafeHandle,
+    UnsafeHandle,
 };
 use crate::{
     bindings::{
@@ -60,11 +60,11 @@ impl CSquirrelVMHandle {
     ///
     /// it is not valid after sqvm destruction
     ///
-    /// the [`UnnsafeHandle`] when used outside of engine thread can cause race conditions or ub
+    /// the [`UnsafeHandle`] when used outside of engine thread can cause race conditions or ub
     ///
-    /// [`UnnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
-    pub unsafe fn get_sqvm(&self) -> UnnsafeHandle<*mut HSquirrelVM> {
-        UnnsafeHandle::internal_new((*self.handle).sqvm)
+    /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
+    pub unsafe fn get_sqvm(&self) -> UnsafeHandle<*mut HSquirrelVM> {
+        UnsafeHandle::internal_new((*self.handle).sqvm)
     }
     /// gets the raw pointer to [`CSquirrelVM`]
     ///
@@ -73,11 +73,11 @@ impl CSquirrelVMHandle {
     ///
     /// it is not valid after sqvm destruction
     ///
-    /// the [`UnnsafeHandle`] when used outside of engine thread can cause race conditions or ub
+    /// the [`UnsafeHandle`] when used outside of engine thread can cause race conditions or ub
     ///
-    /// [`UnnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
-    pub unsafe fn get_cs_sqvm(&self) -> UnnsafeHandle<*mut CSquirrelVM> {
-        UnnsafeHandle::internal_new(self.handle)
+    /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
+    pub unsafe fn get_cs_sqvm(&self) -> UnsafeHandle<*mut CSquirrelVM> {
+        UnsafeHandle::internal_new(self.handle)
     }
 
     /// gets the type of the sqvm :D
