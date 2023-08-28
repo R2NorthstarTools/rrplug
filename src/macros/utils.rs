@@ -17,6 +17,11 @@ macro_rules! impl_vmethod {
             $crate::impl_vmethod!{ GEN pub fn $name( $($arg_name: $arg),* ) -> $output, for $class where offset( $offset ) }
         }
     };
+    ( pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty, for WRAPPER $class:ty where offset($offset:literal) ) => {
+        impl $class {
+            $crate::impl_vmethod!{ GEN pub fn $name( $($arg_name: $arg),* ) -> $output, for $class where offset( $offset ) }
+        }
+    };
     ( pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty, for OFFSET $class:ty where offset($offset:literal) ) => {
         impl $class {
             $crate::impl_vmethod!{ GEN pub fn $name( $($arg_name: $arg),* ) -> $output, for OFFSET $class where offset( $offset ) }
@@ -29,11 +34,24 @@ macro_rules! impl_vmethod {
         pub unsafe fn $name( &self, $($arg_name: $arg),* ) -> $output {
             use std::ffi::c_void;
 
-
-            let func = (**(self.vtable_adr as *const *const [usize;u32::MAX as usize]))[$offset];
+            let func = (**(self.vtable as *const *const [usize;u32::MAX as usize]))[$offset];
             (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>(func))
             (
-                self.vtable_adr as *const c_void,
+                self as *const _ as *const c_void,
+                $( $arg_name, )*
+            )
+        }
+    };
+    ( GEN pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty, for WRAPPER $class:ty where offset($offset:literal) ) => {
+        #[doc = "# Safety" ]
+        #[doc = "this is a wrapper to a vtable function" ]
+        pub unsafe fn $name( &self, $($arg_name: $arg),* ) -> $output {
+            use std::ffi::c_void;
+
+            let func = (**(self.class as *const *const [usize;u32::MAX as usize]))[$offset];
+            (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>(func))
+            (
+                self.class as *const c_void,
                 $( $arg_name, )*
             )
         }
@@ -60,6 +78,13 @@ macro_rules! impl_vmethods {
         impl $class {
             $(
                 $crate::impl_vmethod!{ GEN pub fn $name( $($arg_name: $arg),* ) -> $output, for $class where offset( $offset ) }
+            )*
+        }
+    };
+    ( impl WRAPPER $class:ty { $( pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty where offset($offset:literal) );*; } ) => {
+        impl $class {
+            $(
+                $crate::impl_vmethod!{ GEN pub fn $name( $($arg_name: $arg),* ) -> $output, for WRAPPER $class where offset( $offset ) }
             )*
         }
     };

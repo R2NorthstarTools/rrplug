@@ -70,7 +70,7 @@ use std::{
 use super::engine::EngineData;
 use crate::{
     bindings::{
-        convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
+        cvar::convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
         plugin_abi::ObjectType,
     },
     errors::{CStringPtrError, RegisterError},
@@ -78,7 +78,7 @@ use crate::{
         engine::{get_engine_data, ENGINE_DATA},
         northstar::CREATE_OBJECT_FUNC,
     },
-    to_sq_string,
+    to_c_string,
 };
 
 /// the state of the convar in all of its possible types
@@ -200,9 +200,9 @@ impl ConVarStruct {
         // I think its safe
         // since it should live until process termination so the os would clean it
 
-        let name_ptr = to_sq_string!(register_info.name).into_raw();
+        let name_ptr = to_c_string!(register_info.name).into_raw();
 
-        let default_value_ptr = to_sq_string!(register_info.default_value).into_raw(); // altough this wouldn't
+        let default_value_ptr = to_c_string!(register_info.default_value).into_raw(); // altough this wouldn't
 
         let help_bytes = register_info.help_string.as_bytes();
         let help_string_ptr = match help_bytes.last() {
@@ -210,7 +210,7 @@ impl ConVarStruct {
                 if *last == b'\0' {
                     help_bytes.as_ptr() as *mut i8
                 } else {
-                    to_sq_string!(register_info.help_string).into_raw()
+                    to_c_string!(register_info.help_string).into_raw()
                 }
             }
             None => "\0".as_bytes().as_ptr() as *mut i8,
@@ -237,7 +237,7 @@ impl ConVarStruct {
     }
 
     pub fn find_convar_by_name(name: &str) -> Option<Self> {
-        let name = to_sq_string!(name);
+        let name = to_c_string!(name);
 
         Some(Self {
             inner: unsafe {
@@ -394,7 +394,7 @@ impl ConVarStruct {
 
             let func = mem::transmute::<_, fn(*const ConVar, *const c_char)>(set_value_string);
 
-            let string_value = to_sq_string!(new_value);
+            let string_value = to_c_string!(new_value);
             func(self.inner, string_value.as_ptr())
         }
     }

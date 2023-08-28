@@ -2,18 +2,20 @@ use std::ffi::c_void;
 
 use crate::{
     bindings::{
-        command::{CCommand, ConCommand, ConCommandBase, ConCommandConstructorType},
-        cvar::RawCVar,
+        cvar::{
+            command::{CCommand, ConCommand, ConCommandBase, ConCommandConstructorType},
+            RawCVar,
+        },
         plugin_abi::ObjectType,
     },
     errors::RegisterError,
     mid::northstar::CREATE_OBJECT_FUNC,
-    to_sq_string,
+    to_c_string,
 };
 
 use super::engine::get_engine_data;
 
-#[derive(Debug,Hash,PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct RegisterConCommands {
     pub reg_func: ConCommandConstructorType,
 }
@@ -34,9 +36,9 @@ impl RegisterConCommands {
         help_string: String,
         flags: i32,
     ) -> Result<(), RegisterError> {
-        let name_ptr = to_sq_string!(name).into_raw();
+        let name_ptr = to_c_string!(name).into_raw();
 
-        let help_string_ptr = to_sq_string!(help_string).into_raw();
+        let help_string_ptr = to_c_string!(help_string).into_raw();
 
         let command: *mut ConCommand = unsafe {
             std::mem::transmute((CREATE_OBJECT_FUNC
@@ -62,7 +64,7 @@ impl RegisterConCommands {
 }
 
 pub fn find_concommand_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static mut ConCommand> {
-    let name = to_sq_string!(name);
+    let name = to_c_string!(name);
     unsafe { cvar.find_concommand(name.as_ptr()).as_mut() }
 }
 
@@ -74,7 +76,7 @@ pub fn find_concommand_base_with_cvar(
     name: &str,
     cvar: &RawCVar,
 ) -> Option<&'static mut ConCommandBase> {
-    let name = to_sq_string!(name);
+    let name = to_c_string!(name);
     unsafe { cvar.find_command_base(name.as_ptr()).as_mut() }
 }
 

@@ -6,7 +6,7 @@ use std::mem::MaybeUninit;
 use super::{squirrel::SQHandle, vector::Vector3};
 use crate::{
     bindings::{
-        class_types::player::CPlayer,
+        class_types::cplayer::CPlayer,
         squirreldatatypes::{
             HSquirrelVM, SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger,
             SQNativeClosure, SQObject, SQObjectType, SQString, SQStructInstance, SQTable,
@@ -151,6 +151,12 @@ impl GetFromSquirrelVm for SQHandle<SQClosure> {
         }
     }
 }
+
+// exists for dynamic returns of some functions
+impl GetFromSquirrelVm for () {
+    fn get_from_sqvm(_: *mut HSquirrelVM, _: &SquirrelFunctionsUnwraped, _: i32) -> Self {}
+}
+
 // Get From SQObject Trait
 
 pub trait GetFromSQObject {

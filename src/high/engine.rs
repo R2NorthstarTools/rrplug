@@ -3,7 +3,10 @@
 use parking_lot::Mutex;
 
 use crate::{
-    bindings::{command::CCommand, cvar::RawCVar, plugin_abi::PluginEngineData},
+    bindings::{
+        cvar::{command::CCommand, RawCVar},
+        plugin_abi::PluginEngineData,
+    },
     errors::RegisterError,
     mid::{concommands::RegisterConCommands, convars::ConVarClasses, engine::PluginLoadDLL},
 };
@@ -15,7 +18,7 @@ pub static CALLED_DLLS: Mutex<Vec<PluginLoadDLL>> = Mutex::new(Vec::new());
 /// Use this struct to register convars and concommands
 ///
 /// only usefull when the convars or concommands features are enabled
-#[derive(Debug, Hash,PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EngineData {
     pub(crate) concommands: RegisterConCommands,
     pub(crate) convar: ConVarClasses,

@@ -34,7 +34,7 @@ macro_rules! call_sq_function {
                 let mut obj = std::mem::MaybeUninit::<$crate::bindings::squirreldatatypes::SQObject>::zeroed();
                 let ptr = obj.as_mut_ptr();
 
-                let function_name = $crate::to_sq_string!(std::convert::Into::<String>::into($function_name));
+                let function_name = $crate::to_c_string!(std::convert::Into::<String>::into($function_name));
 
                 let result = unsafe {
                     ($sqfunctions.sq_getfunction)($sqvm, function_name.as_ptr(), ptr, std::ptr::null())

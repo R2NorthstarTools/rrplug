@@ -40,7 +40,7 @@
 
 use std::ffi::CStr;
 
-use crate::bindings::command::CCommand;
+use crate::bindings::cvar::command::CCommand;
 
 /// [`CCommandResult`] gets all the usefull stuff from [`*const CCommand`] and puts in this struct
 #[derive(Debug, Default)]
@@ -103,9 +103,9 @@ impl RegisterConCommands {
         help_string: String,
         flags: i32,
     ) -> Result<(), RegisterError> {
-        let name_ptr = to_sq_string!(name).into_raw();
+        let name_ptr = to_c_string!(name).into_raw();
 
-        let help_string_ptr = to_sq_string!(help_string).into_raw();
+        let help_string_ptr = to_c_string!(help_string).into_raw();
 
         let command: *mut ConCommand = unsafe {
             std::mem::transmute((CREATE_OBJECT_FUNC

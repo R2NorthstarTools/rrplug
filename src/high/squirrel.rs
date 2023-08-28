@@ -7,8 +7,8 @@ use std::{ffi::c_void, marker::PhantomData, mem::transmute};
 
 use super::{
     northstar::{FuncSQFuncInfo, ScriptVmType},
-    squirrel_traits::IsSQObject,
-    Handle,
+    squirrel_traits::{GetFromSquirrelVm, IsSQObject},
+    UnnsafeHandle,
 };
 use crate::{
     bindings::{
@@ -18,7 +18,7 @@ use crate::{
     },
     errors::{CallError, SQCompileError},
     mid::squirrel::SQFUNCTIONS,
-    to_sq_string,
+    to_c_string,
 };
 
 #[doc(hidden)]
@@ -40,7 +40,7 @@ impl CSquirrelVMHandle {
     /// defines a constant on the sqvm
     ///
     /// Like `SERVER`, `CLIENT`, `UI`, etc
-    pub fn define_sq_constant(&self, name: String, value: i32) {
+    pub fn define_sq_constant(&self, name: String, value: impl Into<i32>) {
         let sqfunctions = if self.vm_type == ScriptVmType::Server {
             SQFUNCTIONS.server.wait()
         } else {
@@ -48,9 +48,9 @@ impl CSquirrelVMHandle {
         };
 
         // not sure if I need to leak this
-        let name = to_sq_string!(name);
+        let name = to_c_string!(name);
 
-        unsafe { (sqfunctions.sq_defconst)(self.handle, name.as_ptr(), value) }
+        unsafe { (sqfunctions.sq_defconst)(self.handle, name.as_ptr(), value.into()) }
     }
 
     /// gets the raw pointer to [`HSquirrelVM`]
@@ -59,16 +59,25 @@ impl CSquirrelVMHandle {
     /// assumes its valid
     ///
     /// it is not valid after sqvm destruction
-    pub unsafe fn get_sqvm(&self) -> Handle<*mut HSquirrelVM> {
-        Handle::internal_new((*self.handle).sqvm)
+    ///
+    /// the [`UnnsafeHandle`] when used outside of engine thread can cause race conditions or ub
+    ///
+    /// [`UnnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
+    pub unsafe fn get_sqvm(&self) -> UnnsafeHandle<*mut HSquirrelVM> {
+        UnnsafeHandle::internal_new((*self.handle).sqvm)
     }
     /// gets the raw pointer to [`CSquirrelVM`]
     ///
     /// # Safety
+    /// assumes its valid
     ///
-    /// the pointer itself may be invalid (highly unlikely)
-    pub unsafe fn get_cs_sqvm(&self) -> Handle<*mut CSquirrelVM> {
-        Handle::internal_new(self.handle)
+    /// it is not valid after sqvm destruction
+    ///
+    /// the [`UnnsafeHandle`] when used outside of engine thread can cause race conditions or ub
+    ///
+    /// [`UnnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
+    pub unsafe fn get_cs_sqvm(&self) -> UnnsafeHandle<*mut CSquirrelVM> {
+        UnnsafeHandle::internal_new(self.handle)
     }
 
     /// gets the type of the sqvm :D
@@ -130,10 +139,13 @@ impl SQHandle<SQClosure> {
 pub fn async_call_sq_function<T>(
     context: ScriptVmType,
     function_name: impl Into<String>,
-    callback: Option<Box<T>>,
+    callback: Option<T>,
 ) where
     T: FnOnce(*mut HSquirrelVM, &'static SquirrelFunctionsUnwraped) -> i32,
 {
+    type PayloadType<T> = (T, &'static SquirrelFunctionsUnwraped);
+    type BoxedPayloadType<T> = Box<PayloadType<T>>;
+
     let sqfunctions = match context {
         ScriptVmType::Server => SQFUNCTIONS.server.get(),
         _ => SQFUNCTIONS.client.get(),
@@ -146,11 +158,14 @@ pub fn async_call_sq_function<T>(
     });
 
     let userdata: *mut c_void = match callback {
-        Some(callback) => Box::into_raw(Box::new((callback, sqfunctions))) as *mut c_void,
+        Some(callback) => {
+            let payload: BoxedPayloadType<T> = Box::new((callback, sqfunctions));
+            Box::into_raw(payload) as *mut c_void
+        }
         None => std::ptr::null_mut(),
     };
 
-    let function_name = to_sq_string!(function_name.into());
+    let function_name = to_c_string!(function_name.into());
 
     unsafe {
         (sqfunctions.sq_schedule_call_external)(
@@ -168,11 +183,10 @@ pub fn async_call_sq_function<T>(
     where
         T: FnOnce(*mut HSquirrelVM, &'static SquirrelFunctionsUnwraped) -> i32,
     {
-        match transmute::<_, *mut (Box<T>, &'static SquirrelFunctionsUnwraped)>(userdata).as_mut() {
+        match transmute::<_, *mut PayloadType<T>>(userdata).as_mut() {
             Some(closure) => {
-                let boxed_tuple: Box<(Box<T>, &'static SquirrelFunctionsUnwraped)> =
-                    Box::from_raw(closure);
-                (*boxed_tuple.0)(sqvm, (*boxed_tuple).1)
+                let boxed_tuple: BoxedPayloadType<T> = Box::from_raw(closure);
+                (boxed_tuple.0)(sqvm, (*boxed_tuple).1)
             }
             None => 0,
         }
@@ -184,15 +198,32 @@ pub fn async_call_sq_function<T>(
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
 /// this only allows calls without args use the marco [`crate::call_sq_function`] instead if you want args
-pub fn call_sq_function(
+///
+/// # Panic
+///
+/// this function can panic if the return value is not [`()`] while begin called outside of a sqvm context
+///
+/// examples of "outside of a sqvm context"
+/// - runframe
+/// - callbacks for concommands and convars
+///
+/// # Example
+///
+/// /// ```
+/// #[sqfunction(VM=Server)]
+/// fn call_sqvm_function() -> i32 {
+///     call_sq_object_function(sqvm, sq_functions, "function_that_returns_i32").map_err(|err| err.to_string())
+/// }
+/// ```
+pub fn call_sq_function<R: GetFromSquirrelVm>(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     function_name: impl Into<String>,
-) -> Result<(), CallError> {
+) -> Result<R, CallError> {
     let mut obj = std::mem::MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
 
-    let function_name = to_sq_string!(function_name.into());
+    let function_name = to_c_string!(function_name.into());
 
     let result = unsafe {
         (sqfunctions.sq_getfunction)(sqvm, function_name.as_ptr(), ptr, std::ptr::null())
@@ -213,29 +244,36 @@ pub fn call_sq_function(
 ///
 /// this only allows calls without args use the marco [`crate::call_sq_object_function`] instead if you want args
 ///
-/// ## Example
+/// # Panic
+///
+/// this function can panic if the return value is not [`()`] while begin called outside of a sqvm context
+///
+/// examples of "outside of a sqvm context"
+/// - runframe
+/// - callbacks for concommands and convars
+///
+/// # Example
 ///
 /// ```
 /// #[sqfunction(VM=Server)]
-/// fn call_sqvm_function(func: Fn()) {
-///     call_sq_object_function(sqvm, sq_functions, func);
-///     SQRESULT::SQRESULT_NULL
+/// fn call_sqvm_function(func: fn() -> String) -> String {
+///     call_sq_object_function(sqvm, sq_functions, func).map_err(|err| err.to_string())
 /// }
 /// ```
-pub fn call_sq_object_function(
+pub fn call_sq_object_function<R: GetFromSquirrelVm>(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     mut obj: SQHandle<SQClosure>,
-) -> Result<(), CallError> {
+) -> Result<R, CallError> {
     _call_sq_object_function(sqvm, sqfunctions, obj.as_callable())
 }
 
-#[inline] // let rust decide I just follow dry :)
-fn _call_sq_object_function(
+#[inline]
+fn _call_sq_object_function<R: GetFromSquirrelVm>(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     ptr: *mut SQObject,
-) -> Result<(), CallError> {
+) -> Result<R, CallError> {
     unsafe {
         (sqfunctions.sq_pushobject)(sqvm, ptr);
         (sqfunctions.sq_pushroottable)(sqvm);
@@ -243,7 +281,11 @@ fn _call_sq_object_function(
         if (sqfunctions.sq_call)(sqvm, 1, true as u32, true as u32) == SQRESULT::SQRESULT_ERROR {
             Err(CallError::FunctionFailedToExecute)
         } else {
-            Ok(())
+            Ok(R::get_from_sqvm(
+                sqvm,
+                sqfunctions,
+                sqvm.as_ref().unwrap_unchecked()._stackbase,
+            )) // literally imposible to get null sqvm or it would have crashed before
         }
     }
 }
@@ -263,7 +305,7 @@ pub fn compile_string(
     should_throw_error: bool,
     code: impl Into<String>,
 ) -> Result<(), SQCompileError> {
-    let buffer = to_sq_string!(code.into());
+    let buffer = to_c_string!(code.into());
 
     let mut compile_buffer = CompileBufferState {
         buffer: buffer.as_ptr(),
@@ -271,7 +313,7 @@ pub fn compile_string(
         bufferAgain: buffer.as_ptr(),
     };
 
-    let name = to_sq_string!("compile_string");
+    let name = unsafe { to_c_string!(const "compile_string\0") };
 
     unsafe {
         let result = (sqfunctions.sq_compilebuffer)(

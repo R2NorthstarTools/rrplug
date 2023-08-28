@@ -24,7 +24,14 @@ impl Vector3 {
         y: 0.,
         z: 0.,
     };
+
     pub const MAX: Self = Self {
+        x: f32::MAX,
+        y: f32::MAX,
+        z: f32::MAX,
+    };
+
+    pub const MIN: Self = Self {
         x: f32::MAX,
         y: f32::MAX,
         z: f32::MAX,
@@ -172,12 +179,21 @@ impl QAngle {
         z: 0.,
         w: 0.,
     };
+
     pub const MAX: Self = Self {
         x: f32::MAX,
         y: f32::MAX,
         z: f32::MAX,
         w: f32::MAX,
     };
+
+    pub const MIN: Self = Self {
+        x: f32::MIN,
+        y: f32::MIN,
+        z: f32::MIN,
+        w: f32::MIN,
+    };
+    
     #[inline]
     pub fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
         Self { x, y, z, w }

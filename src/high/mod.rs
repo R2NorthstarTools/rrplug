@@ -14,14 +14,15 @@ pub mod vector;
 /// used to store tf2 pointers across threads
 ///
 /// # Safety
-///
-/// shouldn't be used unless it's absolutely necessary
+/// when used outside of engine thread can cause race conditions or ub
+/// 
+/// [`UnnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
 #[repr(transparent)]
-pub struct Handle<T> {
+pub struct UnnsafeHandle<T> {
     inner: T,
 }
 
-impl<T> Handle<T> {
+impl<T> UnnsafeHandle<T> {
     pub(crate) fn internal_new(value: T) -> Self {
         Self { inner: value }
     }
@@ -46,23 +47,23 @@ impl<T> Handle<T> {
     }
 }
 
-impl<T: Clone + Copy> Handle<T> {
+impl<T: Clone + Copy> UnnsafeHandle<T> {
     pub fn copy(&self) -> T {
         self.inner
     }
 }
 
-impl<T: std::fmt::Debug> std::fmt::Debug for Handle<T> {
+impl<T: std::fmt::Debug> std::fmt::Debug for UnnsafeHandle<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("{:?}", self.inner))
     }
 }
 
-impl<T: std::fmt::Display> std::fmt::Display for Handle<T> {
+impl<T: std::fmt::Display> std::fmt::Display for UnnsafeHandle<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("{}", self.inner))
     }
 }
 
-unsafe impl<T> Sync for Handle<T> {}
-unsafe impl<T> Send for Handle<T> {}
+unsafe impl<T> Sync for UnnsafeHandle<T> {}
+unsafe impl<T> Send for UnnsafeHandle<T> {}

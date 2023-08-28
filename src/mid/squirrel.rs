@@ -11,7 +11,7 @@ use crate::{
     },
     errors::CallError,
     high::{squirrel_traits::PushToSquirrelVm, vector::Vector3},
-    to_sq_string,
+    to_c_string,
 };
 
 /// functions that used to interact with the sqvm
@@ -81,7 +81,7 @@ pub fn push_sq_string(
     string: impl Into<String>,
 ) {
     // boxing this would be a good idea and leaking; altough we don't need to?
-    let cstring = to_sq_string!(string.into());
+    let cstring = to_c_string!(string.into());
     // its impossble for it to crash since we replace null with space if it does it must be reported
     unsafe { (sqfunctions.sq_pushstring)(sqvm, cstring.as_ptr(), -1) }; // why -1?
 }
@@ -202,7 +202,7 @@ pub fn get_sq_function_object(
     let mut obj = MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
 
-    let function_name = to_sq_string!(function_name.into());
+    let function_name = to_c_string!(function_name.into());
 
     let result = unsafe {
         (sqfunctions.sq_getfunction)(sqvm, function_name.as_ptr(), ptr, std::ptr::null())

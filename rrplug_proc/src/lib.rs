@@ -160,7 +160,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     #ouput_parsing
                 },
                 Err(err) => {
-                    let err = rrplug::to_sq_string!(err);
+                    let err = rrplug::to_c_string!(err);
                     unsafe { (sq_functions.sq_raiseerror)(sqvm, err.as_ptr()) };
                     rrplug::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR 
                 }
@@ -234,7 +234,7 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // TODO: allow the users to manipulate the input of the inner function
 
     quote! {
-        #vis unsafe extern "C" fn #ident (ccommand: *const rrplug::bindings::command::CCommand) {
+        #vis unsafe extern "C" fn #ident (ccommand: *const rrplug::bindings::cvar::command::CCommand) {
             fn inner_function ( #input ) #output {
                 #(#stmts)*
             }
@@ -283,7 +283,7 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     quote! {
         #vis unsafe extern "C" fn #ident (
-            convar: *mut rrplug::bindings::convar::ConVar,
+            convar: *mut rrplug::bindings::cvar::convar::ConVar,
             old_value: *const ::std::os::raw::c_char,
             float_old_value: f32
         ) {

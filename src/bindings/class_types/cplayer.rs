@@ -1,4 +1,4 @@
-use std::ffi::c_char;
+use std::ffi::{c_char, c_void};
 
 use crate::{high::vector::Vector3, impl_vmethods, offset_struct};
 
@@ -7,6 +7,7 @@ offset_struct! {
     pub struct CPlayer {
         vtable: *const usize where offset(0x0),
         player_index: u32 where offset(0x58),
+        angles: Vector3 where offset(0x1bf8),
         grapple_active: bool where offset(0x23E8),
         platform_user_id: u32 where offset(0x1D08),
         class_mods_active: i32 where offset(0x1D10),
@@ -100,8 +101,7 @@ offset_struct! {
     }
 }
 
-// recheck this 
-
+// recheck this
 impl_vmethods! {
     impl OFFSET CPlayer {
         pub fn some_get_origin_varient_02(vector: *mut Vector3) -> *mut Vector3 where offset(133);
@@ -111,5 +111,6 @@ impl_vmethods! {
         pub fn get_eye_position(vector: *mut Vector3) -> *mut Vector3 where offset(137);
         pub fn get_center_position(vector: *mut Vector3) -> *mut Vector3 where offset(138);
         pub fn get_origin(vector: *mut Vector3) -> *mut Vector3 where offset(139);
+        pub fn get_forward_vector(vector: *mut Vector3, unk1: *const c_void, unk2: *const c_void) -> () where offset(140);
     }
 }

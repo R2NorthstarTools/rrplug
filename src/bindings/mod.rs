@@ -1,7 +1,5 @@
 use std::fmt::{Debug, Display};
 
-pub mod command;
-pub mod convar;
 pub mod cvar;
 pub mod plugin_abi;
 pub mod squirrelclasstypes;

@@ -4,8 +4,21 @@ use crate::{
     high::vector::Vector3,
 };
 
+#[deprecated]
 #[macro_export]
 macro_rules! to_sq_string {
+    ($value:expr) => {
+        std::ffi::CString::new($value.replace("\0", "").as_bytes()).unwrap()
+    };
+}
+
+#[macro_export]
+macro_rules! to_c_string {
+    // this must documented since const literals must have \0 at the end
+    (const $value:literal) => {
+        std::ffi::CString::from_raw(($value as *const _ as *const i8).cast_mut())
+    };
+
     ($value:expr) => {
         std::ffi::CString::new($value.replace("\0", "").as_bytes()).unwrap()
     };
@@ -104,11 +117,11 @@ macro_rules! sq_return_notnull {
 #[macro_export]
 macro_rules! sq_raise_error {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
-        let err = $crate::to_sq_string!($value);
+        let err = $crate::to_c_string!($value);
         unsafe { ($sq_functions.sq_raiseerror)($sqvm, err.as_ptr()) };
         return $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR
     };
     ($value:expr, $sqvm:expr, $sq_functions: expr, noreturn) => {
-        unsafe { ($sq_functions.sq_raiseerror)($sqvm, $crate::to_sq_string!($value).as_ptr()) };
+        unsafe { ($sq_functions.sq_raiseerror)($sqvm, $crate::to_c_string!($value).as_ptr()) };
     };
 }

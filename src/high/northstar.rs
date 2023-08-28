@@ -86,7 +86,9 @@ pub struct PluginData {
 }
 
 impl PluginData {
+    /// shouldn't be used outside of [`crate::entry`]
     #[allow(clippy::missing_safety_doc)]
+    #[doc(hidden)]
     pub unsafe fn new(
         plugin_init_funcs: *const PluginInitFuncs,
         plugin_northstar_data: *const PluginNorthstarData,

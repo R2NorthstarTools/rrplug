@@ -2,17 +2,19 @@ use std::{ffi::c_void, mem};
 
 use crate::{
     bindings::{
-        command::ConCommandBase,
-        convar::{ConVar, ConVarMallocType, ConVarRegisterType},
-        cvar::RawCVar,
+        cvar::{
+            command::ConCommandBase,
+            convar::{ConVar, ConVarMallocType, ConVarRegisterType},
+            RawCVar,
+        },
         plugin_abi::PluginEngineData,
     },
-    to_sq_string,
+    to_c_string,
 };
 
 use super::engine::get_engine_data;
 
-#[derive(Debug,Hash,PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ConVarClasses {
     pub convar_vtable: *mut c_void,
     pub convar_register: ConVarRegisterType,
@@ -35,7 +37,7 @@ impl ConVarClasses {
 }
 
 pub fn find_convar_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static mut ConVar> {
-    let name = to_sq_string!(name);
+    let name = to_c_string!(name);
     unsafe { cvar.find_convar(name.as_ptr()).as_mut() }
 }
 

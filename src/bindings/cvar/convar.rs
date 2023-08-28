@@ -14,7 +14,7 @@ pub use root::*;
 pub mod root {
     #[allow(unused_imports)]
     use self::super::root;
-    use crate::bindings::command::ConCommandBase;
+    use crate::bindings::cvar::command::ConCommandBase;
     pub const COMMAND_COMPLETION_MAXITEMS: u32 = 64;
     pub const COMMAND_COMPLETION_ITEM_LENGTH: u32 = 128;
     pub const FCVAR_NONE: u32 = 0;
