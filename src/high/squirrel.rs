@@ -7,7 +7,7 @@ use std::{ffi::c_void, marker::PhantomData, mem::transmute};
 
 use super::{
     northstar::{FuncSQFuncInfo, ScriptVmType},
-    squirrel_traits::{GetFromSquirrelVm, IsSQObject},
+    squirrel_traits::IsSQObject,
     UnsafeHandle,
 };
 use crate::{
@@ -215,11 +215,11 @@ pub fn async_call_sq_function<T>(
 ///     call_sq_object_function(sqvm, sq_functions, "function_that_returns_i32").map_err(|err| err.to_string())
 /// }
 /// ```
-pub fn call_sq_function<R: GetFromSquirrelVm>(
+pub fn call_sq_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     function_name: impl Into<String>,
-) -> Result<R, CallError> {
+) -> Result<(), CallError> {
     let mut obj = std::mem::MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
 
@@ -260,20 +260,20 @@ pub fn call_sq_function<R: GetFromSquirrelVm>(
 ///     call_sq_object_function(sqvm, sq_functions, func).map_err(|err| err.to_string())
 /// }
 /// ```
-pub fn call_sq_object_function<R: GetFromSquirrelVm>(
+pub fn call_sq_object_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     mut obj: SQHandle<SQClosure>,
-) -> Result<R, CallError> {
+) -> Result<(), CallError> {
     _call_sq_object_function(sqvm, sqfunctions, obj.as_callable())
 }
 
 #[inline]
-fn _call_sq_object_function<R: GetFromSquirrelVm>(
+fn _call_sq_object_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     ptr: *mut SQObject,
-) -> Result<R, CallError> {
+) -> Result<(), CallError> {
     unsafe {
         (sqfunctions.sq_pushobject)(sqvm, ptr);
         (sqfunctions.sq_pushroottable)(sqvm);
@@ -281,11 +281,12 @@ fn _call_sq_object_function<R: GetFromSquirrelVm>(
         if (sqfunctions.sq_call)(sqvm, 1, true as u32, true as u32) == SQRESULT::SQRESULT_ERROR {
             Err(CallError::FunctionFailedToExecute)
         } else {
-            Ok(R::get_from_sqvm(
-                sqvm,
-                sqfunctions,
-                sqvm.as_ref().unwrap_unchecked()._stackbase,
-            )) // literally imposible to get null sqvm or it would have crashed before
+            // Ok(R::get_from_sqvm(
+            //     sqvm,
+            //     sqfunctions,
+            //     (*sqvm)._stackbase,
+            // )) // literally imposible to get null sqvm or it would have crashed before
+            Ok(())
         }
     }
 }
