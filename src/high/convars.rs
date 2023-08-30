@@ -19,43 +19,41 @@
 //! convars can be created at any time after engine load but its better to create them when the engine loads
 //!
 //! ```no_run
+//! use rrplug::prelude::*;
+//! use rrplug::OnceCell; // just as a example
+//!
 //! // inside Plugin impl
-//! fn on_engine_load(&self, engine: EngineLoadType) {
+//! fn on_engine_load(engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {
 //!     match engine {
-//!         EngineLoadType::Engine(_) => {},
-//!         _ => return;
+//!         PluginLoadDLL::Engine(_) => {},
+//!         _ => return
 //!     };
 //!
-//!     let convar = ConVarStruct::try_new().unwrap(); // creates the convar struct
+//!     let mut convar = ConVarStruct::try_new().unwrap(); // creates the convar struct
 //!     let register_info = ConVarRegister { // struct containing info the convar ( there is a lot of stuff )
 //!         callback: Some(cool_convar_change_callback),
 //!         ..ConVarRegister::mandatory(
 //!         "cool_convar",
 //!         "cool_convar",
-//!         FCVAR_CLIENTDLL as i32,
+//!         0,
 //!         "cool_convar",
 //!     )
 //!     };
 //!
 //!     convar.register(register_info).unwrap(); // register the convar
 //! }
-//! ```
 //!
-//! to access your convar, you will have to save them into a static or in the plugin struct
+//! // to access your convar, you will have to save them into a static or in the plugin struct
 //!
-//! ```no_run
-//! static COOLCONVAR: OnceCell<Mutex<ConVarStruct>> = OnceCell::new();
+//! static COOLCONVAR: OnceCell<ConVarStruct> = OnceCell::new();
 //!
 //! // reading it from a convar change callback
 //! #[rrplug::convar]
-//! fn cool_convar_change_callback(convar: Option<ConvarStruct>, old_value: String, float_old_value: f32) {
-//!     let convar = match COOLCONVAR.get() {
-//!         Some(c) => c,
-//!         None => return,
-//!     };
+//! fn cool_convar_change_callback(old_value: String, float_old_value: f32) {
+//!     let convar = COOLCONVAR.wait();
 //!
 //!     log::info!("convar name: {}", convar.get_name());
-//!     log::info!("new value: {}", convar.get_value().value);
+//!     log::info!("new value: {}", convar.get_value().value.unwrap());
 //!     log::info!("old value: {}", old_value)
 //! }
 //! ```

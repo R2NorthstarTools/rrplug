@@ -3,6 +3,7 @@ pub use crate::{
     entry,
     high::{
         concommands::CCommandResult,
+        convars::{ConVarStruct,ConVarRegister},
         engine::EngineData,
         northstar::{PluginData, ScriptVmType},
         squirrel::CSquirrelVMHandle,

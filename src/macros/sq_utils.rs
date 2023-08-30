@@ -13,10 +13,11 @@ use crate::{
 /// returns `Result<(), CallError>`
 ///
 /// ## example
-/// ```rust
-/// use rpplug::prelude::*;
-/// 
-/// #[rpplug::sqfunction(VM="Server")]
+/// ```
+/// use rrplug::prelude::*;
+/// use rrplug::call_sq_function;
+///  
+/// #[rrplug::sqfunction(VM="Server")]
 /// fn test_call_funcs() {
 ///     call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347).map_err(|err| err.to_string())?;
 ///
@@ -71,11 +72,12 @@ macro_rules! call_sq_function {
 /// returns `Result<(), CallError>`
 ///
 /// ## example
-/// ```rust
-/// use rpplug::prelude::*;
+/// ```
+/// use rrplug::prelude::*;
+/// use rrplug::call_sq_object_function;
 /// 
-/// #[rpplug::sqfunction(VM="Server")]
-/// fn test_call_funcs(func: fn(String)) {
+/// #[rrplug::sqfunction(VM="Server")]
+/// fn test_call_funcs(mut func: fn(String)) {
 ///     call_sq_object_function!(sqvm, sq_functions, func, "test".to_string()).map_err(|err| err.to_string())?;
 ///
 ///     Ok(())
@@ -119,8 +121,10 @@ macro_rules! call_sq_object_function {
 /// macro version of [`crate::high::squirrel::async_call_sq_function`], used to call a function with args
 ///
 /// ## example
-/// ```rust
-/// async_call_sq_function!(ScriptVmType::Client, "SomeSQFunc", 9347, "Test");
+/// ```no_run
+/// use rrplug::prelude::*;
+/// 
+/// rrplug::async_call_sq_function!(ScriptVmType::Client, "SomeSQFunc", 9347, "Test".to_string());
 /// ```
 #[macro_export]
 macro_rules! async_call_sq_function {

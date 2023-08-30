@@ -209,10 +209,14 @@ pub fn async_call_sq_function<T>(
 ///
 /// # Example
 ///
-/// /// ```
-/// #[sqfunction(VM=Server)]
-/// fn call_sqvm_function() -> i32 {
-///     call_sq_object_function(sqvm, sq_functions, "function_that_returns_i32").map_err(|err| err.to_string())
+/// ```
+/// use rrplug::prelude::*;
+/// use rrplug::high::squirrel::call_sq_function;
+///  
+/// #[rrplug::sqfunction(VM="Server")]
+/// fn test_call_sq_object_function() {
+///     call_sq_function(sqvm, sq_functions, "someFunction").map_err(|err| err.to_string())?;
+///     Ok(())
 /// }
 /// ```
 pub fn call_sq_function(
@@ -255,9 +259,13 @@ pub fn call_sq_function(
 /// # Example
 ///
 /// ```
-/// #[sqfunction(VM=Server)]
-/// fn call_sqvm_function(func: fn() -> String) -> String {
-///     call_sq_object_function(sqvm, sq_functions, func).map_err(|err| err.to_string())
+/// use rrplug::prelude::*;
+/// use rrplug::high::squirrel::call_sq_object_function;
+///  
+/// #[rrplug::sqfunction(VM="Server")]
+/// fn call_sqvm_function(func: fn() -> String) {
+///     call_sq_object_function(sqvm, sq_functions, func).map_err(|err| err.to_string())?;
+///     Ok(())
 /// }
 /// ```
 pub fn call_sq_object_function(
@@ -295,9 +303,16 @@ fn _call_sq_object_function(
 ///
 /// ## Example
 ///
-/// ``` no_run
+/// ```
+/// use rrplug::prelude::*;
+/// use rrplug::high::squirrel::compile_string;
+///  
+/// #[rrplug::sqfunction(VM="Server")]
+/// fn compile_string_test(func: fn() -> String) {
+///     compile_string(sqvm, sq_functions, true, "print(\"helloworld\")").map_err(|err| err.to_string())?;
 ///
-/// compile_string(sqvm, sqfunctions, true, "print(\"helloworld\")");
+///     Ok(())
+/// }
 ///
 /// ```
 pub fn compile_string(

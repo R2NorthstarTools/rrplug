@@ -2,6 +2,9 @@
 //!
 //! this version is for plugins v3
 
+#[cfg(doctest)]
+use crate as rrplug;
+
 // #![warn(missing_docs)]
 
 #[allow(missing_docs)]
@@ -26,9 +29,9 @@ pub use rrplug_proc::{concommand, convar, sqfunction};
 #[cfg(test)]
 mod test {
     use crate as rrplug;
+    use rrplug::high::squirrel_traits::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm};
     use rrplug::prelude::*;
     use rrplug_proc::*;
-    use rrplug::high::squirrel_traits::{PushToSquirrelVm,GetFromSquirrelVm,GetFromSQObject};
 
     #[convar]
     fn test_convar(_old_string: String, _old_float: f32) -> () {}
@@ -46,18 +49,18 @@ mod test {
         Ok(TestStruct {
             a: test1,
             b: test2,
-            c: test3
+            c: test3,
         })
     }
-    
-    #[derive(PushToSquirrelVm,GetFromSquirrelVm,GetFromSQObject)]
+
+    #[derive(PushToSquirrelVm, GetFromSquirrelVm, GetFromSQObject)]
     #[repr(i32)]
     enum TestEnum {
         Wow,
-        Owo
+        Owo,
     }
 
-    #[derive(PushToSquirrelVm,GetFromSquirrelVm)]
+    #[derive(PushToSquirrelVm, GetFromSquirrelVm)]
     struct TestStruct {
         a: String,
         b: i32,

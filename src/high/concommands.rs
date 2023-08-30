@@ -4,21 +4,21 @@
 //!
 //! registering a concommand
 //! ```no_run
+//! use rrplug::prelude::*;
+//! 
 //! // inside Plugin impl
-//! fn on_engine_load(&self, engine: EngineLoadType) {
+//! fn on_engine_load(engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {
 //!     let engine = match engine {
-//!         EngineLoadType::Engine(engine) => engine,
-//!         _ => return;
+//!         PluginLoadDLL::Engine(engine) => engine,
+//!         _ => return
 //!     };
 //!
 //!     engine.register_concommand("boom", explode, "displays a explosion in the console", 0); // register the concommand
 //! }
-//! ```
 //!
-//! concommand use callback
-//! ```no_run
+//! // concommand use callback
 //! #[rrplug::concommand]
-//! fn explode(_command: CCommandResult) {
+//! fn explode() {
 //!     log::info!("explode");
 //!
 //!     const BOOM: &str = r#"
