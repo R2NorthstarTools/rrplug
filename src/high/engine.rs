@@ -36,11 +36,13 @@ impl EngineData {
     ///
     /// hoping that the void ptrs point to the right stuff
     pub unsafe fn new(raw: &PluginEngineData) -> Self {
-        Self {
-            concommands: RegisterConCommands::new(raw.ConCommandConstructor),
-            convar: ConVarClasses::new(raw),
-            cvar: RawCVar::from(raw.g_pCVar.cast_const()),
-            low: *raw,
+        unsafe {
+            Self {
+                concommands: RegisterConCommands::new(raw.ConCommandConstructor),
+                convar: ConVarClasses::new(raw),
+                cvar: RawCVar::from(raw.g_pCVar.cast_const()),
+                low: *raw,
+            }
         }
     }
 

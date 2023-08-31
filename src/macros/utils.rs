@@ -116,10 +116,12 @@ macro_rules! engine_functions {
                     return
                 }
 
-                _ = static_var.set( Self {
-                    $(
-                        $name: std::mem::transmute(dll.offset( $addr )),
-                    )*
+                _ = static_var.set( unsafe {
+                    Self {
+                        $(
+                            $name: std::mem::transmute(dll.offset( $addr )), // transmute is used since it's easier but a lot more unsafe so yeah
+                        )*
+                    }
                 });
 
             }

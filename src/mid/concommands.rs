@@ -22,7 +22,7 @@ pub struct RegisterConCommands {
 
 impl RegisterConCommands {
     pub(crate) unsafe fn new(ptr: *const c_void) -> Self {
-        let reg_func: ConCommandConstructorType = std::mem::transmute(ptr);
+        let reg_func: ConCommandConstructorType = unsafe { std::mem::transmute(ptr) }; // functions can only be casted with transmute
 
         Self { reg_func }
     }

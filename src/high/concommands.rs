@@ -57,7 +57,7 @@ impl CCommandResult {
     ///
     /// should be safe if the input is correct
     pub unsafe fn new(ccommand: *const CCommand) -> Self {
-        let ccommand = match ccommand.as_ref() {
+        let ccommand = match unsafe { ccommand.as_ref() } {
             Some(c) => c,
             None => return Self::default(),
         };
@@ -66,7 +66,7 @@ impl CCommandResult {
             Self::default()
         } else {
             let buffer = ccommand.m_pArgSBuffer.as_ptr();
-            let whole_command = CStr::from_ptr(buffer).to_string_lossy().to_string();
+            let whole_command = unsafe { CStr::from_ptr(buffer).to_string_lossy().to_string() };
             let mut whole_command = whole_command.split_whitespace();
 
             let command = whole_command.next().unwrap_or_default().into();

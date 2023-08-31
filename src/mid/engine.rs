@@ -85,6 +85,6 @@ impl<'a> DLLPointer<'a> {
     /// a really bad idea if you have a bad offset or if you don't know what you are doing.
     /// this is mainly here to give access to the engines functions without having the crate be the provider of them.
     pub unsafe fn offset(&self, offset: isize) -> *const c_void {
-        self.ptr.offset(offset)
+        unsafe { self.ptr.offset(offset) }
     }
 }

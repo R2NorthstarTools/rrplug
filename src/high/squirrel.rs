@@ -3,7 +3,7 @@
 //! squirrel vm related function and statics
 
 use parking_lot::Mutex;
-use std::{ffi::c_void, marker::PhantomData, mem::transmute};
+use std::{ffi::c_void, marker::PhantomData};
 
 use super::{
     northstar::{FuncSQFuncInfo, ScriptVmType},
@@ -64,7 +64,7 @@ impl CSquirrelVMHandle {
     ///
     /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
     pub unsafe fn get_sqvm(&self) -> UnsafeHandle<*mut HSquirrelVM> {
-        UnsafeHandle::internal_new((*self.handle).sqvm)
+        unsafe { UnsafeHandle::internal_new((*self.handle).sqvm) }
     }
     /// gets the raw pointer to [`CSquirrelVM`]
     ///
@@ -183,12 +183,14 @@ pub fn async_call_sq_function<T>(
     where
         T: FnOnce(*mut HSquirrelVM, &'static SquirrelFunctionsUnwraped) -> i32,
     {
-        match transmute::<_, *mut PayloadType<T>>(userdata).as_mut() {
-            Some(closure) => {
-                let boxed_tuple: BoxedPayloadType<T> = Box::from_raw(closure);
-                (boxed_tuple.0)(sqvm, (*boxed_tuple).1)
+        unsafe {
+            match (userdata as *mut PayloadType<T>).as_mut() {
+                Some(closure) => {
+                    let boxed_tuple: BoxedPayloadType<T> = Box::from_raw(closure);
+                    (boxed_tuple.0)(sqvm, (*boxed_tuple).1)
+                }
+                None => 0,
             }
-            None => 0,
         }
     }
 }

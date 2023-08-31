@@ -160,21 +160,22 @@ impl ConVarStruct {
         obj_func: unsafe extern "C" fn(ObjectType) -> *mut c_void,
     ) -> Self {
         let convar_classes = &engine.convar;
+        unsafe {
+            let convar = obj_func(ObjectType::CONVAR) as *mut ConVar;
 
-        let convar = mem::transmute::<_, *mut ConVar>(obj_func(ObjectType::CONVAR));
+            addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
+                .write(convar_classes.convar_vtable);
 
-        addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
-            .write(convar_classes.convar_vtable);
+            addr_of_mut!((*convar).m_ConCommandBase.s_pConCommandBases)
+                .write(convar_classes.iconvar_vtable);
 
-        addr_of_mut!((*convar).m_ConCommandBase.s_pConCommandBases)
-            .write(convar_classes.iconvar_vtable);
+            #[allow(clippy::crosspointer_transmute)] // its what c++ this->convar_malloc is
+            (convar_classes.convar_malloc)(mem::transmute(addr_of_mut!((*convar).m_pMalloc)), 0, 0);
+            // Allocate new memory for ConVar.
 
-        #[allow(clippy::crosspointer_transmute)] // its what c++ this->convar_malloc is
-        (convar_classes.convar_malloc)(mem::transmute(addr_of_mut!((*convar).m_pMalloc)), 0, 0);
-        // Allocate new memory for ConVar.
-
-        Self {
-            inner: &mut *convar, // no way this is invalid
+            Self {
+                inner: &mut *convar, // no way this is invalid
+            }
         }
     }
 

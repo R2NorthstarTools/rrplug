@@ -1,3 +1,5 @@
+#![allow(unsafe_op_in_unsafe_fn)] // some bindings are genereted by cbinden and it doesn't follow this...
+
 use std::fmt::{Debug, Display};
 
 pub mod cvar;

@@ -2,10 +2,12 @@
 //!
 //! this version is for plugins v3
 
+#![deny(unsafe_op_in_unsafe_fn)]
+// #![warn(missing_docs)]
+
 #[cfg(doctest)]
 use crate as rrplug;
 
-// #![warn(missing_docs)]
 
 #[allow(missing_docs)]
 pub mod bindings;

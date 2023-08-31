@@ -87,14 +87,17 @@ pub struct PluginData {
 
 impl PluginData {
     /// shouldn't be used outside of [`crate::entry`]
-    #[allow(clippy::missing_safety_doc)]
+    ///
+    /// # Safety
+    ///
+    /// expects the inputed ptrs to be valid
     #[doc(hidden)]
     pub unsafe fn new(
         plugin_init_funcs: *const PluginInitFuncs,
         plugin_northstar_data: *const PluginNorthstarData,
     ) -> Self {
-        let plugin_init_funcs = *plugin_init_funcs;
-        let plugin_northstar_data = *plugin_northstar_data;
+        let plugin_init_funcs = unsafe { *plugin_init_funcs };
+        let plugin_northstar_data = unsafe { *plugin_northstar_data };
 
         CREATE_OBJECT_FUNC
             .set(plugin_init_funcs.createObject)
