@@ -8,6 +8,7 @@ pub mod northstar;
 pub mod squirrel;
 pub mod squirrel_traits;
 pub mod vector;
+pub mod class_types;
 
 /// allows some tf2 types to be send and sync
 ///

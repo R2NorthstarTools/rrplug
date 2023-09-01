@@ -16,7 +16,7 @@ macro_rules! to_sq_string {
 macro_rules! to_c_string {
     // this must documented since const literals must have \0 at the end
     (const $value:literal) => {
-        std::ffi::CString::from_raw(($value as *const _ as *const i8).cast_mut())
+        std::ffi::CStr::from_ptr(($value as *const _ as *const i8).cast_mut())
     };
 
     ($value:expr) => {

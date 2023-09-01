@@ -34,7 +34,7 @@ macro_rules! impl_vmethod {
         pub unsafe fn $name( &self, $($arg_name: $arg),* ) -> $output {
             use std::ffi::c_void;
 
-            let func = (**(self.vtable as *const *const [usize;u32::MAX as usize]))[$offset];
+            let func = (*(self.vtable as *const [usize;u32::MAX as usize]))[$offset];
             (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>(func))
             (
                 self as *const _ as *const c_void,
