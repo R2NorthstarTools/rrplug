@@ -1,13 +1,25 @@
 //! rrplug is a safe wrapper around the plugin system in [R2Northstar](https://northstar.tf/)
 //!
-//! this version is for plugins v3
+//! rrplug uses compile time or sometimes runtime checks to guarantee safety in abstractions
+//!
+//! ## rrplug template
+//!
+//! install cargo-generate if you don't have it
+//! ```bash
+//! cargo install cargo-generate
+//! ```
+//!
+//! ```bash
+//! cargo generate -g  https://github.com/catornot/rrplug.git
+//! ```
+//!
+//! a git [template](https://github.com/catornot/rrplug-template) also exists but it may or not be maintained as well
 
 #![deny(unsafe_op_in_unsafe_fn)]
 #![warn(missing_docs)]
 
 #[cfg(doctest)]
 use crate as rrplug;
-
 
 #[allow(missing_docs)]
 pub mod bindings;

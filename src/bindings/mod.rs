@@ -2,12 +2,12 @@
 
 use std::fmt::{Debug, Display};
 
+pub mod class_types;
 pub mod cvar;
 pub mod plugin_abi;
 pub mod squirrelclasstypes;
 pub mod squirreldatatypes;
 pub mod unwraped;
-pub mod class_types;
 
 #[repr(C)]
 pub struct OffsetStructField<T, const U: usize> {

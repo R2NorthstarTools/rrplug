@@ -1,5 +1,5 @@
 //! various macros to help call squirrel functions
-//! 
+//!
 //! for non async calls the args are not checked to be correct at compile time
 
 #[cfg(doc)]
@@ -79,7 +79,7 @@ macro_rules! call_sq_function {
 /// ```
 /// # use rrplug::prelude::*;
 /// # use rrplug::call_sq_object_function;
-/// 
+///
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn test_call_funcs(mut func: fn(String)) {
 ///     call_sq_object_function!(sqvm, sq_functions, func, "test".to_string()).map_err(|err| err.to_string())?;
@@ -127,7 +127,7 @@ macro_rules! call_sq_object_function {
 /// ## example
 /// ```no_run
 /// # use rrplug::prelude::*;
-/// 
+///
 /// rrplug::async_call_sq_function!(ScriptVmType::Client, "SomeSQFunc", 9347, "Test".to_string());
 /// ```
 #[macro_export]

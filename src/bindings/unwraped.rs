@@ -1,5 +1,6 @@
 #![allow(non_camel_case_types)] // whar
 
+use super::class_types::cplayer::CPlayer;
 use crate::bindings::{
     plugin_abi::SquirrelFunctions,
     squirrelclasstypes::{
@@ -10,7 +11,6 @@ use crate::bindings::{
         CSquirrelVM, HSquirrelVM, SQBool, SQChar, SQFloat, SQInteger, SQObject, SQStackInfos,
     },
 };
-use super::class_types::cplayer::CPlayer;
 
 pub type sq_schedule_call_externalType_unwraped = unsafe extern "C" fn(
     context: ScriptContext,
@@ -104,12 +104,11 @@ pub type sq_createuserdataType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iSize: SQInteger) -> *mut ::std::os::raw::c_void;
 pub type sq_setuserdatatypeidType_unwraped =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger, iTypeId: u64) -> SQRESULT;
-pub type sq_getentityfrominstanceType_unwraped =
-    unsafe extern "C" fn(
-        sqvm: *mut CSquirrelVM,
-        pInstance: *mut SQObject,
-        ppEntityConstant: *mut *mut ::std::os::raw::c_char,
-    ) -> *mut CPlayer;
+pub type sq_getentityfrominstanceType_unwraped = unsafe extern "C" fn(
+    sqvm: *mut CSquirrelVM,
+    pInstance: *mut SQObject,
+    ppEntityConstant: *mut *mut ::std::os::raw::c_char,
+) -> *mut CPlayer;
 pub type sq_GetEntityConstantType_unwraped =
     unsafe extern "C" fn() -> *mut *mut ::std::os::raw::c_char;
 pub type sq_getfunctionType_unwraped = unsafe extern "C" fn(

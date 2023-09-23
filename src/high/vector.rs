@@ -26,21 +26,21 @@ impl Vector3 {
         y: 0.,
         z: 0.,
     };
-    
+
     /// const for largest [`Vector3`] possible
     pub const MAX: Self = Self {
         x: f32::MAX,
         y: f32::MAX,
         z: f32::MAX,
     };
-    
+
     /// const for smallest [`Vector3`] possible
     pub const MIN: Self = Self {
         x: f32::MIN,
         y: f32::MIN,
         z: f32::MIN,
     };
-    
+
     /// creates a new [`Vector3`] from the 3 planes
     #[inline]
     pub fn new(x: f32, y: f32, z: f32) -> Self {
@@ -201,7 +201,7 @@ impl QAngle {
         z: f32::MIN,
         w: f32::MIN,
     };
-    
+
     #[inline]
     pub fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
         Self { x, y, z, w }

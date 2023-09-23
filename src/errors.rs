@@ -10,7 +10,7 @@ pub enum RegisterError {
     /// A function crutial to some systems was null (this is fatal I think)
     #[error("A core function from c++ is null")]
     NoneFunction,
-    
+
     /// A function that creates objects returned a null pointer
     #[error("A builder function returned None")]
     NoneResult,
@@ -29,9 +29,9 @@ pub enum CallError {
     /// the function that was called isn't on the sqvm
     #[error("{0} function wasn't found on the sqvm; is it global?")]
     FunctionNotFound(String),
-    
+
     /// the execution of the function failed for some reason
-    /// 
+    ///
     /// the reason is not exposed by the sqvm :(
     #[error("function failed to execute")]
     FunctionFailedToExecute,
@@ -48,11 +48,11 @@ impl CallError {
 #[derive(Error, Debug)]
 pub enum SQCompileError {
     /// the buffer failed the compile
-    /// 
+    ///
     /// the reason is only provided if the buffer is compiled to display it
     #[error("provided code failed to compile")]
     CompileError,
-    
+
     /// buffer didn't execute corretly
     #[error("compiled buffer failed to execute")]
     BufferFailedToExecute,
@@ -72,7 +72,7 @@ pub enum CStringPtrError {
     #[default]
     #[error("literally nothing like the pointer is null")]
     None,
-    
+
     /// when the char pointer failed to be parsed as [`&str`]
     #[error("invalid string (0)")]
     Utf8Error(#[from] std::str::Utf8Error),

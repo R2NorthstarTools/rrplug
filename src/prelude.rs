@@ -5,7 +5,7 @@ pub use crate::{
     entry,
     high::{
         concommands::CCommandResult,
-        convars::{ConVarStruct,ConVarRegister},
+        convars::{ConVarRegister, ConVarStruct},
         engine::EngineData,
         northstar::{PluginData, ScriptVmType},
         squirrel::CSquirrelVMHandle,

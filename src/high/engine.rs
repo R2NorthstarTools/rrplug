@@ -2,6 +2,8 @@
 
 use parking_lot::Mutex;
 
+#[cfg(doc)]
+use crate::high::convars::ConVarStruct;
 use crate::{
     bindings::{
         cvar::{
@@ -13,8 +15,6 @@ use crate::{
     errors::RegisterError,
     mid::{concommands::RegisterConCommands, convars::ConVarClasses, engine::PluginLoadDLL},
 };
-#[cfg(doc)]
-use crate::high::convars::ConVarStruct;
 
 /// internal vec to not call on_dll_load
 #[doc(hidden)]

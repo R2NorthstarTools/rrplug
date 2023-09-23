@@ -11,7 +11,7 @@ use crate::{
 use super::{concommands::RegisterConCommands, convars::ConVarClasses};
 
 /// used to create to ConVars and ConComands
-/// 
+///
 /// also allows access to [`RawCVar`] if you need it but beter options are available in [`crate::high::convars`]/[`crate::mid::convars`] and [`crate::mid::concommands`]
 pub static ENGINE_DATA: OnceCell<EngineData> = OnceCell::new();
 
@@ -46,7 +46,7 @@ impl EngineData {
 }
 
 /// returns engine data [`EngineData`]
-/// 
+///
 /// refer to [`ENGINE_DATA`] for more docs:tm:
 pub fn get_engine_data() -> Option<&'static EngineData> {
     ENGINE_DATA.get()
