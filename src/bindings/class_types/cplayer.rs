@@ -86,6 +86,7 @@ offset_struct! {
         happy_hour_active: bool where offset(0x1D01),
         gesture_auto_kill_bitfield: i32 where offset(0x1EF4),
         pilot_class_index: i32 where offset(0x2EA8),
+        latest_command_run: u32 where offset(0x2EAC),
         vec_abs_origin: Vector3 where offset(0x100490),
         is_performing_boost_action: bool where offset(0x25BE),
         zipline_valid3p_weapon_layer_anim: bool where offset(0x240C),

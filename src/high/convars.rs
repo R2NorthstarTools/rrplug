@@ -81,11 +81,16 @@ use crate::{
 
 /// the state of the convar in all of its possible types
 ///
-/// value should be valid most of the time
+/// values are always valid
 #[derive(Debug, PartialEq)]
 pub struct ConVarValues<'a> {
+    /// string value
+    ///
+    /// the strings should always be valid utf8
     pub value: Result<&'a str, CStringPtrError>,
+    /// float value
     pub value_float: f32,
+    ///
     pub value_int: i32,
 }
 
@@ -93,18 +98,34 @@ pub struct ConVarValues<'a> {
 ///
 /// consumed by [`ConVarStruct`]`::register`
 pub struct ConVarRegister {
+    /// literally the name of the convar
+    ///
+    /// This is **required**
     pub name: String,
+    /// the default value
+    ///
+    /// This is **required**
     pub default_value: String,
+    /// any flags like [`crate::bindings::cvar::convar::FCVAR_GAMEDLL`]
+    ///
+    /// This is **required**
     pub flags: i32,
+    /// the help string
     pub help_string: &'static str,
+    /// should use min or not
     pub bmin: bool,
+    /// min value for floats and integers
     pub fmin: f32,
+    /// should use max or not
     pub bmax: bool,
+    /// max value for floats and integers
     pub fmax: f32,
+    /// callbak when the convar is changed should be created with [`crate::convar`]
     pub callback: FnChangeCallback_t,
 }
 
 impl ConVarRegister {
+    /// creates a new [`ConVarRegister`]
     pub fn new(
         name: impl Into<String>,
         default_value: impl Into<String>,
@@ -114,6 +135,20 @@ impl ConVarRegister {
         Self::mandatory(name, default_value, flags, help_string)
     }
 
+    /// all the required fields to register a convar
+    ///
+    /// can be used in this way to inforce it
+    /// ```
+    /// # use rrplug::prelude::*;
+    /// _ = ConVarRegister {
+    ///     ..ConVarRegister::mandatory(
+    ///     "a_convar",
+    ///     "default_value",
+    ///     0,
+    ///     "this is a convar",
+    /// )
+    /// };
+    /// ```
     pub fn mandatory(
         name: impl Into<String>,
         default_value: impl Into<String>,
@@ -134,13 +169,21 @@ impl ConVarRegister {
     }
 }
 
-/// [`ConVarStruct`] wraps unsafe code in a safe api
+// TODO: rewrite convars with thread_local!
+// so the convars have to init at mod scope with a macro
+// sync and send must be removed from ConVarStruct to forbid unsafe access with race condition
+// altought a unsafe way of initing the ConVarStruct should be given
+// of course this adds extra overhead with forced atomics for convars but it's required to make everything harder to break by accident
+// also concommand and convar macros should give an option of including the plugin struct like a self input :P
+// note: not all dlls are loaded on the engine thread
+
+/// [`ConVarStruct`] wraps unsafe code in a safe api for convar access
 ///
 /// ### Thread Safety
 /// even thought [`Sync`] and [`Send`] are implemented for this struct
 ///
 /// it is not safe to call any of its functions outside of titanfall's engine callbacks to plugins
-/// and may result in a crash
+/// and may result in race condition (really bad thing)
 pub struct ConVarStruct {
     inner: &'static mut ConVar,
 }
@@ -179,6 +222,26 @@ impl ConVarStruct {
         }
     }
 
+    /// registers a convar from [`ConVarRegister`]
+    ///
+    /// this functions leaks the strings since convars live for the lifetime of the game :)
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use rrplug::prelude::*;
+    ///
+    /// let mut convar = ConVarStruct::try_new().unwrap(); // creates the convar struct
+    /// let register_info = ConVarRegister { // struct containing info the convar ( there is a lot of stuff )
+    ///     ..ConVarRegister::mandatory(
+    ///     "a_convar",
+    ///     "default_value",
+    ///     0,
+    ///     "this is a convar",
+    /// )
+    /// };
+    ///
+    /// convar.register(register_info).unwrap(); // register the convar
+    /// ```
     pub fn register(&mut self, register_info: ConVarRegister) -> Result<(), RegisterError> {
         let engine_data = get_engine_data().ok_or(RegisterError::NoneFunction)?;
 
@@ -235,6 +298,7 @@ impl ConVarStruct {
         Ok(())
     }
 
+    ///
     pub fn find_convar_by_name(name: &str) -> Option<Self> {
         let name = to_c_string!(name);
 
@@ -268,7 +332,7 @@ impl ConVarStruct {
             let value = &self.inner.m_Value;
 
             let string = if !value.m_pszString.is_null()
-                && !self.has_flag(
+                && !self.has_flags(
                     FCVAR_NEVER_AS_STRING
                         .try_into()
                         .expect("supposed to always work"),
@@ -288,6 +352,8 @@ impl ConVarStruct {
         }
     }
 
+    // add a real String version
+
     /// get the value as a string
     ///
     /// only safe on the titanfall thread
@@ -296,7 +362,7 @@ impl ConVarStruct {
             let value = &self.inner.m_Value;
 
             if value.m_pszString.is_null()
-                || self.has_flag(
+                || self.has_flags(
                     FCVAR_NEVER_AS_STRING
                         .try_into()
                         .expect("supposed to always work"),
@@ -382,7 +448,7 @@ impl ConVarStruct {
     /// only safe on the titanfall thread
     pub fn set_value_string(&self, new_value: String) {
         unsafe {
-            if self.has_flag(FCVAR_NEVER_AS_STRING.try_into().unwrap()) {
+            if self.has_flags(FCVAR_NEVER_AS_STRING.try_into().unwrap()) {
                 return;
             }
 
@@ -416,7 +482,7 @@ impl ConVarStruct {
     /// returns [`true`] if the given flags are set for this convar
     ///
     /// only safe on the titanfall thread
-    pub fn has_flag(&self, flags: i32) -> bool {
+    pub fn has_flags(&self, flags: i32) -> bool {
         self.inner.m_ConCommandBase.m_nFlags & flags != 0
     }
 
@@ -431,13 +497,13 @@ impl ConVarStruct {
     ///
     /// only safe on the titanfall thread
     pub fn remove_flags(&mut self, flags: i32) {
-        self.inner.m_ConCommandBase.m_nFlags |= !flags
+        self.inner.m_ConCommandBase.m_nFlags &= !flags
     }
 
     /// exposes the raw pointer to the [`ConVar`] class
     ///
     /// # Safety
-    /// its safe unless you start iteracting with the raw pointer
+    /// accessing the underlying pointer can produce ub
     pub unsafe fn get_raw_convar_ptr(&mut self) -> *mut ConVar {
         self.inner
     }

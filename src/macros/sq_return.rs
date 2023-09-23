@@ -1,10 +1,16 @@
+//! macros for deprecated version of [`crate::sqfunction`]
+
 #[cfg(doc)]
-use crate::{
-    bindings::{squirreldatatypes::HSquirrelVM, unwraped::SquirrelFunctionsUnwraped},
-    high::vector::Vector3,
+use {
+    crate::{
+        bindings::{squirreldatatypes::HSquirrelVM, unwraped::SquirrelFunctionsUnwraped},
+        high::vector::Vector3,
+    },
+    std::ffi::{CStr, CString},
 };
 
-#[deprecated]
+/// use [`crate::to_c_string`]
+#[deprecated = "the name is kinda misleading. use to_c_string instead."]
 #[macro_export]
 macro_rules! to_sq_string {
     ($value:expr) => {
@@ -12,11 +18,25 @@ macro_rules! to_sq_string {
     };
 }
 
+/// transforms a [`String`] into a null terminated string
+///
+/// ### (const $value:literal) => {}
+/// creates a [`CStr`] from [`&str`], the string must be terminated manually by `\0`
+///
+/// ### (unwrap $value:expr) => {}
+/// creates a [`CString`] from [`String`], will panic if a `\0` is found in the string
+///
+/// ### ($value:expr) => {}
+/// creates a [`CString`] from [`String`], removes `\0`
 #[macro_export]
 macro_rules! to_c_string {
     // this must documented since const literals must have \0 at the end
     (const $value:literal) => {
         std::ffi::CStr::from_ptr(($value as *const _ as *const i8).cast_mut())
+    };
+
+    (unwrap $value:expr) => {
+        std::ffi::CString::new($value).unwrap()
     };
 
     ($value:expr) => {

@@ -1,3 +1,7 @@
+//!
+// not much to document ¯\_(ツ)_/¯
+
+/// iterator that yields fields of an array terminated by null until it hits null :)
 #[repr(transparent)]
 pub struct PointerIterator<T> {
     ptr: *mut T,

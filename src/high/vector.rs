@@ -7,36 +7,41 @@ use std::ops::{Add, Div, Mul, Sub};
 
 use crate::bindings::squirreldatatypes::{SQObject, SQVector};
 
-/// the repersention of the source engine's vector
-///
-/// This is a copied struct since in reality its much more unsafe
+/// the source engine's vector
 #[derive(Copy, Clone, Debug, Default, PartialEq, PartialOrd)]
 #[repr(C)]
 pub struct Vector3 {
+    /// x plane
     pub x: f32,
+    /// y plane
     pub y: f32,
+    /// z plane
     pub z: f32,
 }
 
 impl Vector3 {
+    /// const for a zeroed [`Vector3`]
     pub const ZERO: Self = Self {
         x: 0.,
         y: 0.,
         z: 0.,
     };
-
+    
+    /// const for largest [`Vector3`] possible
     pub const MAX: Self = Self {
         x: f32::MAX,
         y: f32::MAX,
         z: f32::MAX,
     };
-
+    
+    /// const for smallest [`Vector3`] possible
     pub const MIN: Self = Self {
-        x: f32::MAX,
-        y: f32::MAX,
-        z: f32::MAX,
+        x: f32::MIN,
+        y: f32::MIN,
+        z: f32::MIN,
     };
     
+    /// creates a new [`Vector3`] from the 3 planes
     #[inline]
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
@@ -163,6 +168,9 @@ impl Div for Vector3 {
     }
 }
 
+// this might not be correct so we hide it for release
+
+#[doc(hidden)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, PartialOrd)]
 #[repr(C)]
 pub struct QAngle {

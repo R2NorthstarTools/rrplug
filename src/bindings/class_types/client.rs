@@ -21,7 +21,7 @@ offset_struct! {
 }
 
 #[repr(i32)]
-#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SignonState {
     #[default]
     NONE = 0, // no state yet; about to connect

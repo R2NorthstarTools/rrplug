@@ -12,15 +12,30 @@ use crate::{
     nslog,
 };
 
+/// function type which is used in `register_sq_functions` to get [`SQFuncInfo`]
 pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
 
 /// holds infomation about a sq function for it to be registered corretly
+///
+/// it creates a native closure btw but sqfunction is also a valid name for it.
+/// sqfunction is used in a lot of places with diffrent meanings `¯\_(ツ)_/¯`
 pub struct SQFuncInfo {
+    /// the name used in source code
     pub cpp_func_name: &'static str,
+    /// name of the defined
     pub sq_func_name: &'static str,
+    /// the arguments of the function in squirrel form
+    ///
+    /// # Example
+    /// ```
+    /// let types = "string name, int id";
+    /// ```
     pub types: &'static str,
+    /// the return value of the function in squirrel form
     pub return_type: &'static str,
+    /// the which vm should be used to register the function on
     pub vm: ScriptVmType,
+    /// the actual function pointer
     pub function: SQFunction,
 }
 
@@ -29,14 +44,21 @@ pub struct SQFuncInfo {
 /// `UiClient` is used for function registration on both vms
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ScriptVmType {
+    /// server vm
     Server,
+    /// client vm
     Client,
+    /// ui vm
     Ui,
+    /// ui and client used in sqfunction registration
     UiClient,
 }
 
-// todo find a better way to do this my bain is just melting rn
+// todo find a better way to do this my brain is just melting rn
 impl ScriptVmType {
+    /// checks if the other [`ScriptVmType`] matches the current one
+    ///
+    /// `UiClient` is equal to `Ui` or `Client`
     pub fn is_right_vm(&self, other: &Self) -> bool {
         self == other
             || (self == &Self::UiClient && (other == &Self::Client || other == &Self::Ui))

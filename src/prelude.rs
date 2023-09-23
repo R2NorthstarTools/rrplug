@@ -1,3 +1,5 @@
+//! prelude for rrplug
+
 pub use crate::{
     bindings::{squirreldatatypes::HSquirrelVM, unwraped::SquirrelFunctionsUnwraped},
     entry,

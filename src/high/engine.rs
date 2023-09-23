@@ -4,12 +4,17 @@ use parking_lot::Mutex;
 
 use crate::{
     bindings::{
-        cvar::{command::CCommand, RawCVar},
+        cvar::{
+            command::{CCommand, ConCommand},
+            RawCVar,
+        },
         plugin_abi::PluginEngineData,
     },
     errors::RegisterError,
     mid::{concommands::RegisterConCommands, convars::ConVarClasses, engine::PluginLoadDLL},
 };
+#[cfg(doc)]
+use crate::high::convars::ConVarStruct;
 
 /// internal vec to not call on_dll_load
 #[doc(hidden)]
@@ -46,13 +51,30 @@ impl EngineData {
         }
     }
 
+    /// registers a command
+    ///
+    /// returns a pointer to [`ConCommand`] which is unsafe to access and has a static lifetime
+    ///
+    ///  # Example
+    /// ```no_run
+    /// # use rrplug::mid::engine::get_engine_data;
+    /// # use rrplug::errors::RegisterError;
+    /// # use rrplug::prelude::*;
+    /// # let engine = get_engine_data().unwrap();
+    /// engine.register_concommand("cool_command", cool_command, "this is cool_command", 0).expect("failed to register cool_command");
+    ///
+    /// #[rrplug::concommand]
+    /// fn cool_command() {
+    ///     println!("cool_command");
+    /// }
+    /// ```
     pub fn register_concommand(
         &self,
         name: impl Into<String>,
         callback: unsafe extern "C" fn(arg1: *const CCommand),
         help_string: impl Into<String>,
         flags: i32,
-    ) -> Result<(), RegisterError> {
+    ) -> Result<*mut ConCommand, RegisterError> {
         let name = name.into();
         log::info!("Registering ConCommand {}", name);
 
@@ -60,6 +82,9 @@ impl EngineData {
             .mid_register_concommand(name, callback, help_string.into(), flags)
     }
 
+    /// registers a convar without any complex steps and without giving back the convar pointer
+    ///
+    /// it's better to use [`ConVarStruct`] instead since you usually would want to get values out of the convar
     pub fn register_convar(
         &self,
         name: impl Into<String>,

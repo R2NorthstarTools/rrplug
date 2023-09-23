@@ -5,7 +5,7 @@
 //! registering a concommand
 //! ```no_run
 //! use rrplug::prelude::*;
-//! 
+//!
 //! // inside Plugin impl
 //! fn on_engine_load(engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {
 //!     let engine = match engine {
@@ -76,18 +76,22 @@ impl CCommandResult {
         }
     }
 
+    /// pops an arg from args [`Vec`]
     pub fn pop_arg(&mut self) -> Option<String> {
         self.args.pop()
     }
 
+    /// gets an arg at a index
     pub fn get_arg(&self, index: usize) -> Option<&str> {
         self.args.get(index).map(|s| &**s)
     }
 
+    /// returns the whole [`Vec`] as a slice
     pub fn get_args(&self) -> &[String] {
         &self.args
     }
 
+    /// returns the command's name
     pub fn get_command(&self) -> &str {
         &self.command
     }

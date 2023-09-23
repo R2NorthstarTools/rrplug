@@ -1,14 +1,14 @@
-//! contains all the exposed **"safe"** function
+//! abstractions :)
 
 pub mod concommands;
 
+pub mod class_types;
 pub mod convars;
 pub mod engine;
 pub mod northstar;
 pub mod squirrel;
 pub mod squirrel_traits;
 pub mod vector;
-pub mod class_types;
 
 /// allows some tf2 types to be send and sync
 ///
@@ -16,7 +16,7 @@ pub mod class_types;
 ///
 /// # Safety
 /// when used outside of engine thread can cause race conditions or ub
-/// 
+///
 /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
 #[repr(transparent)]
 pub struct UnsafeHandle<T> {
@@ -28,27 +28,31 @@ impl<T> UnsafeHandle<T> {
         Self { inner: value }
     }
 
+    /// creates a new [`UnsafeHandle`]
     /// # Safety
-    ///
-    /// this might not be safe since types get auto implemented Sync and Send
+    /// the handle should be used corretly as to not cause race conditions
     pub unsafe fn new(value: T) -> Self {
         Self { inner: value }
     }
 
+    /// returns a ref to the underlying value
     pub fn get(&self) -> &T {
         &self.inner
     }
 
+    /// returns a mut ref to the underlying value
     pub fn get_mut(&mut self) -> &mut T {
         &mut self.inner
     }
 
+    /// consumes the [`UnsafeHandle`] and returns the underlying value
     pub fn take(self) -> T {
         self.inner
     }
 }
 
 impl<T: Clone + Copy> UnsafeHandle<T> {
+    /// copies the underlying value if it has [`Copy`]
     pub fn copy(&self) -> T {
         self.inner
     }

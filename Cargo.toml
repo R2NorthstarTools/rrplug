@@ -2,7 +2,7 @@
 name = "rrplug"
 version = "2.1.1"
 authors = ["catornot"]
-description = "safe wrappers and functions for R2Northstar plugins"
+description = "wrappers and functions for R2Northstar plugins"
 repository = "https://github.com/catornot/rrplug"
 license = "Apache-2.0 OR MIT"
 keywords = ["plugin", "northstar", "titanfall"]

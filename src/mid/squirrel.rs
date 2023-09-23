@@ -1,16 +1,24 @@
+//! thin wrappers around squirrel functions
+//!
+//! some can produce exepections which cannot be caught
+//!
+//! good reference for some functions : [objecthandling](https://r2northstar.readthedocs.io/en/latest/squirrel/cpp_api/objecthandling.htmls)
+
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove later
 
 use std::{ffi::CStr, mem::MaybeUninit};
 
 use once_cell::sync::OnceCell;
 
+#[cfg(doc)]
+use crate::high::squirrel_traits::GetFromSQObject;
 use crate::{
     bindings::{
-        squirreldatatypes::{HSquirrelVM, SQObject},
+        squirreldatatypes::{HSquirrelVM, SQClosure, SQObject},
         unwraped::SquirrelFunctionsUnwraped,
     },
     errors::CallError,
-    high::{squirrel_traits::PushToSquirrelVm, vector::Vector3},
+    high::{squirrel::SQHandle, squirrel_traits::PushToSquirrelVm, vector::Vector3},
     to_c_string,
 };
 
@@ -22,11 +30,14 @@ pub static SQFUNCTIONS: SqFunctions = SqFunctions {
     server: OnceCell::new(),
 };
 
-/// functions that used to interact with the sqvm
+/// functions that are used to interact with the sqvm
 ///
 /// client functions are both for ui and client vms
 pub struct SqFunctions {
+    /// client squirrel functions
     pub client: OnceCell<SquirrelFunctionsUnwraped>,
+
+    /// server squirrel functions
     pub server: OnceCell<SquirrelFunctionsUnwraped>,
 }
 
@@ -43,6 +54,7 @@ pub struct SqFunctions {
 //     }
 // }
 
+/// pushes a `Vec<T>` to the sqvm
 #[inline]
 pub fn push_sq_array<T>(
     sqvm: *mut HSquirrelVM,
@@ -59,21 +71,29 @@ pub fn push_sq_array<T>(
     }
 }
 
+/// pushes a [`f32`] to the sqvm
 #[inline]
 pub fn push_sq_float(sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped, float: f32) {
     unsafe { (sqfunctions.sq_pushfloat)(sqvm, float) };
 }
 
+/// pushes a [`i32`] to the sqvm
 #[inline]
 pub fn push_sq_int(sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped, int: i32) {
     unsafe { (sqfunctions.sq_pushinteger)(sqvm, int) };
 }
 
+/// pushes a [`bool`] to the sqvm
 #[inline]
-pub fn push_sq_bool(sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped, boolen: bool) {
-    unsafe { (sqfunctions.sq_pushbool)(sqvm, boolen as u32) };
+pub fn push_sq_bool(
+    sqvm: *mut HSquirrelVM,
+    sqfunctions: &SquirrelFunctionsUnwraped,
+    boolean: bool,
+) {
+    unsafe { (sqfunctions.sq_pushbool)(sqvm, boolean as u32) };
 }
 
+/// pushes a `T: Into<String>` to the sqvm
 #[inline]
 pub fn push_sq_string(
     sqvm: *mut HSquirrelVM,
@@ -86,15 +106,17 @@ pub fn push_sq_string(
     unsafe { (sqfunctions.sq_pushstring)(sqvm, cstring.as_ptr(), -1) }; // why -1?
 }
 
+/// pushes a [`Vector3`] to the sqvm
 #[inline]
 pub fn push_sq_vector(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
-    vector: Vector3,
+    vector: Vector3, // this could be a borrow actually but this function is used in places where it would hard to change to a borrow so yeah
 ) {
     unsafe { (sqfunctions.sq_pushvector)(sqvm, (&vector).into()) };
 }
 
+/// pushes a [`SQObject`] to the sqvm
 #[inline]
 pub fn push_sq_object(
     sqvm: *mut HSquirrelVM,
@@ -104,6 +126,12 @@ pub fn push_sq_object(
     unsafe { (sqfunctions.sq_pushobject)(sqvm, object.as_mut_ptr()) };
 }
 
+/// gets a array of T at a stack pos
+///
+/// # Caller input
+///
+/// requires the caller to be able to translate a [`SQObject`] into T.
+/// it can be done using [`GetFromSQObject`].
 #[inline]
 pub fn get_sq_array<T, F>(sqvm: *mut HSquirrelVM, stack_pos: i32, transformer: F) -> Vec<T>
 where
@@ -131,6 +159,10 @@ where
     }
 }
 
+/// gets a float at a stack pos
+///
+/// # Exceptions
+/// the sqvm can throw an exceptions if the it's not a float
 #[inline]
 pub fn get_sq_float(
     sqvm: *mut HSquirrelVM,
@@ -140,6 +172,10 @@ pub fn get_sq_float(
     unsafe { (sqfunctions.sq_getfloat)(sqvm, stack_pos) }
 }
 
+/// gets a int at a stack pos
+///
+/// # Exceptions
+/// the sqvm can throw an exceptions if the it's not a int
 #[inline]
 pub fn get_sq_int(
     sqvm: *mut HSquirrelVM,
@@ -149,6 +185,10 @@ pub fn get_sq_int(
     unsafe { (sqfunctions.sq_getinteger)(sqvm, stack_pos) }
 }
 
+/// gets a bool at a stack pos
+///
+/// # Exceptions
+/// the sqvm can throw an exceptions if the it's not a bool
 #[inline]
 pub fn get_sq_bool(
     sqvm: *mut HSquirrelVM,
@@ -158,6 +198,12 @@ pub fn get_sq_bool(
     unsafe { (sqfunctions.sq_getbool)(sqvm, stack_pos) != 0 }
 }
 
+/// gets a string at a stack pos
+///
+/// uses `CStr::to_string_lossy` to always get a valid string
+///
+/// # Exceptions
+/// the sqvm can throw an exceptions if the it's not a string
 #[inline]
 pub fn get_sq_string(
     sqvm: *mut HSquirrelVM,
@@ -171,6 +217,10 @@ pub fn get_sq_string(
     }
 }
 
+/// gets a vector at a stack pos
+///
+/// # Exceptions
+/// the sqvm can throw an exceptions if the it's not a vector
 #[inline]
 pub fn get_sq_vector(
     sqvm: *mut HSquirrelVM,
@@ -180,6 +230,7 @@ pub fn get_sq_vector(
     unsafe { (sqfunctions.sq_getvector)(sqvm, stack_pos).into() }
 }
 
+/// gets the [`SQObject`] at a stack pos
 #[inline]
 pub fn get_sq_object(
     sqvm: *mut HSquirrelVM,
@@ -194,11 +245,15 @@ pub fn get_sq_object(
     obj
 }
 
+/// gets a function [`SQObject`] from the sqvm
+///
+/// # Errors
+/// fails if it doesn't exist
 pub fn get_sq_function_object(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctionsUnwraped,
     function_name: impl Into<String>,
-) -> Result<SQObject, CallError> {
+) -> Result<SQHandle<SQClosure>, CallError> {
     let mut obj = MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
 
@@ -213,6 +268,6 @@ pub fn get_sq_function_object(
             function_name.to_string_lossy().into(),
         )) // totaly safe :clueless:
     } else {
-        Ok(unsafe { obj.assume_init() })
+        Ok(unsafe { SQHandle::new_unchecked(obj.assume_init()) }) // this is always corret since sq_getfunction can only return SQClosure
     }
 }

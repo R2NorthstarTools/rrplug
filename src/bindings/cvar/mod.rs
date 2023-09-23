@@ -24,9 +24,9 @@ impl From<*const c_void> for RawCVar {
 
 impl_vmethods! {
     impl WRAPPER RawCVar {
-        pub fn find_command_base( command_name: *const c_char ) -> *mut ConCommandBase where offset(14);
-        pub fn find_convar( convar_name: *const c_char ) -> *mut ConVar where offset(16);
-        pub fn find_concommand( concommand_name: *const c_char ) -> *mut ConCommand where offset(18);
+        pub fn find_command_base(command_name: *const c_char) -> *mut ConCommandBase where offset(14);
+        pub fn find_convar(convar_name: *const c_char) -> *mut ConVar where offset(16);
+        pub fn find_concommand(concommand_name: *const c_char) -> *mut ConCommand where offset(18);
         pub fn get_cvar_raw_interator() -> *const ConCommandBase where offset(41);
     }
 }
@@ -46,9 +46,9 @@ impl From<*const c_void> for RawCvarIterator {
 
 impl_vmethods! {
     impl WRAPPER RawCvarIterator {
-        pub fn set_first() -> ()  where offset(0);
-        pub fn next() -> ()  where offset(1);
-        pub fn is_valid() -> ()  where offset(2);
-        pub fn get() -> *const ConCommandBase  where offset(3);
+        pub fn set_first() -> () where offset(0);
+        pub fn next() -> () where offset(1);
+        pub fn is_valid() -> () where offset(2);
+        pub fn get() -> *const ConCommandBase where offset(3);
     }
 }

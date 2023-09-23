@@ -1,3 +1,5 @@
+//! trait definitions and implementations to generalize interacting with squirrel
+
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove this later
 
 pub use rrplug_proc::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm};
@@ -34,7 +36,9 @@ macro_rules! push_to_sqvm {
     )* }
 }
 
+/// trait to used to generalize pushing to the sq stack
 pub trait PushToSquirrelVm {
+    /// pushes the value to the stack
     fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped);
 }
 
@@ -84,7 +88,10 @@ macro_rules! get_from_sqvm {
     )* }
 }
 
+/// trait to get values out of the squrriel stack
 pub trait GetFromSquirrelVm {
+    /// tries to get the value out of the squirrel stack but it cannot fail
+    /// so this can panic
     fn get_from_sqvm(
         sqvm: *mut HSquirrelVM,
         sqfunctions: &SquirrelFunctionsUnwraped,
@@ -145,7 +152,7 @@ impl GetFromSquirrelVm for SQHandle<SQClosure> {
         stack_pos: i32,
     ) -> Self {
         unsafe {
-            let mut obj = std::mem::MaybeUninit::<SQObject>::uninit(); // TODO: import SQObject maybe?
+            let mut obj = std::mem::MaybeUninit::<SQObject>::uninit();
             (sqfunctions.sq_getobject)(sqvm, stack_pos, obj.as_mut_ptr());
             Self::new(obj.assume_init()).expect("the SQObject wasn't a closure")
         }
@@ -159,7 +166,15 @@ impl GetFromSquirrelVm for () {
 
 // Get From SQObject Trait
 
+/// gets the value out of a sqobject
+///
+/// most implementations don't check the type
+///
+/// so this can panic if it's not the correct type
 pub trait GetFromSQObject {
+    /// gets the value out of a sqobject
+    ///
+    /// halts if the type is incorrect
     fn get_from_sqobject(obj: &SQObject) -> Self;
 }
 
@@ -212,8 +227,11 @@ macro_rules! is_sq_object {
     )* }
 }
 
+/// trait to define SQObject types
 pub trait IsSQObject {
+    /// ot type
     const OT_TYPE: SQObjectType;
+    /// return type
     const RT_TYPE: SQObjectType;
 }
 

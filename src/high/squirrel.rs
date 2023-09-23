@@ -24,6 +24,9 @@ use crate::{
 #[doc(hidden)]
 pub static FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
 
+/// holds a pointer to [`CSquirrelVM`] and provides a api to interact with systems that require [`CSquirrelVM`]
+///
+/// also has the current vm type
 #[derive(Debug)]
 pub struct CSquirrelVMHandle {
     handle: *mut CSquirrelVM,
@@ -60,7 +63,7 @@ impl CSquirrelVMHandle {
     ///
     /// it is not valid after sqvm destruction
     ///
-    /// the [`UnsafeHandle`] when used outside of engine thread can cause race conditions or ub
+    /// [`UnsafeHandle`] : when used outside of engine thread can cause race conditions or ub
     ///
     /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
     pub unsafe fn get_sqvm(&self) -> UnsafeHandle<*mut HSquirrelVM> {
@@ -73,7 +76,7 @@ impl CSquirrelVMHandle {
     ///
     /// it is not valid after sqvm destruction
     ///
-    /// the [`UnsafeHandle`] when used outside of engine thread can cause race conditions or ub
+    /// [`UnsafeHandle`] : when used outside of engine thread can cause race conditions or ub
     ///
     /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
     pub unsafe fn get_cs_sqvm(&self) -> UnsafeHandle<*mut CSquirrelVM> {
@@ -93,6 +96,7 @@ pub struct SQHandle<H: IsSQObject> {
 }
 
 impl<H: IsSQObject> SQHandle<H> {
+    /// creates a new [`SQHandle`] by checking if the sqobject has the correct type at runtime
     pub fn new(value: SQObject) -> Result<Self, SQObject> {
         let ty = value._Type;
         if ty == H::OT_TYPE || ty == H::RT_TYPE {
@@ -104,6 +108,8 @@ impl<H: IsSQObject> SQHandle<H> {
             Err(value)
         }
     }
+
+    /// creates a new [`SQHandle`] without checking the type
     /// # Safety
     ///
     /// this breaks the type guarantees provided by this struct
@@ -114,26 +120,30 @@ impl<H: IsSQObject> SQHandle<H> {
         }
     }
 
+    /// a getter
     pub fn get(&self) -> &SQObject {
         &self.inner
     }
 
+    /// a mut getter
     pub fn get_mut(&mut self) -> &mut SQObject {
         &mut self.inner
     }
 
+    /// consumes itself and returns the [`SQObject`]
     pub fn take(self) -> SQObject {
         self.inner
     }
 }
 
 impl SQHandle<SQClosure> {
+    /// used in some macros to enforce type safety
     pub fn as_callable(&mut self) -> *mut SQObject {
         &mut self.inner as *mut SQObject
     }
 }
 
-/// "safely" calls any function defined on the sqvm
+/// calls any function defined on the sqvm
 ///
 /// they would only run when the sqvm is valid
 pub fn async_call_sq_function<T>(
@@ -195,7 +205,7 @@ pub fn async_call_sq_function<T>(
     }
 }
 
-/// "safely" calls any function defined on the sqvm
+/// calls any function defined on the sqvm
 ///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
@@ -212,8 +222,8 @@ pub fn async_call_sq_function<T>(
 /// # Example
 ///
 /// ```
-/// use rrplug::prelude::*;
-/// use rrplug::high::squirrel::call_sq_function;
+/// # use rrplug::prelude::*;
+/// # use rrplug::high::squirrel::call_sq_function;
 ///  
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn test_call_sq_object_function() {
@@ -244,7 +254,7 @@ pub fn call_sq_function(
     }
 }
 
-/// "safely" calls any function defined on the sqvm from its [`SQObject`]
+/// calls any function defined on the sqvm from its [`SQObject`]
 ///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
@@ -261,8 +271,8 @@ pub fn call_sq_function(
 /// # Example
 ///
 /// ```
-/// use rrplug::prelude::*;
-/// use rrplug::high::squirrel::call_sq_object_function;
+/// # use rrplug::prelude::*;
+/// # use rrplug::high::squirrel::call_sq_object_function;
 ///  
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn call_sqvm_function(func: fn() -> String) {
@@ -306,8 +316,8 @@ fn _call_sq_object_function(
 /// ## Example
 ///
 /// ```
-/// use rrplug::prelude::*;
-/// use rrplug::high::squirrel::compile_string;
+/// # use rrplug::prelude::*;
+/// # use rrplug::high::squirrel::compile_string;
 ///  
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn compile_string_test(func: fn() -> String) {

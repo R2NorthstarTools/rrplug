@@ -1,6 +1,28 @@
+//! macro used to create export functions for the plugin
+
 /// marco used to generate the entry for your plugin
 ///
 /// takes in a struct that implements the [`crate::plugin::Plugin`] trait.
+///
+/// ### The most basic use
+///
+/// ```
+/// use rrplug::prelude::*;
+///
+/// pub struct BasicPlugin;
+///
+/// impl Plugin for BasicPlugin {
+///     fn new(_plugin_data: &PluginData) -> Self {
+///         Self {}
+///     }
+///
+///     fn main(&self) {}
+/// }
+///
+/// entry!(BasicPlugin);
+///
+/// # fn main() {}
+/// ```
 #[macro_export]
 macro_rules! entry {
     ( $plugin:ident ) => {
@@ -199,7 +221,7 @@ macro_rules! entry {
                     "client.dll" => mid::engine::PluginLoadDLL::Client,
                     _ => mid::engine::PluginLoadDLL::Other(dll_string),
                 };
-                
+
                 let mut called_dlls = high::engine::CALLED_DLLS.lock();
                 if called_dlls.contains(&dll) {
                     called_dlls.push(dll.clone());

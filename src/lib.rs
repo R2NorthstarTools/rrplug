@@ -3,7 +3,7 @@
 //! this version is for plugins v3
 
 #![deny(unsafe_op_in_unsafe_fn)]
-// #![warn(missing_docs)]
+#![warn(missing_docs)]
 
 #[cfg(doctest)]
 use crate as rrplug;

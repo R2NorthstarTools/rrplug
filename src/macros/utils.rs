@@ -1,3 +1,8 @@
+//! various macros for interating with c++
+
+/// internal rrplug macro
+///
+/// examples of uses are in [`crate::bindings::class_types`]
 #[macro_export]
 macro_rules! offset_struct {
     ( $v:vis struct $struct_name:ident { $( $name:ident : $t:ty where offset($offset:literal)),*, } ) => {
@@ -10,6 +15,9 @@ macro_rules! offset_struct {
     };
 }
 
+/// internal rrplug macro
+///
+/// used by [`crate::impl_vmethods`]
 #[macro_export]
 macro_rules! impl_vmethod {
     ( pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty, for $class:ty where offset($offset:literal) ) => {
@@ -31,6 +39,9 @@ macro_rules! impl_vmethod {
     ( GEN pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty, for $class:ty where offset($offset:literal) ) => {
         #[doc = "# Safety" ]
         #[doc = "this is a wrapper to a vtable function" ]
+        #[doc = "" ]
+        #[doc = "calling this function without knowing how it works may or may create ub" ]
+        #[doc = "this is a auto doc so idk how it works" ]
         pub unsafe fn $name( &self, $($arg_name: $arg),* ) -> $output {
             use std::ffi::c_void;
 
@@ -45,6 +56,9 @@ macro_rules! impl_vmethod {
     ( GEN pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty, for WRAPPER $class:ty where offset($offset:literal) ) => {
         #[doc = "# Safety" ]
         #[doc = "this is a wrapper to a vtable function" ]
+        #[doc = "" ]
+        #[doc = "calling this function without knowing how it works may or may create ub" ]
+        #[doc = "this is a auto doc so idk how it works" ]
         pub unsafe fn $name( &self, $($arg_name: $arg),* ) -> $output {
             use std::ffi::c_void;
 
@@ -58,7 +72,10 @@ macro_rules! impl_vmethod {
     };
     ( GEN pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty, for OFFSET $class:ty where offset($offset:literal) ) => {
         #[doc = "# Safety" ]
-        #[doc = "this is a wrapper to a vtable function in a offset struct" ]
+        #[doc = "this is a wrapper to a vtable function" ]
+        #[doc = "" ]
+        #[doc = "Calling this function without knowing how it works may or may not create ub." ]
+        #[doc = "This is a auto doc so idk how it works." ]
         pub unsafe fn $name( &self, $($arg_name: $arg),* ) -> $output {
             use std::ffi::c_void;
 
@@ -72,6 +89,9 @@ macro_rules! impl_vmethod {
     };
 }
 
+/// internal rrplug macro
+///
+/// examples of uses are in [`crate::bindings::class_types`]
 #[macro_export]
 macro_rules! impl_vmethods {
     ( impl $class:ty { $( pub fn $name:ident( $( $arg_name:ident : $arg:ty),* ) -> $output:ty where offset($offset:literal) );*; } ) => {
@@ -97,8 +117,29 @@ macro_rules! impl_vmethods {
     };
 }
 
+/// utility macro to get functions and globals from dlls with offsets
+///
+/// the generated struct has to be init in `on_dll_load`
+///
+/// # Example
+///
+/// ```
+/// # use rrplug::prelude::*;
+/// # use rrplug::offset_functions;
+///
+/// offset_functions! {
+///     ENGINE_FUNCTIONS + EngineFunctions for WhichDll::Engine => {
+///         client_array = *const rrplug::bindings::class_types::client::CClient where offset(0x12A53F90);
+///     }
+/// }
+///
+/// // init
+/// fn on_dll_load(engine: &PluginLoadDLL, dll_ptr: &DLLPointer) {
+///     unsafe { EngineFunctions::try_init(dll_ptr, &ENGINE_FUNCTIONS) };
+/// }
+/// ```
 #[macro_export]
-macro_rules! engine_functions {
+macro_rules! offset_functions {
     ( $static_name:ident + $struct_name:ident for $dll:expr => { $($name:ident = $t:ty where offset($addr:literal);)* } ) => {
         pub static $static_name: $crate::OnceCell<$struct_name> = $crate::OnceCell::new();
 
@@ -136,13 +177,13 @@ macro_rules! engine_functions {
 mod test {
     #![allow(dead_code)]
 
-    engine_functions! {
+    offset_functions! {
         ENGINE_FUNCTIONS + EngineFunctions for WhichDll::Engine => {
             client_array = *const crate::bindings::class_types::client::CClient where offset(0x12A53F90);
         }
     }
 
-    engine_functions! {
+    offset_functions! {
         SOME_FUNCTIONS + SomeFunctions for WhichDll::Other("some.dll") => {
             client_array = *const crate::bindings::class_types::client::CClient where offset(0xdeadbeef);
         }

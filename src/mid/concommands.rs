@@ -1,3 +1,5 @@
+//! minimal abstraction for concommands
+
 use std::ffi::c_void;
 
 use crate::{
@@ -15,8 +17,10 @@ use crate::{
 
 use super::engine::get_engine_data;
 
+/// just a struct with a single function to register concommands
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct RegisterConCommands {
+    /// function to register concommands
     pub reg_func: ConCommandConstructorType,
 }
 
@@ -35,7 +39,7 @@ impl RegisterConCommands {
         callback: unsafe extern "C" fn(arg1: *const CCommand),
         help_string: String,
         flags: i32,
-    ) -> Result<(), RegisterError> {
+    ) -> Result<*mut ConCommand, RegisterError> {
         let name_ptr = to_c_string!(name).into_raw();
 
         let help_string_ptr = to_c_string!(help_string).into_raw();
@@ -59,19 +63,51 @@ impl RegisterConCommands {
                 std::ptr::null_mut(),
             )
         };
-        Ok(())
+        Ok(command)
     }
 }
 
+/// finds a concommand by name
+///
+/// # Example
+/// ```no_run
+/// # use rrplug::mid::engine::get_engine_data;
+/// # use rrplug::mid::concommands::find_concommand_with_cvar;
+/// # fn sub() -> Option<()> {
+/// let concommand = find_concommand_with_cvar("force_newgame", &get_engine_data()?.get_cvar())?;
+/// # Some(())
+/// # }
+/// ```
 pub fn find_concommand_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static mut ConCommand> {
     let name = to_c_string!(name);
     unsafe { cvar.find_concommand(name.as_ptr()).as_mut() }
 }
 
+/// finds a concommand by name
+///
+/// # Example
+/// ```no_run
+/// # use rrplug::mid::concommands::find_concommand;
+/// # fn sub() -> Option<()> {
+/// let concommand = find_concommand("force_newgame")?;
+/// # Some(())
+/// # }
+/// ```
 pub fn find_concommand(name: &str) -> Option<&'static mut ConCommand> {
     find_concommand_with_cvar(name, &get_engine_data()?.cvar)
 }
 
+/// finds a concommand base by name
+///
+/// # Example
+/// ```no_run
+/// # use rrplug::mid::engine::get_engine_data;
+/// # use rrplug::mid::concommands::find_concommand_base_with_cvar;
+/// # fn sub() -> Option<()> {
+/// let base = find_concommand_base_with_cvar("spewlog_enable", &get_engine_data()?.get_cvar())?;
+/// # Some(())
+/// # }
+/// ```
 pub fn find_concommand_base_with_cvar(
     name: &str,
     cvar: &RawCVar,
@@ -80,6 +116,16 @@ pub fn find_concommand_base_with_cvar(
     unsafe { cvar.find_command_base(name.as_ptr()).as_mut() }
 }
 
+/// finds a concommand base by name
+///
+/// # Example
+/// ```no_run
+/// # use rrplug::mid::concommands::find_concommand_base;
+/// # fn sub() -> Option<()> {
+/// let base = find_concommand_base("spewlog_enable")?;
+/// # Some(())
+/// # }
+/// ```
 pub fn find_concommand_base(name: &str) -> Option<&'static mut ConCommandBase> {
     find_concommand_base_with_cvar(name, &get_engine_data()?.cvar)
 }
