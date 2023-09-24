@@ -10,19 +10,29 @@ use syn::{
 pub(crate) mod parsing;
 pub(crate) mod impl_traits;
 
-// todo: redo docs for proc macros
-
 use impl_traits::{ impl_struct_or_enum, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum, get_from_sqvm_impl_enum, get_from_sqvm_impl_struct, get_from_sqobject_impl_enum};
 use parsing::{filter_args, get_sqoutput, input_mapping, Args};
-/// proc marco for generating compatible functions with the sqvm
+
+// TODO: trait for tranlating types into sqtypes 
+
+/// proc marco for generating compatible functions with the sqvm. 
 ///
-///  ### abstractions
-/// the marco catpures any arguments types and return types and tranlates them into sqfunction deffintion
-/// also adds code to transform the sqtypes to rust types at runtime
-///
-/// all the information that is relevent for the sqfunction registration is collected into the functin with the same and a `info_` prefix
-///
-/// returns are managed by other marcos
+///  ## abstractions
+/// the macro uses arguments types and return types to tranlates them into a sqfunction deffintion
+/// `GetFromSquirrelVm` and `PushToSquirrelVm` define logic for how
+/// 
+/// ## attributes
+/// - **VM**
+/// 
+///     Indicates for which the sqfunction is created
+///     .The default is `Client`
+/// - **ExportName**
+/// 
+///     Specifies the name for the function on the sqvm
+/// - **ReturnOverwrite**
+/// 
+///     Overwrites the return type for the sqfunction definition
+///     Useful for ensuring type safety for custom structs and other custom types since they default to `var`.
 #[proc_macro_attribute]
 pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let args = parse_macro_input!(attr as Args).args;
@@ -30,7 +40,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
     let ItemFn {
-        attrs: _,
+        attrs,
         vis,
         sig,
         block,
@@ -123,8 +133,11 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 script_vm_func = "client";
             }
             "VM" => {
-                let fmt = format!("invalid VM {}", input);
-                return quote! { compile_error!(#fmt) }.into();
+                return SynError::new(
+                    arg.ident.span(),
+                    format!("invalid VM {}", input)
+                ).to_compile_error()
+                .into();
             }
             "ExportName" => export_name = input,
             "ReturnOverwrite" => out = out,
@@ -166,7 +179,8 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
         }
-
+        
+        #(#attrs)*
         #vis const fn #ident () -> rrplug::high::northstar::SQFuncInfo {
             rrplug::high::northstar::SQFuncInfo{ 
                 cpp_func_name: #func_name, 
@@ -182,31 +196,21 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     out
 }
 
-// TODO: Rewrite concommand and convar to use the user's varible names and maybe types
-
-// NOTES FOR cat_or_not
-// so the convar callback is weird
-// it returns a weird convar instead of the real one
-// we can travel up the convar list to get ours but we can't get the values only the name
-// since we know the name of the convar we can get it from g_pCVar but thats not exposed to plugins
-// I think v3 plugins should have this :)
-// once it does the convar proc marco should be updated to support it
-// also if we are talking v3 plugins wishlist uwu
-// 1. g_pCVar provided to plugins
-// 2. client.dll, engine.dll and server.dll modules provided to plugins
-// 3. runframe ran on plugins ;)
-// ^ this would allow safe editing of convars and conconmands and also call any sqvm function "safely" :D
-
 /// proc marco for generating compatible concommand callbacks
-///
-/// any arguments and return deffition are discarded
-///
-/// in favor of `convar` with `CCommandResult` which is created at compile time from the actuall passed arguments
+/// 
+/// this macro wraps your function in another function and tries to provide the argurments your requested
+/// 
+/// # how to use it
+/// the 2 possible function signatures are
+/// - `fn(CCommandResult)`
+/// - `fn()`
+/// 
+/// the result is ignored so it can be anything
 #[proc_macro_attribute]
 pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
     let ItemFn {
-        attrs: _,
+        attrs,
         vis,
         sig,
         block,
@@ -234,6 +238,7 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // TODO: allow the users to manipulate the input of the inner function
 
     quote! {
+        #(#attrs)*
         #vis unsafe extern "C" fn #ident (ccommand: *const rrplug::bindings::cvar::command::CCommand) {
             fn inner_function ( #input ) #output {
                 #(#stmts)*
@@ -246,17 +251,20 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// proc marco for generating compatible concommand callbacks
-///
-/// any arguments and return deffition are discarded
-///
-/// are the actual agurments: convar: `Option<ConVarStruct>`, old_value: `String`, float_old_value: `f32`
-///
-/// the convar that is passed to this callback is always garbage data so you will have to bring the convar from a `static`
+/// 
+/// this macro wraps your function in another function and tries to provide the argurments your requested
+/// 
+/// # how to use it
+/// the 2 possible function signatures are
+/// - `fn(String, f32)`
+/// - `fn()`
+/// 
+/// the result is ignored so it can be anything
 #[proc_macro_attribute]
 pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
     let ItemFn {
-        attrs: _,
+        attrs,
         vis,
         sig,
         block,
@@ -282,6 +290,7 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     quote! {
+        #(#attrs)*
         #vis unsafe extern "C" fn #ident (
             convar: *mut rrplug::bindings::cvar::convar::ConVar,
             old_value: *const ::std::os::raw::c_char,
@@ -297,6 +306,11 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
+/// implements `GetFromSquirrelVm` for structs or enums
+/// 
+/// the fields of the struct must implement `GetFromSQObject`
+/// 
+/// the enum must be unit-only
 #[proc_macro_derive(GetFromSquirrelVm)]
 pub fn get_from_sqvm_macro(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -304,6 +318,11 @@ pub fn get_from_sqvm_macro(item: TokenStream) -> TokenStream {
     impl_struct_or_enum(input, get_from_sqvm_impl_struct, get_from_sqvm_impl_enum)
 }
 
+/// implements `PushToSquirrelVm` for structs or enums
+/// 
+/// the fields of the struct must implement `PushToSquirrelVm`
+/// 
+/// the enum must be unit-only
 #[proc_macro_derive(PushToSquirrelVm)]
 pub fn push_to_sqvm_macro(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -311,6 +330,11 @@ pub fn push_to_sqvm_macro(item: TokenStream) -> TokenStream {
     impl_struct_or_enum(input, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum)
 }
 
+/// macro to auto generate a `GetFromSQObject` implementation for enums
+/// 
+/// since squirrel's enums are integers the enum must be a unit-only enum
+/// 
+/// maybe also use `#[repr(i32)]` idk
 #[proc_macro_derive(GetFromSQObject)]
 pub fn get_from_sqobject_macro(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);

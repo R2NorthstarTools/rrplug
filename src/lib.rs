@@ -52,12 +52,17 @@ mod test {
 
     #[convar]
     fn test_convar_noargs() -> () {}
-
+    
+    /// test doc
     #[concommand]
     fn test_concommand(command: CCommandResult) {
         log::info!("test {:?}", command.get_args());
     }
 
+    #[concommand]
+    fn test_concommand_noargs() {}
+    
+    /// test doc
     #[sqfunction(VM = "Server", ExportName = "test")]
     fn test_sqfunction(test1: String, test2: i32, test3: TestEnum) -> TestStruct {
         Ok(TestStruct {
