@@ -89,12 +89,12 @@ pub struct DLLPointer<'a> {
 impl<'a> DLLPointer<'a> {
     /// not for public use, made public for [`crate::entry`] macro
     #[doc(hidden)]
-    pub fn new(dll: &'a PluginLoadDLL, ptr: *const c_void) -> DLLPointer<'a> {
-        let which_dll = match dll {
-            PluginLoadDLL::Engine(_) => WhichDll::Engine,
-            PluginLoadDLL::Client => WhichDll::Client,
-            PluginLoadDLL::Server => WhichDll::Server,
-            PluginLoadDLL::Other(dll) => WhichDll::Other(dll),
+    pub fn new(dll_str: &'a str, ptr: *const c_void) -> DLLPointer<'a> {
+        let which_dll = match dll_str {
+            "engine.dll" => WhichDll::Engine,
+            "client.dll" => WhichDll::Client,
+            "server.dll" => WhichDll::Server,
+            dll => WhichDll::Other(dll),
         };
 
         Self {

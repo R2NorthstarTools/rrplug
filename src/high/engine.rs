@@ -13,12 +13,12 @@ use crate::{
         plugin_abi::PluginEngineData,
     },
     errors::RegisterError,
-    mid::{concommands::RegisterConCommands, convars::ConVarClasses, engine::PluginLoadDLL},
+    mid::{concommands::RegisterConCommands, convars::ConVarClasses},
 };
 
 /// internal vec to not call on_dll_load
 #[doc(hidden)]
-pub static CALLED_DLLS: Mutex<Vec<PluginLoadDLL>> = Mutex::new(Vec::new());
+pub static CALLED_DLLS: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
 /// Use this struct to register convars and concommands
 ///

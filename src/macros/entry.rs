@@ -153,8 +153,8 @@ macro_rules! entry {
 
                     // shouldn't be unwraping here but I will say : why did you name your function like this?
                     let sq_func_name = CString::new(func_info.sq_func_name).unwrap();
-                    let cpp_func_name = CString::new("what help").unwrap();
-                    let help_test = CString::new(func_info.cpp_func_name).unwrap();
+                    let cpp_func_name = CString::new(func_info.cpp_func_name).unwrap();
+                    let help_text = CString::new("what help").unwrap();
                     let returntype = CString::new(func_info.return_type).unwrap();
                     let types = CString::new(func_info.types).unwrap();
 
@@ -166,7 +166,7 @@ macro_rules! entry {
                     unsafe {
                         std::ptr::addr_of_mut!((*struct_ptr).squirrelFuncName).write(sq_func_name.as_ptr());
                         std::ptr::addr_of_mut!((*struct_ptr).cppFuncName).write(cpp_func_name.as_ptr());
-                        std::ptr::addr_of_mut!((*struct_ptr).helpText).write(help_test.as_ptr());
+                        std::ptr::addr_of_mut!((*struct_ptr).helpText).write(help_text.as_ptr());
                         std::ptr::addr_of_mut!((*struct_ptr).returnTypeString).write(returntype.as_ptr());
                         std::ptr::addr_of_mut!((*struct_ptr).returnType).write(esq_returntype);
                         std::ptr::addr_of_mut!((*struct_ptr).argTypes).write(types.as_ptr());
@@ -205,33 +205,29 @@ macro_rules! entry {
             ) {
                 let dll_string = unsafe { CStr::from_ptr(dll) }.to_string_lossy().to_string();
                 let dll_str: &str = &dll_string;
-                let dll = match dll_str {
-                    "engine.dll" => {
-                        unsafe {
-                            let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
-                            match engine_dll.as_ref() {
-                                Some(engine_dll) => _ = mid::engine::ENGINE_DATA.set(EngineData::new(engine_dll)),
-                                None => panic!("the plugin sys provided null engine data!"),
-                            }
+                let engine_data = if dll_str == "engine.dll" || !data.is_null() { // eh lol
+                    unsafe {
+                        let engine_dll: *const plugin_abi::PluginEngineData = std::mem::transmute(data);
+                        match engine_dll.as_ref() {
+                            Some(engine_dll) => _ = mid::engine::ENGINE_DATA.set(EngineData::new(engine_dll)),
+                            None => panic!("the plugin sys provided null engine data!"),
                         }
-                        mid::engine::PluginLoadDLL::Engine(mid::engine::ENGINE_DATA.wait())
-
                     }
-                    "server.dll" => mid::engine::PluginLoadDLL::Server,
-                    "client.dll" => mid::engine::PluginLoadDLL::Client,
-                    _ => mid::engine::PluginLoadDLL::Other(dll_string),
+                    Some(mid::engine::ENGINE_DATA.wait())
+                } else {
+                    None
                 };
 
+                let dll_ptr = $crate::mid::engine::DLLPointer::new(dll_str, dll_ptr);
+
                 let mut called_dlls = high::engine::CALLED_DLLS.lock();
-                if called_dlls.contains(&dll) {
-                    called_dlls.push(dll.clone());
+                if called_dlls.contains(&dll_string) {
                     return;
                 }
 
+                PLUGIN.wait().on_dll_load(engine_data, &dll_ptr);
 
-                let dll_ptr = $crate::mid::engine::DLLPointer::new(&dll, dll_ptr);
-
-                PLUGIN.wait().on_dll_load(&dll, &dll_ptr);
+                called_dlls.push(dll_string);
             }
 
             #[no_mangle]

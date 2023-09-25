@@ -12,7 +12,7 @@ pub use crate::{
         vector::Vector3,
     },
     mid::{
-        engine::{DLLPointer, PluginLoadDLL, WhichDll},
+        engine::{DLLPointer, WhichDll},
         squirrel::SQFUNCTIONS,
     },
     plugin::Plugin,

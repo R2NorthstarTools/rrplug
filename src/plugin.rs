@@ -9,10 +9,11 @@ use std::any::Any;
 
 use crate::{
     high::{
+        engine::EngineData,
         northstar::{PluginData, ScriptVmType},
         squirrel::CSquirrelVMHandle,
     },
-    mid::engine::{DLLPointer, PluginLoadDLL},
+    mid::engine::DLLPointer,
 };
 
 /// Trait for defining the callbacks and entry point of the plugin
@@ -32,7 +33,7 @@ pub trait Plugin: Any + Sync {
     /// called when a dll is loaded with winapi functions by the game (full paths are not provided)
     ///
     /// only calls once for each unique dll
-    fn on_dll_load(&self, _engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {}
+    fn on_dll_load(&self, _engine_data: Option<&EngineData>, _dll_ptr: &DLLPointer) {}
 
     /// called when a sqvm is created
     ///
