@@ -23,10 +23,9 @@
 //! use rrplug::OnceCell; // just as a example
 //!
 //! // inside Plugin impl
-//! fn on_engine_load(engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {
-//!     match engine {
-//!         PluginLoadDLL::Engine(_) => {},
-//!         _ => return
+//! fn on_engine_load(engine_data: Option<&EngineData>, _dll_ptr: &DLLPointer) {
+//!     let Some(_) = engine_data else {
+//!         return;
 //!     };
 //!
 //!     let mut convar = ConVarStruct::try_new().unwrap(); // creates the convar struct

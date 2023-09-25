@@ -7,13 +7,12 @@
 //! use rrplug::prelude::*;
 //!
 //! // inside Plugin impl
-//! fn on_engine_load(engine: &PluginLoadDLL, _dll_ptr: &DLLPointer) {
-//!     let engine = match engine {
-//!         PluginLoadDLL::Engine(engine) => engine,
-//!         _ => return
+//! fn on_engine_load(engine_data: Option<&EngineData>, _dll_ptr: &DLLPointer) {
+//!     let Some(engine_data) = engine_data else {
+//!         return;
 //!     };
 //!
-//!     engine.register_concommand("boom", explode, "displays a explosion in the console", 0); // register the concommand
+//!     engine_data.register_concommand("boom", explode, "displays a explosion in the console", 0); // register the concommand
 //! }
 //!
 //! // concommand use callback

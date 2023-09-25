@@ -134,7 +134,7 @@ macro_rules! impl_vmethods {
 /// }
 ///
 /// // init
-/// fn on_dll_load(engine: &PluginLoadDLL, dll_ptr: &DLLPointer) {
+/// fn on_dll_load(engine_data: Option<&EngineData>, dll_ptr: &DLLPointer) {
 ///     unsafe { EngineFunctions::try_init(dll_ptr, &ENGINE_FUNCTIONS) };
 /// }
 /// ```
