@@ -43,7 +43,12 @@ pub use rrplug_proc::{concommand, convar, sqfunction};
 #[cfg(test)]
 mod test {
     use crate as rrplug;
-    use rrplug::high::squirrel_traits::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm};
+    use rrplug::high::{
+        northstar::SQFuncInfo,
+        squirrel_traits::{
+            ConstSQVMName, GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName,
+        },
+    };
     use rrplug::prelude::*;
     use rrplug_proc::*;
 
@@ -52,7 +57,7 @@ mod test {
 
     #[convar]
     fn test_convar_noargs() -> () {}
-    
+
     /// test doc
     #[concommand]
     fn test_concommand(command: CCommandResult) {
@@ -61,10 +66,17 @@ mod test {
 
     #[concommand]
     fn test_concommand_noargs() {}
-    
+
     /// test doc
     #[sqfunction(VM = "Server", ExportName = "test")]
-    fn test_sqfunction(test1: String, test2: i32, test3: TestEnum) -> TestStruct {
+    fn test_sqfunction(
+        test1: String,
+        test2: i32,
+        test3: TestEnum,
+        test4: Box<dyn Fn(String)>,
+    ) -> TestStruct {
+        test4(test1.clone());
+
         Ok(TestStruct {
             a: test1,
             b: test2,
@@ -72,17 +84,30 @@ mod test {
         })
     }
 
-    #[derive(PushToSquirrelVm, GetFromSquirrelVm, GetFromSQObject)]
+    #[derive(PushToSquirrelVm, GetFromSquirrelVm, GetFromSQObject, SQVMName)]
     #[repr(i32)]
     enum TestEnum {
         Wow,
         Owo,
     }
 
-    #[derive(PushToSquirrelVm, GetFromSquirrelVm)]
+    #[derive(PushToSquirrelVm, GetFromSquirrelVm, SQVMName, ConstSQVMName)]
     struct TestStruct {
         a: String,
         b: i32,
         c: TestEnum,
+    }
+
+    #[test]
+    fn test_test_sqfunction() {
+        let sqfuncdef = SQFuncInfo {
+            cpp_func_name: stringify!(test_sqfunction),
+            sq_func_name: "test",
+            types: "string test1, int test2, TestEnum test3, void functionref(string) test4",
+            return_type: TestStruct::SQ_NAME,
+            vm: ScriptVmType::Server,
+            function: Some(sq_func_test_sqfunction),
+        };
+        assert_eq!(test_sqfunction(), sqfuncdef);
     }
 }

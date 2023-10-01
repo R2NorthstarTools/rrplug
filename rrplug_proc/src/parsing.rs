@@ -61,7 +61,6 @@ macro_rules! push_stmts {
     };
 }
 
-#[allow(unused)] // TODO! Remove later
 pub fn recursive_type_match(t: Type) -> Result<String, SynError> {
     match t {
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
@@ -244,8 +243,8 @@ pub fn get_sqoutput(output: &ReturnType) -> String {
         syn::ReturnType::Type(_, ty) => get_sqtype(ty),
     }
 }
-pub fn get_sqtype(ty: &Box<Type>) -> String {
-    match &**ty {
+pub fn get_sqtype(ty: &Type) -> String {
+    match &*ty {
         Type::Path(type_path) if type_path.to_token_stream().to_string() == "bool" => {
             "bool".to_string()
         }

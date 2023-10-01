@@ -79,9 +79,10 @@ macro_rules! call_sq_function {
 /// ```
 /// # use rrplug::prelude::*;
 /// # use rrplug::call_sq_object_function;
+/// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
 ///
 /// #[rrplug::sqfunction(VM="Server")]
-/// fn test_call_funcs(mut func: fn(String)) {
+/// fn test_call_funcs(mut func: SQHandle<SQClosure>) {
 ///     call_sq_object_function!(sqvm, sq_functions, func, "test".to_string()).map_err(|err| err.to_string())?;
 ///
 ///     Ok(())
@@ -92,6 +93,7 @@ macro_rules! call_sq_object_function {
     ($sqvm:expr, $sqfunctions:expr, $obj:expr, $( $arg:expr ),* ) => (
         {
             {
+                #[allow(unused_imports)]
                 use $crate::high::squirrel_traits::PushToSquirrelVm;
                 const ARGS_AMOUNT: i32 = 1 + $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg)),*]) as i32;
 
@@ -167,13 +169,14 @@ pub const fn __arg_count_helper<const N: usize>(_: [(); N]) -> usize {
 mod test {
     #![allow(unused_mut)]
     use crate as rrplug;
+    use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
     use rrplug::prelude::*;
     use rrplug_proc::*;
 
     use rrplug::{async_call_sq_function, call_sq_function, call_sq_object_function};
 
     #[sqfunction(VM = "Server")]
-    fn test_call_funcs2(mut func: fn(String), test: String) -> String {
+    fn test_call_funcs2(mut func: SQHandle<SQClosure>, test: String) -> String {
         call_sq_object_function!(sqvm, sq_functions, func, "test".to_string())
             .map_err(|err| err.to_string())?;
 

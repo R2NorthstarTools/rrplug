@@ -206,3 +206,39 @@ pub fn get_from_sqobject_impl_enum(input: DeriveInput) -> TokenStream {
     )
     .into()
 }
+
+pub fn const_sqvm_name_impl(input: DeriveInput) -> TokenStream {
+    let DeriveInput {
+        attrs: _,
+        vis: _,
+        ident,
+        generics,
+        data: _,
+    } = input;
+
+    quote!(
+        impl<#generics> ConstSQVMName for #ident<#generics> {
+            const SQ_NAME: &'static str = stringify!(#ident);
+        }
+    )
+    .into()
+}
+
+pub fn sqvm_name_impl(input: DeriveInput) -> TokenStream {
+    let DeriveInput {
+        attrs: _,
+        vis: _,
+        ident,
+        generics,
+        data: _,
+    } = input;
+
+    quote!(
+        impl<#generics> SQVMName for #ident<#generics> {
+            fn get_sqvm_name() -> String {
+                stringify!(#ident).to_string()
+            }
+        }
+    )
+    .into()
+}

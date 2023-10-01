@@ -3,15 +3,15 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    self, parse_macro_input, parse_quote, DeriveInput, FnArg, Ident, ItemFn, ReturnType, Stmt, Error as SynError
+    self, parse_macro_input, parse_quote, DeriveInput, FnArg, Ident, ItemFn, ReturnType, Stmt, Error as SynError, Type, parse_str
 };
 
 #[macro_use]
 pub(crate) mod parsing;
 pub(crate) mod impl_traits;
 
-use impl_traits::{ impl_struct_or_enum, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum, get_from_sqvm_impl_enum, get_from_sqvm_impl_struct, get_from_sqobject_impl_enum};
-use parsing::{filter_args, get_sqoutput, input_mapping, Args};
+use impl_traits::{sqvm_name_impl, const_sqvm_name_impl, impl_struct_or_enum, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum, get_from_sqvm_impl_enum, get_from_sqvm_impl_struct, get_from_sqobject_impl_enum};
+use parsing::{filter_args, input_mapping, Args};
 
 // TODO: trait for tranlating types into sqtypes 
 
@@ -51,7 +51,14 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sqtypes = String::new();
     let ident = &sig.ident;
     let input = &sig.inputs;
-    let input_vec = input.iter().filter_map(|arg| filter_args(arg));
+    let input_vec: Vec<FnArg> = input.iter().filter_map(|arg| filter_args(arg)).collect();
+    let input_type_names = input_vec.iter().filter_map(|_input| {
+        if let FnArg::Typed(t) = _input {
+            Some(t)
+        } else {
+            None
+        }
+    }).map(|arg| arg.ty.as_ref());
     let input_var_names: Vec<Ident> = input
         .iter()
         .cloned()
@@ -93,8 +100,15 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sq_stack_pos = 1;
     let mut sq_gets_stmts = Vec::new();
 
-    let mut out = get_sqoutput(output);
-
+    let mut out: Box<Type> = match output {
+        syn::ReturnType::Default => match parse_str::<Type>("std::ffi::c_void").map_err(|err| err.to_compile_error().into()) {
+            Ok(v) => Box::new(v),
+            Err(err) => return err,
+        },
+        syn::ReturnType::Type(_, ty) => ty.clone(),
+    };
+    
+    // TODO: remove this later too lazy rn
     match input_mapping(input, &mut sqtypes, &mut sq_stack_pos) {
         Ok(tks) => {
             for tk in tks {
@@ -140,7 +154,10 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 .into();
             }
             "ExportName" => export_name = input,
-            "ReturnOverwrite" => out = out,
+            "ReturnOverwrite" => out = match parse_str::<Type>(&input).map_err(|err| err.to_compile_error().into()) {
+                Ok(v) => Box::new(v),
+                Err(err) => return err,
+            },
             _ => {
                 return SynError::new(
                     arg.ident.span(),
@@ -181,12 +198,28 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
         
         #(#attrs)*
-        #vis const fn #ident () -> rrplug::high::northstar::SQFuncInfo {
+        #vis fn #ident () -> rrplug::high::northstar::SQFuncInfo {
+            use rrplug::high::squirrel_traits::{SQVMName,ConstSQVMName};
+            
+            let mut types = String::new();
+            #(
+                if ( !types.is_empty() ) {
+                    types.push(',');
+                    types.push(' ');
+                }
+                types.push_str(&<#input_type_names>::get_sqvm_name());
+                types.push(' ');
+                types.push_str(stringify!(#input_var_names));
+            )*
+
+            // this is ok since the string has to be alive for the lifetime of the game
+            // this can't be done at comp time since implemented consts can't be used for other implementations of consts :|
+
             rrplug::high::northstar::SQFuncInfo{ 
                 cpp_func_name: #func_name, 
                 sq_func_name: #export_name, 
-                types: #sqtypes, 
-                return_type: #out, 
+                types: if types.is_empty() {""} else {types.leak()}, 
+                return_type: #out::SQ_NAME, 
                 vm: ScriptVmType::#script_vm_type, 
                 function: Some( #sq_functions_func ),
             }
@@ -340,4 +373,24 @@ pub fn get_from_sqobject_macro(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
 
     get_from_sqobject_impl_enum(input)
+}
+
+/// macro to auto generate a `ConstSQVMName` implementation
+/// 
+/// the implementation will just be the name of the struct/enum so if the squirrel name is diffrent use a util macro in `rrplug::macro::utils` 
+#[proc_macro_derive(ConstSQVMName)]
+pub fn const_sqvm_name_macro(item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as DeriveInput);
+
+    const_sqvm_name_impl(input)
+}
+
+/// macro to auto generate a `SQVMName` implementation
+/// 
+/// the implementation will just be the name of the struct/enum so if the squirrel name is diffrent use a util macro in `rrplug::macro::utils` 
+#[proc_macro_derive(SQVMName)]
+pub fn sqvm_name_macro(item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as DeriveInput);
+
+    sqvm_name_impl(input)
 }

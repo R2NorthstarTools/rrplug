@@ -173,6 +173,8 @@ macro_rules! offset_functions {
     }
 }
 
+// TODO: add macro to generate a implementation for SQVMName and ConstSQVMName
+
 #[cfg(test)]
 mod test {
     #![allow(dead_code)]

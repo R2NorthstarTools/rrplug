@@ -19,6 +19,7 @@ pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
 ///
 /// it creates a native closure btw but sqfunction is also a valid name for it.
 /// sqfunction is used in a lot of places with diffrent meanings `¯\_(ツ)_/¯`
+#[derive(Debug, PartialEq, Eq)]
 pub struct SQFuncInfo {
     /// the name used in source code
     pub cpp_func_name: &'static str,

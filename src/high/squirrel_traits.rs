@@ -2,7 +2,9 @@
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove this later
 
-pub use rrplug_proc::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm};
+pub use rrplug_proc::{
+    ConstSQVMName, GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName,
+};
 use std::mem::MaybeUninit;
 
 use super::{squirrel::SQHandle, vector::Vector3};
@@ -15,6 +17,7 @@ use crate::{
         },
         unwraped::SquirrelFunctionsUnwraped,
     },
+    call_sq_object_function,
     mid::squirrel::{
         get_sq_array, get_sq_bool, get_sq_float, get_sq_int, get_sq_object, get_sq_string,
         get_sq_vector, push_sq_array, push_sq_bool, push_sq_float, push_sq_int, push_sq_object,
@@ -85,6 +88,25 @@ macro_rules! get_from_sqvm {
                 $function(sqvm, stack_pos, $transformer)
             }
         }
+    )* };
+
+    ( $( ($($ty_name: ident : $var_name:ident),*) );*; ) => { $(
+        impl<$($ty_name: PushToSquirrelVm,)*> GetFromSquirrelVm for Box<dyn Fn($($ty_name,)*)> {
+            fn get_from_sqvm(
+                sqvm: *mut HSquirrelVM,
+                sqfunctions: &'static SquirrelFunctionsUnwraped,
+                stack_pos: i32,
+            ) -> Self {
+                Box::new(move |$($var_name: $ty_name,)*| { _ =
+                    call_sq_object_function!(
+                        sqvm,
+                        sqfunctions,
+                        SQHandle::<SQClosure>::get_from_sqvm(sqvm, sqfunctions, stack_pos),
+                        $($var_name),*
+                    );
+                })
+            }
+        }
     )* }
 }
 
@@ -94,7 +116,7 @@ pub trait GetFromSquirrelVm {
     /// so this can panic
     fn get_from_sqvm(
         sqvm: *mut HSquirrelVM,
-        sqfunctions: &SquirrelFunctionsUnwraped,
+        sqfunctions: &'static SquirrelFunctionsUnwraped,
         stack_pos: i32,
     ) -> Self;
 }
@@ -115,6 +137,19 @@ get_from_sqvm! {
     get_sq_array::<Vec<bool>>(|obj| Some(unsafe{ obj._VAL.asInteger != 0 }) );
     get_sq_array::<Vec<MaybeUninit<SQObject>>>(|obj| Some(std::mem::MaybeUninit::new(*obj))); // might not be sound since the stuff inside ptrs is not copied
     get_sq_array::<Vec<Vector3>>(|obj| Some((obj as *const SQObject).into()));
+}
+
+get_from_sqvm! {
+    (T1: v2);
+    (T1: v1, T2: v2);
+    (T1: v1, T2: v2, T3: v3);
+    (T1: v1, T2: v2, T3: v3, T4: v4);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9, T10: v10);
 }
 
 impl GetFromSquirrelVm for &mut CPlayer {
@@ -213,6 +248,94 @@ impl GetFromSQObject for Vector3 {
     fn get_from_sqobject(obj: &SQObject) -> Self {
         (obj as *const SQObject).into()
     }
+}
+
+// const sqvm name
+
+/// the sqvm name of a type in rust
+///
+/// used to map a rust function into a sq native function
+pub trait ConstSQVMName {
+    /// the name on the sqvm of a type
+    ///
+    /// the default is "var" which is any type
+    const SQ_NAME: &'static str = "var";
+}
+
+// sqvm name
+
+macro_rules! sqvm_name {
+    ($( ($($ty_name:ident : $var_name:ident),*) );*;)  => {
+        $(
+            impl<$($ty_name: PushToSquirrelVm + ConstSQVMName,)*> SQVMName for Box<dyn Fn($($ty_name,)*)> {
+                fn get_sqvm_name() -> String {
+                    let mut name = "void functionref(".to_string();
+
+                    $(
+                        if ( name != "void functionref(" ) { // bad solution but this will ran only once for each implementation 
+                            name.push(',');
+                            name.push(' ');
+                        }
+                        name.push_str(<$ty_name>::SQ_NAME);
+                    )*
+
+                    name.push(')');
+
+                    name
+                }
+            }
+        )*
+    };
+    ( $( $t:ty = $sqty:literal );*; ) => {
+        $(
+            impl ConstSQVMName for $t {
+                const SQ_NAME: &'static str = $sqty;
+            }
+
+            impl SQVMName for $t {
+                #[inline]
+                fn get_sqvm_name() -> String {
+                    <$t>::SQ_NAME.to_string()
+                }
+            }
+        )*
+    };
+}
+
+/// non const version of [`ConstSQVMName`]
+pub trait SQVMName {
+    /// used for Fn trait because of compiler intricacies
+    fn get_sqvm_name() -> String;
+}
+
+sqvm_name! {
+    String = "string";
+    i32 = "int";
+    f32 = "float";
+    bool = "bool";
+    Vector3 = "vector";
+    Vec<String> = "array<string>";
+    Vec<i32> = "array<int>";
+    Vec<f32> = "array<float>";
+    Vec<bool> = "array<bool>";
+    Vec<Vector3> = "array<vector>";
+    &mut CPlayer = "entity";
+    SQHandle<SQClosure> = "var";
+    () = "void";
+    std::ffi::c_void = "void"; // just for a proc macro
+}
+
+sqvm_name! {
+    (T1: v2);
+    (T1: v1, T2: v2);
+    (T1: v1, T2: v2, T3: v3);
+    (T1: v1, T2: v2, T3: v3, T4: v4);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9);
+    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9, T10: v10);
 }
 
 // Markers

@@ -224,6 +224,7 @@ pub fn async_call_sq_function<T>(
 /// ```
 /// # use rrplug::prelude::*;
 /// # use rrplug::high::squirrel::call_sq_function;
+/// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
 ///  
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn test_call_sq_object_function() {
@@ -273,9 +274,10 @@ pub fn call_sq_function(
 /// ```
 /// # use rrplug::prelude::*;
 /// # use rrplug::high::squirrel::call_sq_object_function;
+/// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
 ///  
 /// #[rrplug::sqfunction(VM="Server")]
-/// fn call_sqvm_function(func: fn() -> String) {
+/// fn call_sqvm_function(mut func: SQHandle<SQClosure>) {
 ///     call_sq_object_function(sqvm, sq_functions, func).map_err(|err| err.to_string())?;
 ///     Ok(())
 /// }
@@ -320,7 +322,7 @@ fn _call_sq_object_function(
 /// # use rrplug::high::squirrel::compile_string;
 ///  
 /// #[rrplug::sqfunction(VM="Server")]
-/// fn compile_string_test(func: fn() -> String) {
+/// fn compile_string_test() {
 ///     compile_string(sqvm, sq_functions, true, "print(\"helloworld\")").map_err(|err| err.to_string())?;
 ///
 ///     Ok(())
