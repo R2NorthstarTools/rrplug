@@ -129,7 +129,9 @@ pub fn get_from_sqvm_impl_enum(input: DeriveInput) -> TokenStream {
                 sqvm: *mut HSquirrelVM,
                 sqfunctions: &SquirrelFunctionsUnwraped,
                 stack_pos: i32,
-            ) -> Self {
+            ) -> Self {             
+                const _ :#ident<#generics> = unsafe { std::mem::transmute::<i32,#ident<#generics>>(0) };
+                
                 let value = unsafe { rrplug::mid::squirrel::get_sq_int(sqvm, sqfunctions, stack_pos) };
 
                 if value >= #ident::#varient_first as i32 && value <= #ident::#varient_last as i32 {
@@ -194,6 +196,8 @@ pub fn get_from_sqobject_impl_enum(input: DeriveInput) -> TokenStream {
             #[inline]
             #[allow(clippy::not_unsafe_ptr_arg_deref)]
             fn get_from_sqobject(obj: &rrplug::bindings::squirreldatatypes::SQObject) -> Self {
+                const _: #ident<#generics> = unsafe { std::mem::transmute::<i32,#ident<#generics>>(0) };
+                                                            
                 let value = unsafe { obj._VAL.asInteger };
 
                 if value >= #ident::#varient_first as i32 && value <= #ident::#varient_last as i32 {
@@ -213,12 +217,18 @@ pub fn const_sqvm_name_impl(input: DeriveInput) -> TokenStream {
         vis: _,
         ident,
         generics,
-        data: _,
+        data,
     } = input;
 
+    
+    let mut sqname = ident.to_string();
+    if let Data::Enum(_) = data {
+        sqname = "int".to_string(); // because squirrel doesn't real enums it all just ints
+    }
+    
     quote!(
         impl<#generics> ConstSQVMName for #ident<#generics> {
-            const SQ_NAME: &'static str = stringify!(#ident);
+            const SQ_NAME: &'static str = #sqname;
         }
     )
     .into()
@@ -230,13 +240,18 @@ pub fn sqvm_name_impl(input: DeriveInput) -> TokenStream {
         vis: _,
         ident,
         generics,
-        data: _,
+        data,
     } = input;
+
+    let mut sqname = ident.to_string();
+    if let Data::Enum(_) = data {
+        sqname = "int".to_string();
+    }
 
     quote!(
         impl<#generics> SQVMName for #ident<#generics> {
             fn get_sqvm_name() -> String {
-                stringify!(#ident).to_string()
+                #sqname.to_string()
             }
         }
     )

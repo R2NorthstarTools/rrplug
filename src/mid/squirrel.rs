@@ -10,15 +10,17 @@ use std::{ffi::CStr, mem::MaybeUninit};
 
 use once_cell::sync::OnceCell;
 
-#[cfg(doc)]
-use crate::high::squirrel_traits::GetFromSQObject;
 use crate::{
     bindings::{
         squirreldatatypes::{HSquirrelVM, SQClosure, SQObject},
         unwraped::SquirrelFunctionsUnwraped,
     },
     errors::CallError,
-    high::{squirrel::SQHandle, squirrel_traits::PushToSquirrelVm, vector::Vector3},
+    high::{
+        squirrel::SQHandle,
+        squirrel_traits::{GetFromSQObject, PushToSquirrelVm},
+        vector::Vector3,
+    },
     to_c_string,
 };
 
@@ -128,15 +130,11 @@ pub fn push_sq_object(
 
 /// gets a array of T at a stack pos
 ///
-/// # Caller input
-///
-/// requires the caller to be able to translate a [`SQObject`] into T.
-/// it can be done using [`GetFromSQObject`].
+/// type T must have GetFromSQObject implemented
 #[inline]
-pub fn get_sq_array<T, F>(sqvm: *mut HSquirrelVM, stack_pos: i32, transformer: F) -> Vec<T>
+pub fn get_sq_array<T>(sqvm: *mut HSquirrelVM, stack_pos: i32) -> Vec<T>
 where
-    T: PushToSquirrelVm,
-    F: Fn(&SQObject) -> Option<T>,
+    T: GetFromSQObject,
 {
     unsafe {
         let sqvm_ref = sqvm.as_ref().expect("ok how is this sqvm invalid");
@@ -154,7 +152,7 @@ where
         (0..array._usedSlots as usize)
             .map(|i| array._values.add(i))
             .filter_map(|obj| obj.as_ref())
-            .filter_map(transformer)
+            .map(T::get_from_sqobject)
             .collect()
     }
 }

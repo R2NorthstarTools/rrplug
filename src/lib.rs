@@ -103,7 +103,7 @@ mod test {
         let sqfuncdef = SQFuncInfo {
             cpp_func_name: stringify!(test_sqfunction),
             sq_func_name: "test",
-            types: "string test1, int test2, TestEnum test3, void functionref(string) test4",
+            types: "string test1, int test2, int test3, void functionref(string) test4",
             return_type: TestStruct::SQ_NAME,
             vm: ScriptVmType::Server,
             function: Some(sq_func_test_sqfunction),

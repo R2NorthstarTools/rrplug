@@ -3,9 +3,7 @@
 [![docs.rs](https://docs.rs/rrplug/badge.svg)](https://docs.rs/rrplug)
 [![rrplug-test-build](https://github.com/R2NorthstarTools/rrplug/actions/workflows/rrplug-test-build.yml/badge.svg?branch=master)](https://github.com/R2NorthstarTools/rrplug/actions/workflows/rrplug-test-build.yml)
 
-crate that provides function wappers and functions for [R2Northstar](https://github.com/R2Northstar/NorthstarLauncher) plugin creation.
-
-rrplug uses compile time or sometimes runtime checks to guarantee safety in abstractions
+this crate provides convenient abstractions with compile time checks while not limiting unsafe access to any parts of plugin sys or the titanfall 2 engine.
 
 ## rrplug template
 
