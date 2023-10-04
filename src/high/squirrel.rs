@@ -6,7 +6,7 @@ use parking_lot::Mutex;
 use std::{ffi::c_void, marker::PhantomData};
 
 use super::{
-    northstar::{FuncSQFuncInfo, ScriptVmType},
+    northstar::{SQFuncInfo, ScriptVmType},
     squirrel_traits::IsSQObject,
     UnsafeHandle,
 };
@@ -22,7 +22,7 @@ use crate::{
 };
 
 #[doc(hidden)]
-pub static FUNCTION_SQ_REGISTER: Mutex<Vec<FuncSQFuncInfo>> = Mutex::new(Vec::new());
+pub static FUNCTION_SQ_REGISTER: Mutex<Vec<SQFuncInfo>> = Mutex::new(Vec::new());
 
 /// holds a pointer to [`CSquirrelVM`] and provides a api to interact with systems that require [`CSquirrelVM`]
 ///

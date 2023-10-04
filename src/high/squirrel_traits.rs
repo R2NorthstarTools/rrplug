@@ -244,24 +244,12 @@ impl GetFromSQObject for Vector3 {
     }
 }
 
-// const sqvm name
-
-/// the sqvm name of a type in rust
-///
-/// used to map a rust function into a sq native function
-pub trait ConstSQVMName {
-    /// the name on the sqvm of a type
-    ///
-    /// the default is "var" which is any type
-    const SQ_NAME: &'static str = "var";
-}
-
 // sqvm name
 
 macro_rules! sqvm_name {
     ($( ($($ty_name:ident : $var_name:ident),*) );*;)  => {
         $(
-            impl<$($ty_name: ConstSQVMName,)*> SQVMName for Box<dyn Fn($($ty_name,)*)> {
+            impl<$($ty_name: SQVMName,)*> SQVMName for Box<dyn Fn($($ty_name,)*)> {
                 fn get_sqvm_name() -> String {
                     let mut name = "void functionref(".to_string();
 
@@ -270,7 +258,7 @@ macro_rules! sqvm_name {
                             name.push(',');
                             name.push(' ');
                         }
-                        name.push_str(<$ty_name>::SQ_NAME);
+                        name.push_str(&$ty_name::get_sqvm_name());
                     )*
 
                     name.push(')');
@@ -283,32 +271,23 @@ macro_rules! sqvm_name {
 
     ( $( $t:ty = $sqty:literal );*; ) => {
         $(
-            impl ConstSQVMName for $t {
-                const SQ_NAME: &'static str = $sqty;
-            }
-
             impl SQVMName for $t {
                 #[inline]
                 fn get_sqvm_name() -> String {
-                     <$t>::SQ_NAME.to_string()
+                     $sqty.to_string()
                 }
             }
         )*
     };
-
-    ( CONST => $( $t:ty = $sqty:literal );*; ) => {
-        $(
-            impl ConstSQVMName for $t {
-                const SQ_NAME: &'static str = $sqty;
-            }
-        )*
-    };
-
 }
 
-/// non const version of [`ConstSQVMName`]
+/// the sqvm name of a type in rust
+///
+/// used to map a rust function into a sq native function
 pub trait SQVMName {
-    /// used for Fn trait because of compiler intricacies
+    /// the name on the sqvm of a type
+    ///
+    /// the default is "var" which is any type
     fn get_sqvm_name() -> String;
 }
 
@@ -322,15 +301,6 @@ sqvm_name! {
     SQHandle<SQClosure> = "var";
     () = "void";
     std::ffi::c_void = "void"; // just for a proc macro
-}
-
-sqvm_name! {
-    CONST =>
-    Vec<String> = "array<string>";
-    Vec<i32> = "array<int>";
-    Vec<f32> = "array<float>";
-    Vec<bool> = "array<bool>";
-    Vec<Vector3> = "array<vector>";
 }
 
 sqvm_name! {
@@ -383,3 +353,15 @@ is_sq_object! {
     SQInteger, RT: SQObjectType::RT_INTEGER, OT: SQObjectType::OT_INTEGER;
     SQBool, RT: SQObjectType::RT_BOOL, OT: SQObjectType::OT_BOOL;
 } // not a thing? SQStructDef, RT: SQObjectType::, OT: SQObjectType::;
+
+// TODO: so here is the idea
+// have add_sqfunction be generic over extern "C" fn s and have traits to diffrenciate client/server/ui sqfunctions
+// the generic would cover mutitple implementation
+// but with this version the user would have to specifically ask for a sqvm and sqfunctions
+// now that I writing this the biggest problem is the return ...
+// but since it's a int we could have a C struct with a i32 and it would be transparent
+// this would allow the user to return anything that can become that sturct
+// so this is figured out :)
+// also the input could be generic over *mut sqvm
+// but then it would have to be a tuple :pain:
+// maybe a combination of this and proc macro would be better?

@@ -199,7 +199,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         
         #(#attrs)*
         #vis fn #ident () -> rrplug::high::northstar::SQFuncInfo {
-            use rrplug::high::squirrel_traits::{SQVMName,ConstSQVMName};
+            use rrplug::high::squirrel_traits::SQVMName;
             
             let mut types = String::new();
             #(
@@ -218,8 +218,8 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             rrplug::high::northstar::SQFuncInfo{ 
                 cpp_func_name: #func_name, 
                 sq_func_name: #export_name, 
-                types: if types.is_empty() {""} else {types.leak()}, 
-                return_type: #out::SQ_NAME, 
+                types: types,
+                return_type: #out::get_sqvm_name(), 
                 vm: ScriptVmType::#script_vm_type, 
                 function: Some( #sq_functions_func ),
             }

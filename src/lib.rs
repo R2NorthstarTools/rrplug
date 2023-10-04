@@ -45,9 +45,7 @@ mod test {
     use crate as rrplug;
     use rrplug::high::{
         northstar::SQFuncInfo,
-        squirrel_traits::{
-            ConstSQVMName, GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName,
-        },
+        squirrel_traits::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName},
     };
     use rrplug::prelude::*;
     use rrplug_proc::*;
@@ -91,7 +89,7 @@ mod test {
         Owo,
     }
 
-    #[derive(PushToSquirrelVm, GetFromSquirrelVm, SQVMName, ConstSQVMName)]
+    #[derive(PushToSquirrelVm, GetFromSquirrelVm, SQVMName)]
     struct TestStruct {
         a: String,
         b: i32,
@@ -103,8 +101,8 @@ mod test {
         let sqfuncdef = SQFuncInfo {
             cpp_func_name: stringify!(test_sqfunction),
             sq_func_name: "test",
-            types: "string test1, int test2, int test3, void functionref(string) test4",
-            return_type: TestStruct::SQ_NAME,
+            types: "string test1, int test2, int test3, void functionref(string) test4".into(),
+            return_type: TestStruct::get_sqvm_name(),
             vm: ScriptVmType::Server,
             function: Some(sq_func_test_sqfunction),
         };

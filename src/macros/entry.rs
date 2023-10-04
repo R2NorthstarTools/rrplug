@@ -114,7 +114,7 @@ macro_rules! entry {
                 let context = std::convert::Into::<high::northstar::ScriptVmType>::into(context);
                 log::info!("PLUGIN_INFORM_SQVM_CREATED called {}", context);
 
-                let mut locked_register_functions = high::squirrel::FUNCTION_SQ_REGISTER.lock();
+                let locked_register_functions = high::squirrel::FUNCTION_SQ_REGISTER.lock();
 
                 let sq_functions = match context {
                     ScriptVmType::Server => SQFUNCTIONS.server.get(),
@@ -130,8 +130,7 @@ macro_rules! entry {
 
                 for func_info in
                     locked_register_functions
-                        .iter_mut()
-                        .map(|f| f())
+                        .iter()
                         .filter(|info| info.vm.is_right_vm(&context))
                 {
                     log::info!("Registering {context} function {} with types: {}", func_info.sq_func_name, func_info.types);
@@ -155,8 +154,10 @@ macro_rules! entry {
                     let sq_func_name = CString::new(func_info.sq_func_name).unwrap();
                     let cpp_func_name = CString::new(func_info.cpp_func_name).unwrap();
                     let help_text = CString::new("what help").unwrap();
-                    let returntype = CString::new(func_info.return_type).unwrap();
-                    let types = CString::new(func_info.types).unwrap();
+                    let return_type: &str = &func_info.return_type;
+                    let returntype = CString::new(return_type).unwrap();
+                    let types: &str = &func_info.types;
+                    let types = CString::new(types).unwrap();
 
                     let mut reg = std::mem::MaybeUninit::<
                         squirrelclasstypes::SQFuncRegistration,

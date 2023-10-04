@@ -31,9 +31,9 @@ pub struct SQFuncInfo {
     /// ```
     /// let types = "string name, int id";
     /// ```
-    pub types: &'static str,
+    pub types: String,
     /// the return value of the function in squirrel form
-    pub return_type: &'static str,
+    pub return_type: String,
     /// the which vm should be used to register the function on
     pub vm: ScriptVmType,
     /// the actual function pointer
@@ -167,6 +167,6 @@ impl PluginData {
     ///
     /// The sqfunction will be registered when its vm is loaded
     pub fn register_sq_functions(&self, get_info_func: FuncSQFuncInfo) {
-        FUNCTION_SQ_REGISTER.lock().push(get_info_func);
+        FUNCTION_SQ_REGISTER.lock().push(get_info_func());
     }
 }
