@@ -21,8 +21,6 @@ impl Plugin for ExamplePlugin {
         plugin_data.register_sq_functions(info_example);
     }
 
-    fn main(&self) {}
-
     fn on_engine_load(&self, engine: &EngineLoadType) {
         let engine = match engine {
             EngineLoadType::Engine(engine) => engine,
@@ -87,8 +85,6 @@ impl Plugin for BasicPlugin {
     fn initialize(&mut self, plugin_data: &PluginData) {
         log::info!("yay logging :D");
     }
-
-    fn main(&self) {}
 }
 
 entry!(BasicPlugin);

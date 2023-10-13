@@ -15,8 +15,6 @@
 ///     fn new(_plugin_data: &PluginData) -> Self {
 ///         Self {}
 ///     }
-///
-///     fn main(&self) {}
 /// }
 ///
 /// entry!(BasicPlugin);
@@ -67,8 +65,6 @@ macro_rules! entry {
                 }
 
                 log::info!( "plugin static initialized : {}", PLUGIN.get().is_some() );
-
-                std::thread::spawn(move || PLUGIN.wait().main());
             }
 
             #[no_mangle]
@@ -250,8 +246,6 @@ mod test_entry {
         fn new(_plugin_data: &PluginData) -> Self {
             Self {}
         }
-
-        fn main(&self) {}
     }
 
     entry!(Test);

@@ -18,17 +18,12 @@ use crate::{
 
 /// Trait for defining the callbacks and entry point of the plugin
 ///
-/// also provides a thread to run code on (the main function)
-///
 /// it is unsafe to run any titanfall engine functions on it
 pub trait Plugin: Any + Sync {
     /// init function
     ///
     /// [`PluginData`] can be used to register sqfunctions and get the northstar version
     fn new(plugin_data: &PluginData) -> Self;
-
-    /// provided separate thread
-    fn main(&self);
 
     /// called when a dll is loaded with winapi functions by the game (full paths are not provided)
     ///
