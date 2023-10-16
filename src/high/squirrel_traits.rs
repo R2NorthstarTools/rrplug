@@ -219,28 +219,54 @@ impl GetFromSQObject for String {
         }
     }
 }
+
 impl GetFromSQObject for i32 {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         unsafe { obj._VAL.asInteger }
     }
 }
+
 impl GetFromSQObject for f32 {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         unsafe { obj._VAL.asFloat }
     }
 }
+
 impl GetFromSQObject for bool {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         unsafe { obj._VAL.asInteger != 0 }
     }
 }
+
 impl GetFromSQObject for Vector3 {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         (obj as *const SQObject).into()
+    }
+}
+
+impl<T> GetFromSQObject for Vec<T>
+where
+    T: GetFromSQObject,
+{
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        unsafe {
+            let array = obj
+                ._VAL
+                .asArray
+                .as_ref()
+                .expect("the sq object may be invalid");
+
+            (0..array._usedSlots as usize)
+                .map(|i| array._values.add(i))
+                .filter_map(|obj| obj.as_ref())
+                .map(T::get_from_sqobject)
+                .collect()
+        }
     }
 }
 
