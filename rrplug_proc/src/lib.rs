@@ -10,7 +10,7 @@ use syn::{
 pub(crate) mod parsing;
 pub(crate) mod impl_traits;
 
-use impl_traits::{sqvm_name_impl, const_sqvm_name_impl, impl_struct_or_enum, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum, get_from_sqvm_impl_enum, get_from_sqvm_impl_struct, get_from_sqobject_impl_enum};
+use impl_traits::{sqvm_name_impl, const_sqvm_name_impl, impl_struct_or_enum, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum, get_from_sqvm_impl_enum, get_from_sqvm_impl_struct, get_from_sqobject_impl_enum, get_from_sqobject_impl_struct};
 use parsing::{filter_args, input_mapping, Args};
 
 // TODO: trait for tranlating types into sqtypes 
@@ -363,7 +363,7 @@ pub fn push_to_sqvm_macro(item: TokenStream) -> TokenStream {
     impl_struct_or_enum(input, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum)
 }
 
-/// macro to auto generate a `GetFromSQObject` implementation for enums
+/// macro to auto generate a `GetFromSQObject` implementation for enums and structs behaves mostly like `GetFromSquirrelVm`
 /// 
 /// since squirrel's enums are integers the enum must be a unit-only enum
 /// 
@@ -372,7 +372,7 @@ pub fn push_to_sqvm_macro(item: TokenStream) -> TokenStream {
 pub fn get_from_sqobject_macro(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
 
-    get_from_sqobject_impl_enum(input)
+    impl_struct_or_enum(input, get_from_sqobject_impl_struct, get_from_sqobject_impl_enum)
 }
 
 /// macro to auto generate a `ConstSQVMName` implementation

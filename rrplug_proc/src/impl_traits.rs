@@ -211,6 +211,48 @@ pub fn get_from_sqobject_impl_enum(input: DeriveInput) -> TokenStream {
     .into()
 }
 
+// TODO: refactor this to use what I have in the other implemantion of this
+pub fn get_from_sqobject_impl_struct(input: DeriveInput) -> TokenStream {
+    let DeriveInput { // copying this from system clipboard destroyed this, but I won't fix this today
+            attrs: _,
+            vis: _,
+            ident,
+            generics,
+            data,
+        } = input;
+    let fields = get_struct_fields(data);
+    let field_idents: Vec<Ident> = fields.iter().cloned().filter_map(|f| f.ident).collect();
+    let field_amount = field_idents.len() as u32;
+    quote!(
+         impl<#generics> GetFromSQObject for #ident<#generics> {
+             #[allow(clippy::not_unsafe_ptr_arg_deref)] // smth should be done about this
+             #[inline]
+             fn get_from_sqobject(obj: &rrplug::bindings::squirreldatatypes::SQObject) -> Self {
+                 use rrplug::{high::squirrel_traits::GetFromSQObject,bindings::squirreldatatypes::SQObject};
+                 let sqstruct = unsafe { 
+                     obj
+                         ._VAL
+                         .asStructInstance
+                         .as_ref()
+                         .expect("provided struct was invalid")
+                 };
+                 debug_assert_eq!(#field_amount, sqstruct.size, "the size of the struct instance({}) didn't match the size of {}({})", sqstruct.size, stringify!(#ident), #field_amount);
+                 let data = &sqstruct.data as *const SQObject; // this static array is dynamic in reality
+                 let mut iter = (0..sqstruct.size)
+                     .filter_map(|i| i.try_into().ok())
+                     .filter_map(|i| unsafe { data.add(i).as_ref() });
+                 Self {
+                      #(
+                          #field_idents: GetFromSQObject::get_from_sqobject(iter.next().expect("ran out of struct instance fields")),
+                      )*
+                     }
+                 }
+             }
+        )
+    .into()
+}
+
+
 pub fn const_sqvm_name_impl(input: DeriveInput) -> TokenStream {
     let DeriveInput {
         attrs: _,

@@ -89,7 +89,7 @@ mod test {
         Owo,
     }
 
-    #[derive(PushToSquirrelVm, GetFromSquirrelVm, SQVMName)]
+    #[derive(PushToSquirrelVm, GetFromSquirrelVm, SQVMName, GetFromSQObject)]
     struct TestStruct {
         a: String,
         b: i32,
