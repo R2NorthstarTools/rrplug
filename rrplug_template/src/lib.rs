@@ -1,35 +1,24 @@
-{% if example %}use rrplug::prelude::*;
-use rrplug::{
-    bindings::convar::FCVAR_GAMEDLL, sq_return_null,
-    wrappers::convars::{ConVarRegister, ConVarStruct},
-    wrappers::northstar::{EngineLoadType, PluginData},
-};
+{% if example %}use rrplug::bindings::cvar::convar::FCVAR_GAMEDLL;
+use rrplug::prelude::*;
 
-#[derive(Debug)]
 pub struct ExamplePlugin;
 
 impl Plugin for ExamplePlugin {
-    type SaveType = squirrel::Save;
+    fn new(plugin_data: &PluginData) -> Self {
+        log::info!("yay logging :D");
 
-    fn new() -> Self {
+        plugin_data.register_sq_functions(example);
+
         Self {}
     }
 
-    fn initialize(&mut self, plugin_data: &PluginData) {
-        log::info!("yay logging :D");
-
-        plugin_data.register_sq_functions(info_example);
-    }
-
-    fn on_engine_load(&self, engine: &EngineLoadType) {
+    fn on_dll_load(&self, engine: Option<&EngineData>, _dll_ptr: &DLLPointer) {
         let engine = match engine {
-            EngineLoadType::Engine(engine) => engine,
-            EngineLoadType::EngineFailed => return,
-            EngineLoadType::Server => return,
-            EngineLoadType::Client => return,
+            Some(engine) => engine,
+            None => return,
         };
 
-        let convar = ConVarStruct::try_new().unwrap();
+        let mut convar = ConVarStruct::try_new().unwrap();
         let register_info = ConVarRegister {
             callback: Some(basic_convar_changed_callback),
             ..ConVarRegister::mandatory(
@@ -54,36 +43,28 @@ impl Plugin for ExamplePlugin {
 #[rrplug::concommand]
 fn basic_command_callback(command: CCommandResult) {
     log::info!("running basic_command");
-    log::info!("args: {:?}", command.args)
+    log::info!("args: {:?}", command.get_args())
 }
 
 #[rrplug::convar]
-fn basic_convar_changed_callback(convar: Option<ConVarStruct>, old_value: String, float_old_value: f32) {
+fn basic_convar_changed_callback(_: String, float_old_value: f32) {
     log::info!("old value: {}", float_old_value)
 }
 
-#[rrplug::sqfunction(VM=Client,ExportName=BasicExample)]
+#[rrplug::sqfunction(VM = "Client", ExportName = "BasicExample")]
 fn example(name: String) {
     log::info!("exmaple {name}");
-
-    sq_return_null!()
 }
 
 entry!(ExamplePlugin);
+
 {% else %}use rrplug::prelude::*;
 
-#[derive(Debug)]
 pub struct BasicPlugin;
 
 impl Plugin for BasicPlugin {
-    type SaveType = squirrel::Save;
-
-    fn new() -> Self {
+    fn new(_plugin_data: &PluginData) -> Self {
         Self {}
-    }
-
-    fn initialize(&mut self, plugin_data: &PluginData) {
-        log::info!("yay logging :D");
     }
 }
 
