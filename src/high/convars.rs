@@ -496,7 +496,7 @@ impl ConVarStruct {
     ///
     /// only safe on the titanfall thread
     pub fn remove_flags(&mut self, flags: i32) {
-        self.inner.m_ConCommandBase.m_nFlags &= !flags
+        self.inner.m_ConCommandBase.m_nFlags &= !flags // TODO: figure out if this still needs fixing
     }
 
     /// exposes the raw pointer to the [`ConVar`] class

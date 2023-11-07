@@ -1,5 +1,8 @@
 //! various macros for interating with c++
 
+#[cfg(doc)]
+use crate::high::squirrel_traits::SQVMName;
+
 /// internal rrplug macro
 ///
 /// examples of uses are in [`crate::bindings::class_types`]
@@ -173,11 +176,34 @@ macro_rules! offset_functions {
     }
 }
 
-// TODO: add macro to generate a implementation for SQVMName and ConstSQVMName
+/// macro to implement [`SQVMName`]
+///
+/// # Example
+/// ```
+/// # use rrplug::prelude::*;
+/// # use rrplug::impl_sqvm_name;
+/// struct SQStruct;
+///
+/// impl_sqvm_name!(SQStruct => "SQStruct");
+/// ```
+#[macro_export]
+macro_rules! impl_sqvm_name {
+    ($struct:ident => $name:literal ) => {
+        impl $crate::high::squirrel_traits::SQVMName for $struct {
+            fn get_sqvm_name() -> String {
+                $name.into()
+            }
+        }
+    };
+}
 
 #[cfg(test)]
 mod test {
     #![allow(dead_code)]
+
+    struct Test;
+
+    impl_sqvm_name!(Test => "Test");
 
     offset_functions! {
         ENGINE_FUNCTIONS + EngineFunctions for WhichDll::Engine => {

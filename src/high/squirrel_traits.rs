@@ -2,15 +2,14 @@
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove this later
 
-pub use rrplug_proc::{
-    ConstSQVMName, GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName,
-};
+pub use rrplug_proc::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName};
 use std::mem::MaybeUninit;
 
 use super::{squirrel::SQHandle, vector::Vector3};
 use crate::{
     bindings::{
         class_types::cplayer::CPlayer,
+        squirrelclasstypes::SQRESULT,
         squirreldatatypes::{
             HSquirrelVM, SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger,
             SQNativeClosure, SQObject, SQObjectType, SQString, SQStructInstance, SQTable,
@@ -40,7 +39,15 @@ macro_rules! push_to_sqvm {
 }
 
 /// trait to used to generalize pushing to the sq stack
+///
+/// # Use cases
+/// - returning from native functions
+/// - accumulating in arrays and structs
 pub trait PushToSquirrelVm {
+    /// used for ()
+    #[doc(hidden)]
+    const DEFAULT_RESULT: SQRESULT = SQRESULT::SQRESULT_NOTNULL;
+
     /// pushes the value to the stack
     fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped);
 }
@@ -60,6 +67,84 @@ where
 {
     fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
         push_sq_array(sqvm, sqfunctions, self);
+    }
+}
+
+impl PushToSquirrelVm for () {
+    const DEFAULT_RESULT: SQRESULT = SQRESULT::SQRESULT_NULL;
+
+    fn push_to_sqvm(self, _: *mut HSquirrelVM, _: &SquirrelFunctionsUnwraped) {
+        // TODO: in the future this should have pushnull maybe?
+    }
+}
+
+// Return Trait
+
+/// trait to return diffrent values to the sqvm from a native closure
+///
+/// [`Option`] will return a `ornull` type in squirrel
+///
+/// [`Result`] will return its T type in squirrel and will raise an exception in squirrel if it's an error
+/// # Use cases
+/// - returning from native functions
+pub trait ReturnToVm {
+    /// returns a value defined by [`SQRESULT`]
+    fn return_to_vm(
+        self,
+        sqvm: *mut HSquirrelVM,
+        sqfunctions: &SquirrelFunctionsUnwraped,
+    ) -> SQRESULT;
+}
+
+impl<T: PushToSquirrelVm> ReturnToVm for Option<T> {
+    /// returns a `ornull T` to the sqvm
+    fn return_to_vm(
+        self,
+        sqvm: *mut HSquirrelVM,
+        sqfunctions: &SquirrelFunctionsUnwraped,
+    ) -> SQRESULT {
+        match self {
+            Some(rtrn) => {
+                rtrn.push_to_sqvm(sqvm, sqfunctions);
+                T::DEFAULT_RESULT
+            }
+            None => SQRESULT::SQRESULT_NULL,
+        }
+    }
+}
+
+impl<T: PushToSquirrelVm, E: ToString> ReturnToVm for Result<T, E> {
+    /// will raise a squirrel exception if it's an error
+    ///
+    /// result returns of T,R are identical to non result returns of T
+    fn return_to_vm(
+        self,
+        sqvm: *mut HSquirrelVM,
+        sqfunctions: &SquirrelFunctionsUnwraped,
+    ) -> SQRESULT {
+        match self {
+            Ok(rtrn) => {
+                rtrn.push_to_sqvm(sqvm, sqfunctions);
+                T::DEFAULT_RESULT
+            }
+            Err(err) => {
+                let err = crate::to_c_string!(err.to_string());
+                unsafe { (sqfunctions.sq_raiseerror)(sqvm, err.as_ptr()) };
+                SQRESULT::SQRESULT_ERROR
+            }
+        }
+    }
+}
+
+impl<T: PushToSquirrelVm> ReturnToVm for T {
+    /// any return for types simply pushes it and returns NonNull
+    fn return_to_vm(
+        self,
+        sqvm: *mut HSquirrelVM,
+        sqfunctions: &SquirrelFunctionsUnwraped,
+    ) -> SQRESULT {
+        self.push_to_sqvm(sqvm, sqfunctions);
+        T::DEFAULT_RESULT
     }
 }
 
@@ -101,6 +186,9 @@ macro_rules! get_from_sqvm {
 }
 
 /// trait to get values out of the squrriel stack
+///
+/// # Use cases
+/// - getting the arguments in native closures
 pub trait GetFromSquirrelVm {
     /// tries to get the value out of the squirrel stack but it cannot fail
     /// so this can panic
@@ -200,6 +288,9 @@ impl GetFromSquirrelVm for () {
 /// most implementations don't check the type
 ///
 /// so this can panic if it's not the correct type
+///
+/// # Use cases
+/// - getting fields of arrays and structs
 pub trait GetFromSQObject {
     /// gets the value out of a sqobject
     ///
@@ -310,6 +401,9 @@ macro_rules! sqvm_name {
 /// the sqvm name of a type in rust
 ///
 /// used to map a rust function into a sq native function
+///
+/// # Use cases
+/// - translating rust types to squirrel types
 pub trait SQVMName {
     /// the name on the sqvm of a type
     ///
@@ -326,7 +420,6 @@ sqvm_name! {
     &mut CPlayer = "entity";
     SQHandle<SQClosure> = "var";
     () = "void";
-    std::ffi::c_void = "void"; // just for a proc macro
 }
 
 sqvm_name! {
@@ -347,6 +440,27 @@ impl<T: SQVMName> SQVMName for Vec<T> {
         format!("array<{}>", T::get_sqvm_name())
     }
 }
+
+// because of this `void ornull` is possible oops
+impl<T: SQVMName> SQVMName for Option<T> {
+    fn get_sqvm_name() -> String {
+        format!("{} ornull", T::get_sqvm_name())
+    }
+}
+
+impl<T: SQVMName, E> SQVMName for Result<T, E> {
+    fn get_sqvm_name() -> String {
+        T::get_sqvm_name() // yeah squirrel doesn't have a way in the type system to sepecify a possible error :|
+    }
+}
+
+// specialization is not as strong as I though :(
+// impl SQVMName for Option<()> {
+//     fn get_sqvm_name() -> String {
+//         "void".to_string()
+//     }
+// }
+
 // Markers
 
 macro_rules! is_sq_object {
@@ -391,3 +505,6 @@ is_sq_object! {
 // also the input could be generic over *mut sqvm
 // but then it would have to be a tuple :pain:
 // maybe a combination of this and proc macro would be better?
+
+// TODO: another thing to think about is the fact that there 5 traits for interacting with the sqvm
+// they are all required for everything so why not just combine most of them into one large trait

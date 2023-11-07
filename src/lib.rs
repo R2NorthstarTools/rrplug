@@ -72,14 +72,14 @@ mod test {
         test2: i32,
         test3: TestEnum,
         test4: Box<dyn Fn(String)>,
-    ) -> TestStruct {
+    ) -> Result<Vec<TestStruct>, String> {
         test4(test1.clone());
 
-        Ok(TestStruct {
+        Ok(vec![TestStruct {
             a: test1,
             b: test2,
             c: test3,
-        })
+        }])
     }
 
     #[derive(PushToSquirrelVm, GetFromSquirrelVm, GetFromSQObject, SQVMName)]
@@ -102,7 +102,7 @@ mod test {
             cpp_func_name: stringify!(test_sqfunction),
             sq_func_name: "test",
             types: "string test1, int test2, int test3, void functionref(string) test4".into(),
-            return_type: TestStruct::get_sqvm_name(),
+            return_type: <Vec<TestStruct> as SQVMName>::get_sqvm_name(),
             vm: ScriptVmType::Server,
             function: Some(sq_func_test_sqfunction),
         };

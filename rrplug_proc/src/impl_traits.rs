@@ -212,6 +212,7 @@ pub fn get_from_sqobject_impl_enum(input: DeriveInput) -> TokenStream {
 }
 
 // TODO: refactor this to use what I have in the other implemantion of this
+// whar, past self?
 pub fn get_from_sqobject_impl_struct(input: DeriveInput) -> TokenStream {
     let DeriveInput { // copying this from system clipboard destroyed this, but I won't fix this today
             attrs: _,
@@ -252,29 +253,6 @@ pub fn get_from_sqobject_impl_struct(input: DeriveInput) -> TokenStream {
     .into()
 }
 
-
-pub fn const_sqvm_name_impl(input: DeriveInput) -> TokenStream {
-    let DeriveInput {
-        attrs: _,
-        vis: _,
-        ident,
-        generics,
-        data,
-    } = input;
-
-    
-    let mut sqname = ident.to_string();
-    if let Data::Enum(_) = data {
-        sqname = "int".to_string(); // because squirrel doesn't real enums it all just ints
-    }
-    
-    quote!(
-        impl<#generics> ConstSQVMName for #ident<#generics> {
-            const SQ_NAME: &'static str = #sqname;
-        }
-    )
-    .into()
-}
 
 pub fn sqvm_name_impl(input: DeriveInput) -> TokenStream {
     let DeriveInput {
