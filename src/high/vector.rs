@@ -43,7 +43,7 @@ impl Vector3 {
 
     /// creates a new [`Vector3`] from the 3 planes
     #[inline]
-    pub fn new(x: f32, y: f32, z: f32) -> Self {
+    pub const fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
 }
@@ -168,8 +168,6 @@ impl Div for Vector3 {
     }
 }
 
-// this might not be correct so we hide it for release
-
 #[doc(hidden)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, PartialOrd)]
 #[repr(C)]
@@ -177,7 +175,6 @@ pub struct QAngle {
     pub x: f32,
     pub y: f32,
     pub z: f32,
-    pub w: f32,
 }
 
 impl QAngle {
@@ -185,26 +182,23 @@ impl QAngle {
         x: 0.,
         y: 0.,
         z: 0.,
-        w: 0.,
     };
 
     pub const MAX: Self = Self {
         x: f32::MAX,
         y: f32::MAX,
         z: f32::MAX,
-        w: f32::MAX,
     };
 
     pub const MIN: Self = Self {
         x: f32::MIN,
         y: f32::MIN,
         z: f32::MIN,
-        w: f32::MIN,
     };
 
     #[inline]
-    pub fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
-        Self { x, y, z, w }
+    pub const fn new(x: f32, y: f32, z: f32) -> Self {
+        Self { x, y, z }
     }
 }
 
@@ -214,7 +208,6 @@ impl From<[f32; 4]> for QAngle {
             x: value[0],
             y: value[1],
             z: value[2],
-            w: value[3],
         }
     }
 }
@@ -227,7 +220,6 @@ impl Add for QAngle {
             x: self.x + other.x,
             y: self.y + other.y,
             z: self.z + other.z,
-            w: self.w + other.w,
         }
     }
 }
@@ -240,7 +232,6 @@ impl Sub for QAngle {
             x: self.x - other.x,
             y: self.y - other.y,
             z: self.z - other.z,
-            w: self.w - other.w,
         }
     }
 }
@@ -253,7 +244,6 @@ impl Mul for QAngle {
             x: self.x * other.x,
             y: self.y * other.y,
             z: self.z * other.z,
-            w: self.w * other.w,
         }
     }
 }
@@ -266,7 +256,6 @@ impl Div for QAngle {
             x: self.x / rhs.x,
             y: self.y / rhs.y,
             z: self.z / rhs.z,
-            w: self.w / rhs.w,
         }
     }
 }
