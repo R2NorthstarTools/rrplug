@@ -16,7 +16,7 @@
 //! a git [template](https://github.com/catornot/rrplug-template) also exists but it may or not be maintained as well
 
 #![deny(unsafe_op_in_unsafe_fn)]
-#![warn(missing_docs)]
+// #![warn(missing_docs)]
 
 #[cfg(doctest)]
 use crate as rrplug;
@@ -25,6 +25,7 @@ use crate as rrplug;
 pub mod bindings;
 pub mod errors;
 pub mod high;
+pub mod interfaces;
 pub mod low;
 pub mod macros;
 pub mod mid;

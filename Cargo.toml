@@ -1,6 +1,6 @@
 [package]
 name = "rrplug"
-version = "3.0.0"
+version = "4.0.0"
 authors = ["catornot"]
 description = "wrappers and functions for R2Northstar plugins"
 repository = "https://github.com/catornot/rrplug"
@@ -23,6 +23,5 @@ default-target = "x86_64-pc-windows-msvc"
 targets = ["x86_64-pc-windows-msvc"]
 
 [features]
-default = ["default_features"]
-default_features = [ ]
-full = [  ]
+default = []
+async_engine = []

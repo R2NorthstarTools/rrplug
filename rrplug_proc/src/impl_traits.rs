@@ -37,7 +37,7 @@ pub fn get_from_sqvm_impl_struct(input: DeriveInput) -> TokenStream {
                 stack_pos: i32,
             ) -> Self {
                 use rrplug::{high::squirrel_traits::GetFromSQObject,bindings::squirreldatatypes::SQObject};
-                let sqstruct = unsafe { 
+                let sqstruct = unsafe {
                     let sqvm = sqvm.as_ref().expect("sqvm has to be valid");
                     ((*sqvm._stackOfCurrentFunction.add(stack_pos as usize))
                         ._VAL
@@ -129,9 +129,9 @@ pub fn get_from_sqvm_impl_enum(input: DeriveInput) -> TokenStream {
                 sqvm: *mut HSquirrelVM,
                 sqfunctions: &SquirrelFunctionsUnwraped,
                 stack_pos: i32,
-            ) -> Self {             
+            ) -> Self {
                 const _ :#ident<#generics> = unsafe { std::mem::transmute::<i32,#ident<#generics>>(0) };
-                
+
                 let value = unsafe { rrplug::mid::squirrel::get_sq_int(sqvm, sqfunctions, stack_pos) };
 
                 if value >= #ident::#varient_first as i32 && value <= #ident::#varient_last as i32 {
@@ -197,7 +197,7 @@ pub fn get_from_sqobject_impl_enum(input: DeriveInput) -> TokenStream {
             #[allow(clippy::not_unsafe_ptr_arg_deref)]
             fn get_from_sqobject(obj: &rrplug::bindings::squirreldatatypes::SQObject) -> Self {
                 const _: #ident<#generics> = unsafe { std::mem::transmute::<i32,#ident<#generics>>(0) };
-                                                            
+
                 let value = unsafe { obj._VAL.asInteger };
 
                 if value >= #ident::#varient_first as i32 && value <= #ident::#varient_last as i32 {
@@ -214,13 +214,14 @@ pub fn get_from_sqobject_impl_enum(input: DeriveInput) -> TokenStream {
 // TODO: refactor this to use what I have in the other implemantion of this
 // whar, past self?
 pub fn get_from_sqobject_impl_struct(input: DeriveInput) -> TokenStream {
-    let DeriveInput { // copying this from system clipboard destroyed this, but I won't fix this today
-            attrs: _,
-            vis: _,
-            ident,
-            generics,
-            data,
-        } = input;
+    let DeriveInput {
+        // copying this from system clipboard destroyed this, but I won't fix this today
+        attrs: _,
+        vis: _,
+        ident,
+        generics,
+        data,
+    } = input;
     let fields = get_struct_fields(data);
     let field_idents: Vec<Ident> = fields.iter().cloned().filter_map(|f| f.ident).collect();
     let field_amount = field_idents.len() as u32;
@@ -229,8 +230,8 @@ pub fn get_from_sqobject_impl_struct(input: DeriveInput) -> TokenStream {
              #[allow(clippy::not_unsafe_ptr_arg_deref)] // smth should be done about this
              #[inline]
              fn get_from_sqobject(obj: &rrplug::bindings::squirreldatatypes::SQObject) -> Self {
-                 use rrplug::{high::squirrel_traits::GetFromSQObject,bindings::squirreldatatypes::SQObject};
-                 let sqstruct = unsafe { 
+                 use rrplug::{high::squirrel_traits::getfromsqobject,bindings::squirreldatatypes::sqobject};
+                 let sqstruct = unsafe {
                      obj
                          ._VAL
                          .asStructInstance
@@ -252,7 +253,6 @@ pub fn get_from_sqobject_impl_struct(input: DeriveInput) -> TokenStream {
         )
     .into()
 }
-
 
 pub fn sqvm_name_impl(input: DeriveInput) -> TokenStream {
     let DeriveInput {

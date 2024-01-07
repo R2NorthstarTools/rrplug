@@ -1,9 +1,14 @@
 use proc_macro::TokenStream;
 use quote::{quote, spanned::Spanned, ToTokens};
 use syn::{
-    self, parse::Parse, parse::ParseStream, punctuated::Punctuated, token::Comma, FnArg, Ident,
-    LitStr, Result as SynResult, Token, Type, __private::TokenStream2, parse_quote,
-    Error as SynError,
+    self,
+    parse::ParseStream,
+    parse::{Parse, Parser},
+    punctuated::Punctuated,
+    token::Comma,
+    FnArg, Ident, LitStr, Result as SynResult, Token, Type,
+    __private::TokenStream2,
+    parse_quote, parse_str, Error as SynError,
 };
 
 pub struct Arg {
@@ -91,6 +96,13 @@ pub fn get_arg_type(input: &FnArg) -> Result<Box<Type>, SynError> {
             format!("invalid arg {}", input.to_token_stream().to_string()),
         )),
         FnArg::Typed(t) => Ok(maybe_change(&t.ty)),
+    }
+}
+
+pub fn get_arg_ident(input: &FnArg) -> Option<Ident> {
+    match input {
+        FnArg::Receiver(_) => None,
+        FnArg::Typed(t) => parse_str(t.pat.to_token_stream().to_string().as_str()).ok(),
     }
 }
 

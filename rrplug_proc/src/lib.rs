@@ -1,41 +1,48 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
-use quote::{format_ident, quote, ToTokens};
+use proc_macro2::Span;
+use quote::{format_ident, quote, quote_spanned, ToTokens};
 use syn::{
-    self, parse_macro_input, DeriveInput, FnArg, Ident, ItemFn, Stmt, Error as SynError, Type, parse_str
+    self, parse_macro_input, parse_str, punctuated::Punctuated, spanned::Spanned,
+    AngleBracketedGenericArguments, DeriveInput, Error as SynError, FnArg, Ident, ImplItem,
+    ImplItemFn, ItemFn, ItemImpl, ReturnType, Stmt, Token, Type,
 };
 
 #[macro_use]
 pub(crate) mod parsing;
 pub(crate) mod impl_traits;
 
-use impl_traits::{sqvm_name_impl, impl_struct_or_enum, push_to_sqvm_impl_struct, push_to_sqvm_impl_enum, get_from_sqvm_impl_enum, get_from_sqvm_impl_struct, get_from_sqobject_impl_enum, get_from_sqobject_impl_struct};
-use parsing::{filter_args, input_mapping, Args};
+use impl_traits::{
+    get_from_sqobject_impl_enum, get_from_sqobject_impl_struct, get_from_sqvm_impl_enum,
+    get_from_sqvm_impl_struct, impl_struct_or_enum, push_to_sqvm_impl_enum,
+    push_to_sqvm_impl_struct, sqvm_name_impl,
+};
+use parsing::{filter_args, get_arg_ident, input_mapping, Args};
 
 // TODO: add multiple vm targets to sqfunction
 
-/// proc marco for generating compatible functions with the sqvm. 
+/// proc marco for generating compatible functions with the sqvm.
 ///
 ///  ## abstractions
 /// the macro uses arguments types and return types to tranlates them into a sqfunction deffintion
 /// `GetFromSquirrelVm` and `PushToSquirrelVm` define logic for how
-/// 
+///
 /// ## attributes
 /// - **VM**
-/// 
+///
 ///     Indicates for which the sqfunction is created
 ///     .The default is `Client`
 /// - **ExportName**
-/// 
+///
 ///     Specifies the name for the function on the sqvm
 /// - **ReturnOverwrite**
-/// 
+///
 ///     Overwrites the return type for the sqfunction definition
 ///     Useful for ensuring type safety for custom structs and other custom types since they default to `var`.
 /// ## Traits
 /// this macro heavily relies on traits from rrplug and only exists to generate a parsing code.
-/// 
+///
 /// refer to the traits for more info
 #[proc_macro_attribute]
 pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -55,13 +62,16 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let ident = &sig.ident;
     let input = &sig.inputs;
     let input_vec: Vec<FnArg> = input.iter().filter_map(|arg| filter_args(arg)).collect();
-    let input_type_names = input_vec.iter().filter_map(|_input| {
-        if let FnArg::Typed(t) = _input {
-            Some(t)
-        } else {
-            None
-        }
-    }).map(|arg| arg.ty.as_ref());
+    let input_type_names = input_vec
+        .iter()
+        .filter_map(|_input| {
+            if let FnArg::Typed(t) = _input {
+                Some(t)
+            } else {
+                None
+            }
+        })
+        .map(|arg| arg.ty.as_ref());
     let input_var_names: Vec<Ident> = input
         .iter()
         .cloned()
@@ -90,13 +100,15 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut sq_gets_stmts = Vec::new();
 
     let mut out: Box<Type> = match output {
-        syn::ReturnType::Default => match parse_str::<Type>("()").map_err(|err| err.to_compile_error().into()) {
-            Ok(v) => Box::new(v),
-            Err(err) => return err,
-        },
+        syn::ReturnType::Default => {
+            match parse_str::<Type>("()").map_err(|err| err.to_compile_error().into()) {
+                Ok(v) => Box::new(v),
+                Err(err) => return err,
+            }
+        }
         syn::ReturnType::Type(_, ty) => ty.clone(),
     };
-    
+
     match input_mapping(input, &mut sq_stack_pos) {
         Ok(tks) => {
             for tk in tks {
@@ -135,22 +147,23 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 script_vm_func = "client";
             }
             "VM" => {
-                return SynError::new(
-                    arg.ident.span(),
-                    format!("invalid VM {}", input)
-                ).to_compile_error()
-                .into();
+                return SynError::new(arg.ident.span(), format!("invalid VM {}", input))
+                    .to_compile_error()
+                    .into();
             }
             "ExportName" => export_name = input,
-            "ReturnOverwrite" => out = match parse_str::<Type>(&input).map_err(|err| err.to_compile_error().into()) {
-                Ok(v) => Box::new(v),
-                Err(err) => return err,
-            },
+            "ReturnOverwrite" => {
+                out = match parse_str::<Type>(&input).map_err(|err| err.to_compile_error().into()) {
+                    Ok(v) => Box::new(v),
+                    Err(err) => return err,
+                }
+            }
             _ => {
                 return SynError::new(
                     arg.ident.span(),
-                    format!("wrong arg \"{}\" or arg {}", input, arg.ident.to_string())
-                ).to_compile_error()
+                    format!("wrong arg \"{}\" or arg {}", input, arg.ident.to_string()),
+                )
+                .to_compile_error()
                 .into();
             }
         }
@@ -166,18 +179,18 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             let sq_functions = SQFUNCTIONS.#script_vm_func.wait();
 
             #(#sub_stms)*
-            
+
             fn inner_function( sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM, sq_functions: &SquirrelFunctionsUnwraped #(, #input_vec)* ) #output {
                 #(#stmts)*
             }
 
             inner_function( sqvm, sq_functions #(, #input_var_names)* ).return_to_vm(sqvm, sq_functions)
         }
-        
+
         #(#attrs)*
         #vis fn #ident () -> rrplug::high::northstar::SQFuncInfo {
             use rrplug::high::squirrel_traits::SQVMName;
-            
+
             let mut types = String::new();
             #(
                 if ( !types.is_empty() ) {
@@ -189,12 +202,12 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 types.push_str(stringify!(#input_var_names));
             )*
 
-            rrplug::high::northstar::SQFuncInfo{ 
-                cpp_func_name: #func_name, 
-                sq_func_name: #export_name, 
+            rrplug::high::northstar::SQFuncInfo{
+                cpp_func_name: #func_name,
+                sq_func_name: #export_name,
                 types: types,
-                return_type: <#out as SQVMName>::get_sqvm_name(), 
-                vm: ScriptVmType::#script_vm_type, 
+                return_type: <#out as SQVMName>::get_sqvm_name(),
+                vm: ScriptVmType::#script_vm_type,
                 function: Some( #sq_functions_func ),
             }
         }
@@ -204,14 +217,14 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// proc marco for generating compatible concommand callbacks
-/// 
+///
 /// this macro wraps your function in another function and tries to provide the argurments your requested
-/// 
+///
 /// # how to use it
 /// the 2 possible function signatures are
 /// - `fn(CCommandResult)`
 /// - `fn()`
-/// 
+///
 /// the result is ignored so it can be anything
 #[proc_macro_attribute]
 pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -256,14 +269,14 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// proc marco for generating compatible concommand callbacks
-/// 
+///
 /// this macro wraps your function in another function and tries to provide the argurments your requested
-/// 
+///
 /// # how to use it
 /// the 2 possible function signatures are
 /// - `fn(String, f32)`
 /// - `fn()`
-/// 
+///
 /// the result is ignored so it can be anything
 #[proc_macro_attribute]
 pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -311,10 +324,170 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
+#[proc_macro_attribute]
+pub fn as_interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as ItemImpl);
+    let ItemImpl {
+        attrs,
+        defaultness: _,
+        unsafety: _,
+        impl_token,
+        generics,
+        trait_,
+        self_ty,
+        brace_token: _,
+        items,
+    } = input;
+
+    let self_ty_ident: Type = match parse_str(
+        self_ty
+            .to_token_stream()
+            .to_string()
+            .split('<')
+            .nth(0)
+            .unwrap(),
+    ) {
+        Ok(ty) => ty,
+        Err(err) => return err.to_compile_error().into(),
+    };
+    let generics_bracked: Option<AngleBracketedGenericArguments> = self_ty
+        .to_token_stream()
+        .to_string()
+        .split_once('<')
+        .map(|(_, generics)| format!("<{}>", generics))
+        .map(|generic_str| parse_str(&generic_str).ok())
+        .flatten();
+
+    if let Some(trait_) = trait_ {
+        let error_site = trait_.1.span();
+        return quote_spanned! {error_site => compile_error!("interfaces must not be a implementation for a trait");}.into();
+    }
+
+    let mut funcs = match items
+        .into_iter()
+        .map(|item| match (item.span(), item) {
+            (_, ImplItem::Fn(func)) => Ok(func),
+            (span, _) => Err(span),
+        })
+        .collect::<Result<Vec<ImplItemFn>, Span>>()
+    {
+        Ok(funcs) => funcs,
+        Err(error_site) => {
+            return quote_spanned! {error_site => compile_error!("can only have functions in interfaces");}.into()
+        }
+    };
+
+    let new_impl = match funcs
+        .iter()
+        .find(|func| func.sig.ident.to_string() == "new")
+        .map(|func| func.block.stmts.clone())
+    {
+        Some(funcs) => funcs,
+        None => {
+            return quote! {compile_error!("a interface must have a new function to initialize it");}
+                .into()
+        }
+    };
+
+    funcs.remove(
+        funcs
+            .iter()
+            .position(|func| func.sig.ident.to_string() == "new")
+            .unwrap(),
+    );
+
+    if funcs.is_empty() {
+        return quote! {compile_error!("perhaps you should add a function to your interface");}
+            .into();
+    }
+
+    let function_idents = funcs
+        .iter()
+        .map(|func| &func.sig.ident)
+        .collect::<Vec<&Ident>>();
+
+    if let Some(error_site) = funcs
+        .iter()
+        .find(|func| {
+            func.sig
+                .inputs
+                .first()
+                .map(|selfarg| match selfarg {
+                    FnArg::Receiver(_) => Some(()),
+                    _ => None,
+                })
+                .flatten()
+                .is_none()
+        })
+        .map(|func| func.sig.inputs.span())
+    {
+        return quote_spanned! {error_site => compile_error!("functions must have &self");}.into();
+    }
+
+    let extern_inputs = funcs
+        .iter()
+        .map(|func| {
+            func.sig
+                .inputs
+                .iter()
+                .skip(1)
+                .collect::<Punctuated<&FnArg, Token![,]>>()
+        })
+        .collect::<Vec<Punctuated<&FnArg, Token![,]>>>();
+    let extern_inputs_idents = extern_inputs
+        .iter()
+        .map(|inputs| {
+            inputs.iter().filter_map(|input| get_arg_ident(input)).fold(
+                Punctuated::new(),
+                |mut acc, ident| {
+                    acc.push(ident);
+                    acc
+                },
+            )
+        })
+        .collect::<Vec<Punctuated<Ident, Token![,]>>>();
+    let extern_outputs = funcs
+        .iter()
+        .map(|func| &func.sig.output)
+        .collect::<Vec<&ReturnType>>();
+
+    quote! {
+        #(#attrs)*
+        #impl_token #generics #self_ty {
+            #(#funcs)*
+        }
+
+        #(#attrs)*
+        impl #generics rrplug::interfaces::interface::AsInterface for #self_ty {
+            fn as_interface() -> rrplug::interfaces::interface::Interface<Self> {
+                    // make these extern c wrapped and offset the self since it will have the vtable
+                // TODO: make generic functions work (big headache)
+                #(
+                    #[allow(unsafe_op_in_unsafe_fn)]
+                    unsafe extern "C" fn #function_idents #generics(self_: *const std::ffi::c_void, #extern_inputs) #extern_outputs {
+                        // transmute because I want to be lazy here
+                        #self_ty_ident::#generics_bracked #function_idents(std::mem::transmute(self_.offset(std::mem::size_of::<usize>() as isize)), #extern_inputs_idents )
+                    }
+                )*
+
+                const VTABLE: &[*const std::ffi::c_void] = &[#(#function_idents #generics_bracked as *const std::ffi::c_void,)*];
+
+                rrplug::interfaces::interface::Interface::new(
+                    unsafe { std::ptr::NonNull::new_unchecked(VTABLE.as_ptr().cast_mut()) },
+                    {
+                        #(#new_impl)*
+                    }
+                )
+            }
+        }
+    }
+    .into()
+}
+
 /// implements `GetFromSquirrelVm` for structs or enums
-/// 
+///
 /// the fields of the struct must implement `GetFromSQObject`
-/// 
+///
 /// the enum must be unit-only
 #[proc_macro_derive(GetFromSquirrelVm)]
 pub fn get_from_sqvm_macro(item: TokenStream) -> TokenStream {
@@ -324,9 +497,9 @@ pub fn get_from_sqvm_macro(item: TokenStream) -> TokenStream {
 }
 
 /// implements `PushToSquirrelVm` for structs or enums
-/// 
+///
 /// the fields of the struct must implement `PushToSquirrelVm`
-/// 
+///
 /// the enum must be unit-only
 #[proc_macro_derive(PushToSquirrelVm)]
 pub fn push_to_sqvm_macro(item: TokenStream) -> TokenStream {
@@ -336,20 +509,24 @@ pub fn push_to_sqvm_macro(item: TokenStream) -> TokenStream {
 }
 
 /// macro to auto generate a `GetFromSQObject` implementation for enums and structs behaves mostly like `GetFromSquirrelVm`
-/// 
+///
 /// since squirrel's enums are integers the enum must be a unit-only enum
-/// 
+///
 /// maybe also use `#[repr(i32)]` idk
 #[proc_macro_derive(GetFromSQObject)]
 pub fn get_from_sqobject_macro(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
 
-    impl_struct_or_enum(input, get_from_sqobject_impl_struct, get_from_sqobject_impl_enum)
+    impl_struct_or_enum(
+        input,
+        get_from_sqobject_impl_struct,
+        get_from_sqobject_impl_enum,
+    )
 }
 
 /// macro to auto generate a `SQVMName` implementation
-/// 
-/// the implementation will just be the name of the struct/enum so if the squirrel name is diffrent use a util macro in `rrplug::macro::utils` 
+///
+/// the implementation will just be the name of the struct/enum so if the squirrel name is diffrent use a util macro in `rrplug::macro::utils`
 #[proc_macro_derive(SQVMName)]
 pub fn sqvm_name_macro(item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
