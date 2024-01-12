@@ -8,11 +8,7 @@
 use std::any::Any;
 
 use crate::{
-    high::{
-        engine::EngineData,
-        northstar::{PluginData, ScriptVmType},
-        squirrel::CSquirrelVMHandle,
-    },
+    high::{engine::EngineData, squirrel::CSquirrelVMHandle},
     mid::engine::DLLPointer,
 };
 
@@ -22,8 +18,8 @@ use crate::{
 pub trait Plugin: Any + Sync {
     /// init function
     ///
-    /// [`PluginData`] can be used to register sqfunctions and get the northstar version
-    fn new(plugin_data: &PluginData) -> Self;
+    /// TODO: redo docs for this about registering sq functions
+    fn new() -> Self;
 
     /// called when a dll is loaded with winapi functions by the game (full paths are not provided)
     ///
@@ -36,7 +32,14 @@ pub trait Plugin: Any + Sync {
     fn on_sqvm_created(&self, _sqvm_handle: &CSquirrelVMHandle) {}
 
     /// called when a sqvm is dropped
-    fn on_sqvm_destroyed(&self, _context: ScriptVmType) {}
+    ///
+    /// the sqvm will be invalid after this call
+    fn on_sqvm_destroyed(&self, _sqvm_handle: &CSquirrelVMHandle) {}
+
+    /// called on the module dll load bassically before new
+    ///
+    /// using this may be a bad idea since rrplug may not be done initializing everything.
+    fn on_module_load() {}
 
     /// called on each engine frame (runs on the titanfall 2 thread ofc lol)
     fn runframe(&self) {}

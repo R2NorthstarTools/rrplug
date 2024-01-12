@@ -1,14 +1,9 @@
 use proc_macro::TokenStream;
 use quote::{quote, spanned::Spanned, ToTokens};
 use syn::{
-    self,
-    parse::ParseStream,
-    parse::{Parse, Parser},
-    punctuated::Punctuated,
-    token::Comma,
-    FnArg, Ident, LitStr, Result as SynResult, Token, Type,
-    __private::TokenStream2,
-    parse_quote, parse_str, Error as SynError,
+    self, parse::Parse, parse::ParseStream, punctuated::Punctuated, token::Comma, FnArg, Ident,
+    LitStr, Result as SynResult, Token, Type, __private::TokenStream2, parse_quote, parse_str,
+    Error as SynError,
 };
 
 pub struct Arg {

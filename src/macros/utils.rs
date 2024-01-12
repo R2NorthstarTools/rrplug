@@ -144,7 +144,7 @@ macro_rules! impl_vmethods {
 #[macro_export]
 macro_rules! offset_functions {
     ( $static_name:ident + $struct_name:ident for $dll:expr => { $($name:ident = $t:ty where offset($addr:literal);)* } ) => {
-        pub static $static_name: $crate::OnceCell<$struct_name> = $crate::OnceCell::new();
+        pub static $static_name: $crate::exports::OnceCell<$struct_name> = $crate::exports::OnceCell::new();
 
         #[doc(hidden)]
         pub struct $struct_name {
@@ -153,7 +153,7 @@ macro_rules! offset_functions {
 
         #[allow(clippy::missing_safety_doc,clippy::useless_transmute)]
         impl $struct_name {
-            pub unsafe fn try_init(dll: &$crate::mid::engine::DLLPointer, static_var: &$crate::OnceCell<Self>) {
+            pub unsafe fn try_init(dll: &$crate::mid::engine::DLLPointer, static_var: &$crate::exports::OnceCell<Self>) {
                 use $crate::mid::engine::WhichDll;
 
                 if &$dll != dll.which_dll() {

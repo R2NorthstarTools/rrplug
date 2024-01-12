@@ -3,12 +3,8 @@ use std::ffi::c_void;
 
 use once_cell::sync::OnceCell;
 
-use crate::{
-    bindings::{cvar::RawCVar, plugin_abi::PluginEngineData},
-    high::engine::EngineData,
-};
-
-use super::{concommands::RegisterConCommands, convars::ConVarClasses};
+use super::{concommands::RegisterConCommands, convars::CvarGlobals};
+use crate::{bindings::cvar::RawCVar, high::engine::EngineData};
 
 /// used to create to ConVars and ConComands
 ///
@@ -17,15 +13,12 @@ pub static ENGINE_DATA: OnceCell<EngineData> = OnceCell::new();
 
 impl EngineData {
     /// just returns everything in it's raw form
-    pub fn get_raw_ptrs(&self) -> &PluginEngineData {
-        &self.low
-    }
 
     /// returns the functions and statics needed to register ConVars
     ///
     /// if you need to use it for some reason you can refer to rrplug code in [`crate::high::convars`]
-    pub fn get_convar_ptrs(&self) -> &ConVarClasses {
-        &self.convar
+    pub fn get_convar_ptrs(&self) -> &CvarGlobals {
+        self.convar
     }
 
     /// returns the function to register concommands
@@ -50,19 +43,6 @@ impl EngineData {
 /// refer to [`ENGINE_DATA`] for more docs:tm:
 pub fn get_engine_data() -> Option<&'static EngineData> {
     ENGINE_DATA.get()
-}
-
-/// specifies what is the current dll that is being loaded with a possibly payload of [`EngineData`]
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub enum PluginLoadDLL {
-    /// engine with [`EngineData`]
-    Engine(&'static EngineData),
-    /// just client
-    Client,
-    /// just server
-    Server,
-    /// any other dll
-    Other(String),
 }
 
 /// specifies what is the current dll without the engine functions payload

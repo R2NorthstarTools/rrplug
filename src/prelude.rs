@@ -7,8 +7,8 @@ pub use crate::{
         concommands::CCommandResult,
         convars::{ConVarRegister, ConVarStruct},
         engine::EngineData,
-        northstar::{PluginData, ScriptVmType},
-        squirrel::CSquirrelVMHandle,
+        northstar::ScriptVmType,
+        squirrel::{register_sq_functions, CSquirrelVMHandle},
         vector::Vector3,
     },
     mid::{

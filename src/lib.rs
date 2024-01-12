@@ -34,12 +34,21 @@ pub mod nslog;
 pub mod plugin;
 pub mod prelude;
 
-// could be changed to sqexternal
+pub use rrplug_proc::{as_interface, concommand, convar, sqfunction};
+
 #[doc(hidden)]
-pub use log;
+/// used by some macros
+mod exports {
+    pub use log;
+    pub use once_cell::sync::OnceCell;
+    pub use windows;
+}
+
 #[doc(hidden)]
-pub use once_cell::sync::OnceCell;
-pub use rrplug_proc::{concommand, convar, sqfunction};
+/// used by [`rrplug::entry`]
+pub mod rrplug {
+    pub use super::*;
+}
 
 #[cfg(test)]
 mod test {

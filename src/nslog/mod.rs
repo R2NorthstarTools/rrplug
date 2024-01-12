@@ -1,18 +1,20 @@
-use crate::bindings::plugin_abi::{loggerfunc_t, LogMsg, MessageSource};
+use crate::bindings::plugin_abi::LogLevel;
+use crate::high::UnsafeHandle;
+use crate::mid::northstar::{NorthstarSys, NORTHSTAR_DATA};
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use std::ffi::{c_char, CStr, CString};
 use std::panic;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use windows::Win32::Foundation::HMODULE;
 
 const C_STRING_ERROR: *const c_char =
     "rrplug logger failed to transform a String to a CString\0".as_ptr() as *const c_char;
 
 static mut LOGGER: NorthstarLogger = NorthstarLogger {
-    logger: None,
-    plugin_handle: 0,
+    ns_sys: None,
+    plugin_handle: HMODULE(0),
 };
 
-pub fn try_init(logger: loggerfunc_t, plugin_handle: i32) -> Result<(), SetLoggerError> {
+pub fn try_init(plugin_handle: HMODULE) -> Result<(), SetLoggerError> {
     panic::set_hook(Box::new(|info| {
         log::error!("");
 
@@ -28,25 +30,21 @@ pub fn try_init(logger: loggerfunc_t, plugin_handle: i32) -> Result<(), SetLogge
     }));
 
     unsafe {
-        LOGGER = NorthstarLogger::init(logger, plugin_handle);
+        LOGGER = NorthstarLogger::init(plugin_handle);
 
         log::set_logger(&LOGGER).map(|()| log::set_max_level(LevelFilter::Info))
     }
 }
 
-pub fn init(logger: loggerfunc_t, plugin_handle: i32) {
-    try_init(logger, plugin_handle).unwrap();
-}
-
 struct NorthstarLogger {
-    logger: loggerfunc_t,
-    plugin_handle: ::std::os::raw::c_int,
+    ns_sys: Option<UnsafeHandle<&'static NorthstarSys>>,
+    plugin_handle: HMODULE,
 }
 
 impl NorthstarLogger {
-    fn init(logger: loggerfunc_t, plugin_handle: i32) -> Self {
+    fn init(plugin_handle: HMODULE) -> Self {
         Self {
-            logger,
+            ns_sys: Some(UnsafeHandle::internal_new(NORTHSTAR_DATA.wait().sys.copy())),
             plugin_handle,
         }
     }
@@ -58,38 +56,22 @@ impl log::Log for NorthstarLogger {
     }
 
     fn log(&self, record: &Record) {
-        if !self.enabled(record.metadata()) || self.logger.is_none() {
+        if !self.enabled(record.metadata()) || self.ns_sys.is_none() {
             return;
         }
 
-        // probably should be reworked to use less to_cstring, like who needs file, func and line context?
-
         let msg = to_cstring(record.args());
-        let file = to_cstring(record.module_path().unwrap_or(" "));
-        let func = to_cstring(record.file().unwrap_or(" "));
-        let line = record.line().unwrap_or(0) as i32;
 
-        let source = MessageSource {
-            file: file.as_ptr(),
-            func: func.as_ptr(),
-            line,
+        let Some(level) = level_to_log(record.metadata().level()) else {
+            return;
         };
 
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or(Duration::ZERO)
-            .as_millis();
-
-        let mut logs = LogMsg {
-            level: level_to_int(record.metadata().level()),
-            timestamp: timestamp.try_into().unwrap_or(0), // lmao cpp logs use u64
-            msg: msg.as_ptr(),
-            source,
-            pluginHandle: self.plugin_handle,
-        };
-
-        // if this is null then smth went very wrong
-        unsafe { self.logger.unwrap()(&mut logs as *mut LogMsg) }
+        unsafe {
+            self.ns_sys
+                .unwrap_unchecked()
+                .get()
+                .log(self.plugin_handle, level, msg.as_ptr())
+        }
     }
 
     fn flush(&self) {}
@@ -104,12 +86,12 @@ where
 }
 
 /// this is needed because [`Level`] doesn't have the same order
-fn level_to_int(level: Level) -> i32 {
+fn level_to_log(level: Level) -> Option<LogLevel> {
     match level {
-        Level::Error => 4,
-        Level::Warn => 3,
-        Level::Info => 2,
-        Level::Debug => 1,
-        Level::Trace => 0,
+        Level::Error => Some(LogLevel::LogErr),
+        Level::Warn => Some(LogLevel::LogWarn),
+        Level::Info => Some(LogLevel::LogInfo),
+        Level::Debug => None,
+        Level::Trace => None,
     }
 }

@@ -1,52 +1,91 @@
 //! engine related abstractions and functions
 
 use parking_lot::Mutex;
+use std::{cell::UnsafeCell, marker::PhantomData};
 
 #[cfg(doc)]
 use crate::high::convars::ConVarStruct;
 use crate::{
-    bindings::{
-        cvar::{
-            command::{CCommand, ConCommand},
-            RawCVar,
-        },
-        plugin_abi::PluginEngineData,
+    bindings::cvar::{
+        command::{CCommand, ConCommand},
+        RawCVar, RawCvar,
     },
     errors::RegisterError,
-    mid::{concommands::RegisterConCommands, convars::ConVarClasses},
+    mid::{
+        concommands::{RegisterConCommands, REGISTER_CONCOMNMADS},
+        convars::{CvarGlobals, CVAR_GLOBALS},
+    },
 };
+
+use super::UnsafeHandle;
 
 /// internal vec to not call on_dll_load
 #[doc(hidden)]
 pub static CALLED_DLLS: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
+#[derive(Debug, Clone, Copy)]
+pub struct EngineToken(PhantomData<*mut UnsafeCell<()>>);
+
+impl EngineToken {
+    /// this is a super expensive operation that checks if this is the engine thread
+    pub fn try_new() -> Option<Self> {
+        // TODO: finish this
+        todo!()
+    }
+
+    pub unsafe fn new_unchecked() -> Self {
+        Self(PhantomData)
+    }
+}
+
+pub struct EngineGlobal<T>(UnsafeHandle<T>);
+
+impl<T> EngineGlobal<T> {
+    pub fn new(data: T) -> Self {
+        Self(UnsafeHandle { inner: data })
+    }
+
+    pub fn get(&self, _: EngineToken) -> &T {
+        self.0.get()
+    }
+
+    pub fn get_mut(&mut self) -> &mut T {
+        self.0.get_mut()
+    }
+
+    pub fn take(self) -> T {
+        self.0.take()
+    }
+}
+
+impl<T: Copy> EngineGlobal<T> {
+    fn copy(&self, _: EngineToken) -> T {
+        self.0.copy()
+    }
+}
+
 /// Use this struct to register convars and concommands
 ///
 /// only usefull when the convars or concommands features are enabled
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct EngineData {
-    pub(crate) concommands: RegisterConCommands,
-    pub(crate) convar: ConVarClasses,
-    pub(crate) low: PluginEngineData,
-    pub(crate) cvar: RawCVar,
+    pub(crate) concommands: &'static RegisterConCommands,
+    pub(crate) convar: &'static CvarGlobals,
+    pub(crate) cvar: &'static RawCVar,
 }
 
 unsafe impl Send for EngineData {}
 unsafe impl Sync for EngineData {}
 
-// don't forget about CVar class
-
 impl EngineData {
     /// # Safety
     ///
-    /// hoping that the void ptrs point to the right stuff
-    pub unsafe fn new(raw: &PluginEngineData) -> Self {
+    /// hopefuly rrplug has correct offsets
+    pub unsafe fn new(cvar: &'static RawCvar) -> Self {
         unsafe {
             Self {
-                concommands: RegisterConCommands::new(raw.ConCommandConstructor),
-                convar: ConVarClasses::new(raw),
-                cvar: RawCVar::from(raw.g_pCVar.cast_const()),
-                low: *raw,
+                concommands: REGISTER_CONCOMNMADS.wait(),
+                convar: CVAR_GLOBALS.wait(),
+                cvar,
             }
         }
     }

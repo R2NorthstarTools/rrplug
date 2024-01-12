@@ -1,53 +1,25 @@
 //! minimal abstraction for convars
 
-use std::{ffi::c_void, mem};
+use std::ffi::c_void;
 
+use crate::to_c_string;
 use crate::{
-    bindings::{
-        cvar::{
-            command::ConCommandBase,
-            convar::{ConVar, ConVarMallocType, ConVarRegisterType},
-            RawCVar,
-        },
-        plugin_abi::PluginEngineData,
+    bindings::cvar::{
+        command::ConCommandBase,
+        convar::{ConVar, ConVarMallocType, ConVarRegisterType},
+        RawCVar,
     },
-    to_c_string,
+    offset_functions,
 };
 
 use super::engine::get_engine_data;
 
-/// holds stuff required to register convar
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ConVarClasses {
-    /// convar vtable
-    ///
-    /// quite useful since no source allocator :(
-    pub convar_vtable: *mut c_void,
-
-    /// function to register convars
-    pub convar_register: ConVarRegisterType,
-
-    /// another vtable
-    pub iconvar_vtable: *mut ConCommandBase,
-
-    /// allocator for m_pMalloc in convars
-    pub convar_malloc: ConVarMallocType,
-}
-
-impl ConVarClasses {
-    pub(crate) unsafe fn new(raw: &PluginEngineData) -> Self {
-        unsafe {
-            let convar_malloc: ConVarMallocType = mem::transmute(raw.conVarMalloc);
-            let iconvar_vtable = raw.IConVar_Vtable as *mut ConCommandBase;
-            let convar_register: ConVarRegisterType = mem::transmute(raw.conVarRegister);
-
-            Self {
-                convar_vtable: raw.ConVar_Vtable,
-                iconvar_vtable,
-                convar_register,
-                convar_malloc,
-            }
-        }
+offset_functions! {
+    CVAR_GLOBALS + CvarGlobals for WhichDll::Engine => {
+        convar_vtable = *mut c_void where offset(0x67FD28);
+        convar_register = ConVarRegisterType where offset(0x67FD28);
+        iconvar_vtable = *mut ConCommandBase where offset(0x67FD28);
+        convar_malloc = ConVarMallocType where offset(0x67FD28);
     }
 }
 

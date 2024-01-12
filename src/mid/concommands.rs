@@ -3,32 +3,19 @@
 use std::ffi::c_void;
 
 use crate::{
-    bindings::{
-        cvar::{
-            command::{CCommand, ConCommand, ConCommandBase, ConCommandConstructorType},
-            RawCVar,
-        },
-        plugin_abi::ObjectType,
+    bindings::cvar::{
+        command::{CCommand, ConCommand, ConCommandBase, ConCommandConstructorType},
+        RawCVar,
     },
     errors::RegisterError,
-    mid::northstar::CREATE_OBJECT_FUNC,
-    to_c_string,
+    offset_functions, to_c_string,
 };
 
 use super::engine::get_engine_data;
 
-/// just a struct with a single function to register concommands
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct RegisterConCommands {
-    /// function to register concommands
-    pub reg_func: ConCommandConstructorType,
-}
-
-impl RegisterConCommands {
-    pub(crate) unsafe fn new(ptr: *const c_void) -> Self {
-        let reg_func: ConCommandConstructorType = unsafe { std::mem::transmute(ptr) }; // functions can only be casted with transmute
-
-        Self { reg_func }
+offset_functions! {
+    REGISTER_CONCOMNMADS + RegisterConCommands for WhichDll::Engine => {
+        reg_func = ConCommandConstructorType where offset(0x415F60);
     }
 }
 
@@ -44,14 +31,17 @@ impl RegisterConCommands {
 
         let help_string_ptr = to_c_string!(help_string).into_raw();
 
-        let command: *mut ConCommand = unsafe {
-            std::mem::transmute((CREATE_OBJECT_FUNC
-                .get()
-                .ok_or(RegisterError::NoneFunction)?
-                .ok_or(RegisterError::NoneFunction))?(
-                ObjectType::CONCOMMANDS
-            ))
-        };
+        // let command: *mut ConCommand = unsafe {
+        //     std::mem::transmute((CREATE_OBJECT_FUNC
+        //         .get()
+        //         .ok_or(RegisterError::NoneFunction)?
+        //         .ok_or(RegisterError::NoneFunction))?(
+        //         ObjectType::CONCOMMANDS
+        //     ))
+        // };
+
+        let command = unsafe { std::alloc::alloc(std::alloc::Layout::new::<ConCommand>()) }
+            as *mut ConCommand; // TODO: this is not good since if the source allocator decides to drop this concommand bad things will happen
 
         unsafe {
             self.reg_func.ok_or(RegisterError::NoneFunction)?(

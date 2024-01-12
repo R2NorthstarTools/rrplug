@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote, quote_spanned, ToTokens};
 use syn::{
-    self, parse_macro_input, parse_str, punctuated::Punctuated, spanned::Spanned,
+    self, parse, parse_macro_input, parse_str, punctuated::Punctuated, spanned::Spanned,
     AngleBracketedGenericArguments, DeriveInput, Error as SynError, FnArg, Ident, ImplItem,
     ImplItemFn, ItemFn, ItemImpl, ReturnType, Stmt, Token, Type,
 };
@@ -377,24 +377,44 @@ pub fn as_interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    let new_impl = match funcs
+    let mut new_func = match funcs
         .iter()
-        .find(|func| func.sig.ident.to_string() == "new")
-        .map(|func| func.block.stmts.clone())
+        .position(|func| func.sig.ident.to_string() == "new")
     {
-        Some(funcs) => funcs,
+        Some(index) => funcs.remove(index),
         None => {
             return quote! {compile_error!("a interface must have a new function to initialize it");}
                 .into()
         }
     };
 
-    funcs.remove(
-        funcs
-            .iter()
-            .position(|func| func.sig.ident.to_string() == "new")
-            .unwrap(),
-    );
+    // the most sane solution me thinks
+    new_func = {
+        let ImplItemFn {
+            attrs,
+            vis,
+            defaultness,
+
+            mut sig,
+            block,
+        } = new_func;
+        let stmts = block.stmts;
+        sig.output = parse_str("-> rrplug::interfaces::interface::Interface<Self>").unwrap();
+
+        let tk = quote! {
+            #(#attrs)*
+            #vis #defaultness #sig {
+                use rrplug::interfaces::interface::AsInterface;
+                Self::as_interface({
+                    #(#stmts)*
+                })
+            }
+        };
+        match parse(tk.into()) {
+            Ok(s) => s,
+            Err(err) => return err.to_compile_error().into(),
+        }
+    };
 
     if funcs.is_empty() {
         return quote! {compile_error!("perhaps you should add a function to your interface");}
@@ -413,7 +433,11 @@ pub fn as_interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 .inputs
                 .first()
                 .map(|selfarg| match selfarg {
-                    FnArg::Receiver(_) => Some(()),
+                    FnArg::Receiver(recveiver)
+                        if recveiver.reference.is_some() && recveiver.mutability.is_none() =>
+                    {
+                        Some(())
+                    }
                     _ => None,
                 })
                 .flatten()
@@ -455,11 +479,12 @@ pub fn as_interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #(#attrs)*
         #impl_token #generics #self_ty {
             #(#funcs)*
+            #new_func
         }
 
         #(#attrs)*
         impl #generics rrplug::interfaces::interface::AsInterface for #self_ty {
-            fn as_interface() -> rrplug::interfaces::interface::Interface<Self> {
+            fn as_interface(self) -> rrplug::interfaces::interface::Interface<Self> {
                     // make these extern c wrapped and offset the self since it will have the vtable
                 // TODO: make generic functions work (big headache)
                 #(
@@ -474,9 +499,7 @@ pub fn as_interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
                 rrplug::interfaces::interface::Interface::new(
                     unsafe { std::ptr::NonNull::new_unchecked(VTABLE.as_ptr().cast_mut()) },
-                    {
-                        #(#new_impl)*
-                    }
+                    self
                 )
             }
         }

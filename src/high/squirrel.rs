@@ -6,7 +6,7 @@ use parking_lot::Mutex;
 use std::{ffi::c_void, marker::PhantomData};
 
 use super::{
-    northstar::{SQFuncInfo, ScriptVmType},
+    northstar::{FuncSQFuncInfo, SQFuncInfo, ScriptVmType},
     squirrel_traits::IsSQObject,
     UnsafeHandle,
 };
@@ -141,6 +141,13 @@ impl SQHandle<SQClosure> {
     pub fn as_callable(&mut self) -> *mut SQObject {
         &mut self.inner as *mut SQObject
     }
+}
+
+/// Adds a sqfunction to the registration list
+///
+/// The sqfunction will be registered when its vm is loaded
+pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
+    FUNCTION_SQ_REGISTER.lock().push(get_info_func());
 }
 
 /// calls any function defined on the sqvm
