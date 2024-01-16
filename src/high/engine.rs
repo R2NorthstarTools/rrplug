@@ -8,7 +8,7 @@ use crate::high::convars::ConVarStruct;
 use crate::{
     bindings::cvar::{
         command::{CCommand, ConCommand},
-        RawCVar, RawCvar,
+        RawCVar,
     },
     errors::RegisterError,
     mid::{
@@ -59,7 +59,7 @@ impl<T> EngineGlobal<T> {
 }
 
 impl<T: Copy> EngineGlobal<T> {
-    fn copy(&self, _: EngineToken) -> T {
+    pub fn copy(&self, _: EngineToken) -> T {
         self.0.copy()
     }
 }
@@ -80,13 +80,11 @@ impl EngineData {
     /// # Safety
     ///
     /// hopefuly rrplug has correct offsets
-    pub unsafe fn new(cvar: &'static RawCvar) -> Self {
-        unsafe {
-            Self {
-                concommands: REGISTER_CONCOMNMADS.wait(),
-                convar: CVAR_GLOBALS.wait(),
-                cvar,
-            }
+    pub unsafe fn new(cvar: &'static RawCVar) -> Self {
+        Self {
+            concommands: REGISTER_CONCOMNMADS.wait(),
+            convar: CVAR_GLOBALS.wait(),
+            cvar,
         }
     }
 

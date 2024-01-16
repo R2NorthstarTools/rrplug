@@ -67,10 +67,11 @@ impl log::Log for NorthstarLogger {
         };
 
         unsafe {
-            self.ns_sys
-                .unwrap_unchecked()
-                .get()
-                .log(self.plugin_handle, level, msg.as_ptr())
+            self.ns_sys.as_ref().unwrap_unchecked().get().log(
+                self.plugin_handle,
+                level,
+                msg.as_ptr(),
+            )
         }
     }
 

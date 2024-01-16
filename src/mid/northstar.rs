@@ -17,12 +17,20 @@ pub struct NorthstarData {
     pub(crate) sys: UnsafeHandle<&'static NorthstarSys>,
 }
 
+impl std::fmt::Debug for NorthstarData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NorhstarData")
+            .field("handle", &self.handle)
+            .finish_non_exhaustive()
+    }
+}
+
 impl NorthstarData {
-    fn sys(&self) -> &'static NorthstarSys {
+    pub fn sys(&self) -> &'static NorthstarSys {
         self.sys.copy()
     }
 
-    fn handle(&self) -> HMODULE {
+    pub fn handle(&self) -> HMODULE {
         self.handle
     }
 }
@@ -36,12 +44,14 @@ create_external_interface! {
 /// should only be used by [`crate::entry`] to init northstar interfaces
 #[doc(hidden)]
 pub unsafe fn init_northstar_interfaces(dll_ptr: HMODULE, plugin_data: &PluginNorthstarData) {
-    NORTHSTAR_DATA.set(NorthstarData {
-        handle: plugin_data.handle,
-        sys: unsafe {
-            UnsafeHandle::new(
-                NorthstarSys::from_dll_ptr(dll_ptr, "NSSys001").expect("NSSys001 is invalid"),
-            )
-        },
-    });
+    NORTHSTAR_DATA
+        .set(NorthstarData {
+            handle: plugin_data.handle,
+            sys: unsafe {
+                UnsafeHandle::new(
+                    NorthstarSys::from_dll_ptr(dll_ptr, "NSSys001").expect("NSSys001 is invalid"),
+                )
+            },
+        })
+        .expect("northstar interfaces don't exist????????");
 }

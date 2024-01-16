@@ -2,10 +2,7 @@
 
 #[cfg(doc)]
 use {
-    crate::{
-        bindings::{squirreldatatypes::HSquirrelVM, unwraped::SquirrelFunctionsUnwraped},
-        high::vector::Vector3,
-    },
+    crate::{bindings::squirreldatatypes::HSquirrelVM, high::vector::Vector3},
     std::ffi::{CStr, CString},
 };
 

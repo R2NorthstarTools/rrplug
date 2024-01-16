@@ -180,7 +180,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 
             #(#sub_stms)*
 
-            fn inner_function( sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM, sq_functions: &SquirrelFunctionsUnwraped #(, #input_vec)* ) #output {
+            fn inner_function( sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM, sq_functions: &SquirrelFunctions #(, #input_vec)* ) #output {
                 #(#stmts)*
             }
 

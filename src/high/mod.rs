@@ -10,6 +10,9 @@ pub mod squirrel;
 pub mod squirrel_traits;
 pub mod vector;
 
+#[cfg(feature = "async_engine ")]
+pub mod engine_sync;
+
 /// allows some tf2 types to be send and sync
 ///
 /// used to store tf2 pointers across threads

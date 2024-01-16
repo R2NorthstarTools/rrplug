@@ -1,7 +1,10 @@
 //! prelude for rrplug
 
 pub use crate::{
-    bindings::{squirreldatatypes::HSquirrelVM, unwraped::SquirrelFunctionsUnwraped},
+    bindings::{
+        squirrelclasstypes::ScriptContext, squirreldatatypes::HSquirrelVM,
+        squirrelfunctions::SquirrelFunctions,
+    },
     entry,
     high::{
         concommands::CCommandResult,

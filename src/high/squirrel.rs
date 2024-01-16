@@ -3,7 +3,7 @@
 //! squirrel vm related function and statics
 
 use parking_lot::Mutex;
-use std::{ffi::c_void, marker::PhantomData};
+use std::marker::PhantomData;
 
 use super::{
     northstar::{FuncSQFuncInfo, SQFuncInfo, ScriptVmType},
@@ -14,7 +14,7 @@ use crate::{
     bindings::{
         squirrelclasstypes::{CompileBufferState, SQRESULT},
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
-        unwraped::SquirrelFunctionsUnwraped,
+        squirrelfunctions::SquirrelFunctions,
     },
     errors::{CallError, SQCompileError},
     mid::squirrel::SQFUNCTIONS,
@@ -152,68 +152,6 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 
 /// calls any function defined on the sqvm
 ///
-/// they would only run when the sqvm is valid
-pub fn async_call_sq_function<T>(
-    context: ScriptVmType,
-    function_name: impl Into<String>,
-    callback: Option<T>,
-) where
-    T: FnOnce(*mut HSquirrelVM, &'static SquirrelFunctionsUnwraped) -> i32,
-{
-    type PayloadType<T> = (T, &'static SquirrelFunctionsUnwraped);
-    type BoxedPayloadType<T> = Box<PayloadType<T>>;
-
-    let sqfunctions = match context {
-        ScriptVmType::Server => SQFUNCTIONS.server.get(),
-        _ => SQFUNCTIONS.client.get(),
-    }
-    .expect("SQFUNCTIONS should be initialized at this point");
-
-    let c_callback = callback.as_ref().map(|_| {
-        callback_trampoline::<T>
-            as unsafe extern "C" fn(sqvm: *mut HSquirrelVM, userdata: *mut c_void) -> i32
-    });
-
-    let userdata: *mut c_void = match callback {
-        Some(callback) => {
-            let payload: BoxedPayloadType<T> = Box::new((callback, sqfunctions));
-            Box::into_raw(payload) as *mut c_void
-        }
-        None => std::ptr::null_mut(),
-    };
-
-    let function_name = to_c_string!(function_name.into());
-
-    unsafe {
-        (sqfunctions.sq_schedule_call_external)(
-            context.into(),
-            function_name.as_ptr(),
-            c_callback,
-            userdata,
-        )
-    }
-
-    unsafe extern "C" fn callback_trampoline<T>(
-        sqvm: *mut HSquirrelVM,
-        userdata: *mut c_void,
-    ) -> i32
-    where
-        T: FnOnce(*mut HSquirrelVM, &'static SquirrelFunctionsUnwraped) -> i32,
-    {
-        unsafe {
-            match (userdata as *mut PayloadType<T>).as_mut() {
-                Some(closure) => {
-                    let boxed_tuple: BoxedPayloadType<T> = Box::from_raw(closure);
-                    (boxed_tuple.0)(sqvm, (*boxed_tuple).1)
-                }
-                None => 0,
-            }
-        }
-    }
-}
-
-/// calls any function defined on the sqvm
-///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
 /// this only allows calls without args use the marco [`crate::call_sq_function`] instead if you want args
@@ -242,7 +180,7 @@ pub fn async_call_sq_function<T>(
 /// ```
 pub fn call_sq_function(
     sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
+    sqfunctions: &SquirrelFunctions,
     function_name: impl Into<String>,
 ) -> Result<(), CallError> {
     let mut obj = std::mem::MaybeUninit::<SQObject>::zeroed();
@@ -293,7 +231,7 @@ pub fn call_sq_function(
 /// ```
 pub fn call_sq_object_function(
     sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
+    sqfunctions: &SquirrelFunctions,
     mut obj: SQHandle<SQClosure>,
 ) -> Result<(), CallError> {
     _call_sq_object_function(sqvm, sqfunctions, obj.as_callable())
@@ -302,7 +240,7 @@ pub fn call_sq_object_function(
 #[inline]
 fn _call_sq_object_function(
     sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
+    sqfunctions: &SquirrelFunctions,
     ptr: *mut SQObject,
 ) -> Result<(), CallError> {
     unsafe {
@@ -340,7 +278,7 @@ fn _call_sq_object_function(
 /// ```
 pub fn compile_string(
     sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctionsUnwraped,
+    sqfunctions: &SquirrelFunctions,
     should_throw_error: bool,
     code: impl Into<String>,
 ) -> Result<(), SQCompileError> {

@@ -33,7 +33,7 @@ pub fn get_from_sqvm_impl_struct(input: DeriveInput) -> TokenStream {
             #[inline]
             fn get_from_sqvm(
                 sqvm: *mut HSquirrelVM,
-                sqfunctions: &SquirrelFunctionsUnwraped,
+                sqfunctions: &SquirrelFunctions,
                 stack_pos: i32,
             ) -> Self {
                 use rrplug::{high::squirrel_traits::GetFromSQObject,bindings::squirreldatatypes::SQObject};
@@ -82,7 +82,7 @@ pub fn push_to_sqvm_impl_struct(input: DeriveInput) -> TokenStream {
         impl<#generics> PushToSquirrelVm for #ident<#generics> {
             #[allow(clippy::not_unsafe_ptr_arg_deref)]
             #[inline]
-            fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
+            fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) {
                 unsafe {
                     (sqfunctions.sq_pushnewstructinstance)(sqvm, #field_amount);
                     #(
@@ -127,7 +127,7 @@ pub fn get_from_sqvm_impl_enum(input: DeriveInput) -> TokenStream {
             #[allow(clippy::not_unsafe_ptr_arg_deref)]
             fn get_from_sqvm(
                 sqvm: *mut HSquirrelVM,
-                sqfunctions: &SquirrelFunctionsUnwraped,
+                sqfunctions: &SquirrelFunctions,
                 stack_pos: i32,
             ) -> Self {
                 const _ :#ident<#generics> = unsafe { std::mem::transmute::<i32,#ident<#generics>>(0) };
@@ -158,7 +158,7 @@ pub fn push_to_sqvm_impl_enum(input: DeriveInput) -> TokenStream {
         impl<#generics> PushToSquirrelVm for #ident<#generics> {
             #[inline]
             #[allow(clippy::not_unsafe_ptr_arg_deref)]
-            fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctionsUnwraped) {
+            fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) {
                 unsafe { rrplug::mid::squirrel::push_sq_int(sqvm, sqfunctions, self as i32) };
             }
         }
@@ -230,7 +230,7 @@ pub fn get_from_sqobject_impl_struct(input: DeriveInput) -> TokenStream {
              #[allow(clippy::not_unsafe_ptr_arg_deref)] // smth should be done about this
              #[inline]
              fn get_from_sqobject(obj: &rrplug::bindings::squirreldatatypes::SQObject) -> Self {
-                 use rrplug::{high::squirrel_traits::getfromsqobject,bindings::squirreldatatypes::sqobject};
+                 use rrplug::{high::squirrel_traits::GetFromSQObject,bindings::squirreldatatypes::SQObject};
                  let sqstruct = unsafe {
                      obj
                          ._VAL

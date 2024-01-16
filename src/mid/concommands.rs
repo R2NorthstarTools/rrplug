@@ -1,7 +1,5 @@
 //! minimal abstraction for concommands
 
-use std::ffi::c_void;
-
 use crate::{
     bindings::cvar::{
         command::{CCommand, ConCommand, ConCommandBase, ConCommandConstructorType},

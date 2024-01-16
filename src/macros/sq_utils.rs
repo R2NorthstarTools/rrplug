@@ -173,7 +173,7 @@ mod test {
     use rrplug::{bindings::squirreldatatypes::SQClosure, high::squirrel::SQHandle};
     use rrplug_proc::*;
 
-    use rrplug::{async_call_sq_function, call_sq_function, call_sq_object_function};
+    use rrplug::{call_sq_function, call_sq_object_function};
 
     #[sqfunction(VM = "Server")]
     fn test_call_funcs2(mut func: SQHandle<SQClosure>, test: String) -> Result<String, String> {
@@ -183,7 +183,7 @@ mod test {
         call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347, 3892, 23423)
             .map_err(|err| err.to_string())?;
 
-        async_call_sq_function!(ScriptVmType::Server, "SomeSQFunc", test, 9347);
+        // async_call_sq_function!(ScriptVmType::Server, "SomeSQFunc", test, 9347);
 
         Ok("test".to_string())
     }

@@ -211,11 +211,13 @@ macro_rules! entry {
                         module.0 as *const std::ffi::c_void,
                     );
 
-                    mid::convars::CvarGlobals::try_init(&dll_ptr, &mid::convars::CVAR_GLOBALS);
-                    mid::concommands::RegisterConCommands::try_init(
-                        &dll_ptr,
-                        &mid::concommands::REGISTER_CONCOMNMADS,
-                    );
+                    unsafe {
+                        mid::convars::CvarGlobals::try_init(&dll_ptr, &mid::convars::CVAR_GLOBALS);
+                        mid::concommands::RegisterConCommands::try_init(
+                            &dll_ptr,
+                            &mid::concommands::REGISTER_CONCOMNMADS,
+                        );
+                    }
 
                     let engine_data = if dll_string == "engine.dll" {
                         unsafe {
@@ -237,6 +239,7 @@ macro_rules! entry {
                     called_dlls.push(dll_string);
                 }
                 fn RunFrame(&self) {
+                    $crate::entry_async_feature!(ASYNC_ENGINE_RUN);
                     PLUGIN.wait().runframe();
                 }
             }
@@ -261,12 +264,34 @@ macro_rules! entry {
                             PluginCallbacks::new(),
                         );
                     }
+                    $crate::entry_async_feature!(ASYNC_ENGINE_INIT);
                     $plugin::on_module_load();
                 }
                 true
             }
         }
     };
+}
+
+/// wouldn't recommend messing with this
+#[macro_export]
+#[doc(hidden)]
+#[cfg(feature = "async_engine ")]
+macro_rules! entry_async_feature {
+    (ASYNC_ENGINE_INIT) => {
+        $crate::high::engine_sync::init_async_routine()
+    };
+    (ASYNC_ENGINE_RUN) => {
+        unsafe { $crate::high::engine_sync::run_async_routine() }
+    };
+}
+
+#[macro_export]
+#[doc(hidden)]
+#[cfg(not(feature = "async_engine "))]
+macro_rules! entry_async_feature {
+    (ASYNC_ENGINE_INIT) => {};
+    (ASYNC_ENGINE_RUN) => {};
 }
 
 #[cfg(test)]

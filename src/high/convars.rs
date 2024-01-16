@@ -60,21 +60,14 @@
 use std::{
     ffi::{c_char, CStr},
     mem,
-    os::raw::c_void,
     ptr::addr_of_mut,
 };
 
 use super::engine::EngineData;
 use crate::{
-    bindings::{
-        cvar::convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
-        plugin_abi::ObjectType,
-    },
+    bindings::cvar::convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
     errors::{CStringPtrError, RegisterError},
-    mid::{
-        engine::{get_engine_data, ENGINE_DATA},
-        northstar::CREATE_OBJECT_FUNC,
-    },
+    mid::engine::{get_engine_data, ENGINE_DATA},
     to_c_string,
 };
 
@@ -192,18 +185,13 @@ impl ConVarStruct {
     ///
     /// Would only fail if something goes wrong with northstar
     pub fn try_new() -> Option<Self> {
-        let obj_func = (*CREATE_OBJECT_FUNC.get()?)?;
-
-        get_engine_data().map(move |engine| unsafe { Self::new(engine, obj_func) })
+        get_engine_data().map(move |engine| unsafe { Self::new(engine) })
     }
 
-    unsafe fn new(
-        engine: &EngineData,
-        obj_func: unsafe extern "C" fn(ObjectType) -> *mut c_void,
-    ) -> Self {
+    unsafe fn new(engine: &EngineData) -> Self {
         let convar_classes = &engine.convar;
         unsafe {
-            let convar = obj_func(ObjectType::CONVAR) as *mut ConVar;
+            let convar = std::alloc::alloc(std::alloc::Layout::new::<ConVar>()) as *mut ConVar; // TODO: this is not good since if the source allocator decides to drop this concommand bad things will happen
 
             addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
                 .write(convar_classes.convar_vtable);
