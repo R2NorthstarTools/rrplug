@@ -8,6 +8,7 @@ use crate::high::convars::ConVarStruct;
 use crate::{
     bindings::cvar::{
         command::{CCommand, ConCommand},
+        convar::COMMAND_COMPLETION_ITEM_LENGTH,
         RawCVar,
     },
     errors::RegisterError,
@@ -17,7 +18,7 @@ use crate::{
     },
 };
 
-use super::UnsafeHandle;
+use super::{concommands::CommandCompletion, UnsafeHandle};
 
 /// internal vec to not call on_dll_load
 #[doc(hidden)]
@@ -117,6 +118,29 @@ impl EngineData {
 
         self.concommands
             .mid_register_concommand(name, callback, help_string.into(), flags)
+    }
+
+    pub fn register_concommand_with_completion(
+        &self,
+        name: impl Into<String>,
+        callback: unsafe extern "C" fn(arg1: *const CCommand),
+        help_string: impl Into<String>,
+        flags: i32,
+        completion_callback: unsafe extern "C" fn(
+            arg1: *const ::std::os::raw::c_char,
+            arg2: *mut [::std::os::raw::c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize],
+        ) -> ::std::os::raw::c_int,
+    ) -> Result<*mut ConCommand, RegisterError> {
+        let name = name.into();
+        log::info!("Registering ConCommand {} with completion", name);
+
+        self.concommands.mid_register_concommand_with_completion(
+            name,
+            callback,
+            help_string.into(),
+            flags,
+            completion_callback,
+        )
     }
 
     /// registers a convar without any complex steps and without giving back the convar pointer

@@ -2,7 +2,10 @@
 
 use crate::{
     bindings::cvar::{
-        command::{CCommand, ConCommand, ConCommandBase, ConCommandConstructorType},
+        command::{
+            CCommand, ConCommand, ConCommandBase, ConCommandConstructorType,
+            COMMAND_COMPLETION_ITEM_LENGTH,
+        },
         RawCVar,
     },
     errors::RegisterError,
@@ -53,6 +56,38 @@ impl RegisterConCommands {
         };
         Ok(command)
     }
+
+    pub(crate) fn mid_register_concommand_with_completion(
+        &self,
+        name: String,
+        callback: unsafe extern "C" fn(arg1: *const CCommand),
+        help_string: String,
+        flags: i32,
+        completion_callback: unsafe extern "C" fn(
+            arg1: *const ::std::os::raw::c_char,
+            arg2: *mut [::std::os::raw::c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize],
+        ) -> ::std::os::raw::c_int,
+    ) -> Result<*mut ConCommand, RegisterError> {
+        self.mid_register_concommand(name, callback, help_string, flags)
+            .map(move |command| {
+                unsafe {
+                    (*command).m_pCompletionCallback = Some(completion_callback);
+                    (*command).m_nCallbackFlags |= 0x3;
+                }
+                command
+            })
+    }
+}
+
+pub unsafe fn add_completion_callback(
+    command: &mut ConCommand,
+    completion_callback: unsafe extern "C" fn(
+        arg1: *const ::std::os::raw::c_char,
+        arg2: *mut [::std::os::raw::c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize],
+    ) -> ::std::os::raw::c_int,
+) {
+    command.m_pCompletionCallback = Some(completion_callback);
+    command.m_nCallbackFlags |= 0x3;
 }
 
 /// finds a concommand by name

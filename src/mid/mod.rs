@@ -5,3 +5,4 @@ pub mod convars;
 pub mod engine;
 pub mod northstar;
 pub mod squirrel;
+pub mod utils;

@@ -268,7 +268,93 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
-/// proc marco for generating compatible concommand callbacks
+#[proc_macro_attribute]
+pub fn completion(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as ItemFn);
+    let ItemFn {
+        attrs,
+        vis,
+        sig,
+        block,
+    } = input;
+
+    let stmts = block.stmts;
+    let ident = &sig.ident;
+    let mut inputs = sig.inputs.iter();
+    let output = &sig.output;
+
+    if sig.inputs.len() > 2 {
+        return quote_spanned! {
+            sig.inputs.span() => {
+                compile_error!("can only have two args");
+            }
+        }
+        .into();
+    }
+
+    if inputs
+        .next()
+        .map(|arg| {
+            arg.to_token_stream()
+                .to_string()
+                .ends_with("CurrentCommand")
+                .then_some(())
+        })
+        .is_none()
+    {
+        return quote_spanned! {
+            sig.inputs.span() => {
+                compile_error!("the first arg must have type a of CurrentCommand");
+            }
+        }
+        .into();
+    }
+
+    if inputs
+        .next()
+        .map(|arg| {
+            arg.to_token_stream()
+                .to_string()
+                .ends_with("CommandCompletion")
+                .then_some(())
+        })
+        .is_none()
+    {
+        return quote_spanned! {
+            sig.inputs.span() => {
+                compile_error!("the second arg must have a type of CommandCompletion");
+            }
+        }
+        .into();
+    }
+
+    let ident1 = get_arg_ident(&sig.inputs[0]).unwrap();
+    let ident2 = get_arg_ident(&sig.inputs[1]).unwrap();
+
+    quote! {
+        #(#attrs)*
+        #vis unsafe extern "C" fn #ident (
+            partial: *const std::ffi::c_char,
+            commands: *mut [std::ffi::c_char;rrplug::bindings::cvar::convar::COMMAND_COMPLETION_ITEM_LENGTH as usize],
+        ) -> i32 {
+            let current = rrplug::high::concommands::CurrentCommand::new(partial).unwrap();
+            let mut suggestions = rrplug::high::concommands::CommandCompletion::from(commands);
+
+
+            fn inner_function ( #ident1 : rrplug::high::concommands::CurrentCommand, #ident2: &mut rrplug::high::concommands::CommandCompletion ) #output {
+                #(#stmts)*
+            }
+
+            
+            _ = inner_function(current, &mut suggestions);
+
+            suggestions.commands_used()
+        }
+    }
+    .into()
+}
+
+/// proc marco for generating compatible convar callbacks
 ///
 /// this macro wraps your function in another function and tries to provide the argurments your requested
 ///

@@ -37,15 +37,30 @@
 //! }
 //! ```
 
-use std::ffi::CStr;
+use std::ffi::{c_char, CStr};
 
-use crate::bindings::cvar::command::CCommand;
+use crate::{
+    bindings::cvar::command::{
+        CCommand, COMMAND_COMPLETION_ITEM_LENGTH, COMMAND_COMPLETION_MAXITEMS,
+    },
+    mid::utils::set_c_char_array,
+};
 
 /// [`CCommandResult`] gets all the usefull stuff from [`*const CCommand`] and puts in this struct
 #[derive(Debug, Default)]
 pub struct CCommandResult {
     args: Vec<String>,
     command: String,
+}
+
+pub struct CommandCompletion<'a> {
+    suggestions: &'a mut [[i8; COMMAND_COMPLETION_ITEM_LENGTH as usize]],
+    suggestions_left: u32,
+}
+
+pub struct CurrentCommand<'a> {
+    pub cmd: &'a str,
+    pub partial: &'a str,
 }
 
 // should maybe make this lazy?
@@ -96,6 +111,51 @@ impl CCommandResult {
     }
 }
 
+impl<'a> From<*mut [c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize]> for CommandCompletion<'a> {
+    fn from(commands: *mut [c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize]) -> Self {
+        Self {
+            suggestions: unsafe {
+                std::slice::from_raw_parts_mut(commands, COMMAND_COMPLETION_MAXITEMS as usize)
+            },
+            suggestions_left: COMMAND_COMPLETION_MAXITEMS,
+        }
+    }
+}
+impl CommandCompletion<'_> {
+    pub fn push<'b>(&mut self, new: &'b str) -> Result<(), ()> {
+        if self.suggestions_left == 0 {
+            return Err(());
+        }
+
+        unsafe {
+            set_c_char_array(
+                &mut self.suggestions
+                    [(COMMAND_COMPLETION_MAXITEMS - self.suggestions_left) as usize],
+                new,
+            )
+        };
+        self.suggestions_left -= 1;
+
+        Ok(())
+    }
+
+    pub fn commands_used(&self) -> i32 {
+        (COMMAND_COMPLETION_MAXITEMS - self.suggestions_left) as i32
+    }
+}
+
+impl CurrentCommand<'_> {
+    pub fn new(partial: *const c_char) -> Option<Self> {
+        let partial = unsafe { CStr::from_ptr(partial).to_str() }.ok()?;
+        let (name, cmd) = partial.split_once(' ').unwrap_or((partial, ""));
+
+        Some(Self {
+            cmd: name,
+            partial: cmd,
+        })
+    }
+}
+
 // maybe this will work in the future
 /*
 impl RegisterConCommands {
@@ -136,3 +196,17 @@ extern "C" fn ccommand_trampoline<const T: fn(CCommandResult)>(ccommand: *const 
     ccommand_trampoline(ccommand.into())
 }
 */
+
+#[cfg(test)]
+mod test {
+    // TODO: test some completion structs
+
+    use crate::rrplug;
+
+    #[rrplug::completion]
+    fn completion_test(current: CurrentCommand, suggestions: CommandCompletion) {
+        suggestions
+            .push(format!("{} {}", current.cmd, "test").as_str())
+            .unwrap();
+    }
+}

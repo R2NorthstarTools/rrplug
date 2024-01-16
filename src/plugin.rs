@@ -19,7 +19,7 @@ pub trait Plugin: Any + Sync {
     /// init function
     ///
     /// TODO: redo docs for this about registering sq functions
-    fn new() -> Self;
+    fn new(reloaded: bool) -> Self;
 
     /// called when a dll is loaded with winapi functions by the game (full paths are not provided)
     ///

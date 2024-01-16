@@ -48,6 +48,7 @@ macro_rules! entry {
             struct PluginId;
             struct PluginCallbacks;
 
+            #[allow(non_snake_case)]
             #[$crate::as_interface]
             impl PluginId {
                 fn new() {
@@ -70,6 +71,7 @@ macro_rules! entry {
             }
 
             #[$crate::as_interface]
+            #[allow(non_snake_case)]
             impl PluginCallbacks {
                 fn new() {
                     Self
@@ -86,9 +88,10 @@ macro_rules! entry {
 
                     unsafe { mid::northstar::init_northstar_interfaces(ns_module, plugin_data) };
 
-                    $crate::nslog::try_init(plugin_data.handle);
+                    $crate::nslog::try_init(plugin_data.handle)
+                        .expect("ns log didn't init correctly");
 
-                    let plugin: $plugin = $crate::plugin::Plugin::new();
+                    let plugin: $plugin = $crate::plugin::Plugin::new(reloaded);
 
                     if PLUGIN.set(plugin).is_err() {
                         panic!("PLUGIN failed initialization")
@@ -301,7 +304,7 @@ mod test_entry {
     pub struct Test;
 
     impl Plugin for Test {
-        fn new() -> Self {
+        fn new(_reloaded: bool) -> Self {
             Self {}
         }
     }

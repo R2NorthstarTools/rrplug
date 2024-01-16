@@ -34,7 +34,7 @@ pub mod nslog;
 pub mod plugin;
 pub mod prelude;
 
-pub use rrplug_proc::{as_interface, concommand, convar, sqfunction};
+pub use rrplug_proc::{as_interface, completion, concommand, convar, sqfunction};
 
 #[doc(hidden)]
 /// used by some macros
