@@ -12,7 +12,7 @@
 /// pub struct BasicPlugin;
 ///
 /// impl Plugin for BasicPlugin {
-///     fn new() -> Self {
+///     fn new(reloaded: bool) -> Self {
 ///         Self {}
 ///     }
 /// }
@@ -250,7 +250,7 @@ macro_rules! entry {
             #[no_mangle]
             #[export_name = "DllMain"]
             extern "stdcall" fn dll_main(
-                hmodule: $crate::exports::windows::Win32::Foundation::HINSTANCE,
+                _hmodule: $crate::exports::windows::Win32::Foundation::HINSTANCE,
                 reason: u32,
                 _: *mut std::ffi::c_void,
             ) -> bool {

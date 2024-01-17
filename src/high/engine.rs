@@ -18,7 +18,7 @@ use crate::{
     },
 };
 
-use super::{concommands::CommandCompletion, UnsafeHandle};
+use super::UnsafeHandle;
 
 /// internal vec to not call on_dll_load
 #[doc(hidden)]

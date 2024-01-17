@@ -18,9 +18,6 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 // #![warn(missing_docs)]
 
-#[cfg(doctest)]
-use crate as rrplug;
-
 #[allow(missing_docs)]
 pub mod bindings;
 pub mod errors;
@@ -38,7 +35,7 @@ pub use rrplug_proc::{as_interface, completion, concommand, convar, sqfunction};
 
 #[doc(hidden)]
 /// used by some macros
-mod exports {
+pub mod exports {
     pub use log;
     pub use once_cell::sync::OnceCell;
     pub use windows;

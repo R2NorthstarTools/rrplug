@@ -121,6 +121,8 @@ macro_rules! call_sq_object_function {
     )
 }
 
+// TODO: remove this
+/*
 /// calls any function defined on the sqvm
 /// the call will happen on the next engine frame
 ///
@@ -149,6 +151,7 @@ macro_rules! async_call_sq_function {
         )
     );
 }
+*/
 
 /// internal macro used in counting args in some macros
 #[doc(hidden)]
@@ -177,7 +180,7 @@ mod test {
 
     #[sqfunction(VM = "Server")]
     fn test_call_funcs2(mut func: SQHandle<SQClosure>, test: String) -> Result<String, String> {
-        call_sq_object_function!(sqvm, sq_functions, func, "test".to_string())
+        call_sq_object_function!(sqvm, sq_functions, func, test.clone())
             .map_err(|err| err.to_string())?;
 
         call_sq_function!(sqvm, sq_functions, "SomeSQFunc", 9347, 3892, 23423)

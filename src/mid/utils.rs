@@ -1,7 +1,7 @@
 use std::ffi::{c_char, CStr};
 
 #[inline]
-pub(crate) unsafe fn set_c_char_array<const U: usize>(buf: &mut [c_char; U], new: &str) {
+pub unsafe fn set_c_char_array<const U: usize>(buf: &mut [c_char; U], new: &str) {
     *buf = [0; U]; // null everything
     buf.iter_mut()
         .zip(new.as_bytes())
@@ -10,7 +10,7 @@ pub(crate) unsafe fn set_c_char_array<const U: usize>(buf: &mut [c_char; U], new
 }
 
 #[inline]
-pub(crate) unsafe fn from_char_ptr<T: From<String>>(ptr: *const c_char) -> T {
+pub unsafe fn from_char_ptr<T: From<String>>(ptr: *const c_char) -> T {
     unsafe { CStr::from_ptr(ptr) }
         .to_string_lossy()
         .to_string()
@@ -18,6 +18,6 @@ pub(crate) unsafe fn from_char_ptr<T: From<String>>(ptr: *const c_char) -> T {
 }
 
 #[inline]
-pub(crate) unsafe fn str_from_char_ptr<'a>(ptr: *const c_char) -> Option<&'a str> {
+pub unsafe fn str_from_char_ptr<'a>(ptr: *const c_char) -> Option<&'a str> {
     unsafe { CStr::from_ptr(ptr) }.to_str().ok()
 }

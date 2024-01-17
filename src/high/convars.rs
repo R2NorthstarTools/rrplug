@@ -20,7 +20,7 @@
 //!
 //! ```no_run
 //! use rrplug::prelude::*;
-//! use rrplug::OnceCell; // just as a example
+//! use rrplug::exports::OnceCell; // just as a example
 //!
 //! // inside Plugin impl
 //! fn on_engine_load(engine_data: Option<&EngineData>, _dll_ptr: &DLLPointer) {
