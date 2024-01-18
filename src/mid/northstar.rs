@@ -54,4 +54,6 @@ pub unsafe fn init_northstar_interfaces(dll_ptr: HMODULE, plugin_data: &PluginNo
             },
         })
         .expect("northstar interfaces don't exist????????");
+
+    super::source_alloc::SOURCE_ALLOC.init();
 }

@@ -368,18 +368,21 @@ impl ConVarStruct {
     ///
     /// only safe on the titanfall thread
     pub fn get_value_i32(&self) -> i32 {
-        let value = &self.inner.m_Value;
+        self.inner.m_Value.m_nValue
+    }
 
-        value.m_nValue
+    /// get the value as a bool
+    ///
+    /// only safe on the titanfall thread
+    pub fn get_value_bool(&self) -> bool {
+        self.inner.m_Value.m_nValue != 0
     }
 
     /// get the value as a f32
     ///
     /// only safe on the titanfall thread
     pub fn get_value_f32(&self) -> f32 {
-        let value = &self.inner.m_Value;
-
-        value.m_fValue
+        self.inner.m_Value.m_fValue
     }
 
     // todo: add exclusive access set_value s aka &mut self
