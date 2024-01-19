@@ -148,8 +148,8 @@ pub struct SquirrelFunctions {
     pub sq_sealstructslot: sq_sealstructslotType,
 }
 
-impl From<ClientSQFunctions> for SquirrelFunctions {
-    fn from(val: ClientSQFunctions) -> Self {
+impl From<&ClientSQFunctions> for SquirrelFunctions {
+    fn from(val: &ClientSQFunctions) -> Self {
         SquirrelFunctions {
             register_squirrel_func: val.register_squirrel_func,
             sq_defconst: val.sq_defconst,
@@ -191,8 +191,8 @@ impl From<ClientSQFunctions> for SquirrelFunctions {
     }
 }
 
-impl From<ServerSQFunctions> for SquirrelFunctions {
-    fn from(val: ServerSQFunctions) -> Self {
+impl From<&ServerSQFunctions> for SquirrelFunctions {
+    fn from(val: &ServerSQFunctions) -> Self {
         SquirrelFunctions {
             register_squirrel_func: val.register_squirrel_func,
             sq_defconst: val.sq_defconst,

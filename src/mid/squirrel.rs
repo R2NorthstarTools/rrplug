@@ -14,7 +14,10 @@ use crate::{
     bindings::{
         squirrelclasstypes::{SQFunction, ScriptContext},
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
-        squirrelfunctions::SquirrelFunctions,
+        squirrelfunctions::{
+            ClientSQFunctions, ServerSQFunctions, SquirrelFunctions, SQUIRREL_CLIENT_FUNCS,
+            SQUIRREL_SERVER_FUNCS,
+        },
     },
     errors::CallError,
     high::{
@@ -23,6 +26,7 @@ use crate::{
         squirrel_traits::{GetFromSQObject, PushToSquirrelVm},
         vector::Vector3,
     },
+    prelude::DLLPointer,
 };
 
 use super::utils::{to_cstring, try_cstring};
@@ -54,6 +58,20 @@ pub struct SqFunctions {
 }
 
 impl SqFunctions {
+    #[doc(hidden)]
+    pub fn fetch_functions(&self, dll: &DLLPointer) {
+        unsafe { ClientSQFunctions::try_init(dll, &SQUIRREL_CLIENT_FUNCS) };
+        unsafe { ServerSQFunctions::try_init(dll, &SQUIRREL_SERVER_FUNCS) };
+    }
+
+    #[doc(hidden)]
+    pub fn try_init(&self) -> Option<()> {
+        self.client.set(SQUIRREL_CLIENT_FUNCS.wait().into()).ok()?;
+        self.server.set(SQUIRREL_SERVER_FUNCS.wait().into()).ok()?;
+
+        None
+    }
+
     pub fn from_sqvm(&'static self, sqvm: *mut HSquirrelVM) -> &'static SquirrelFunctions {
         self.from_cssqvm(unsafe { (*(*sqvm).sharedState).cSquirrelVM })
     }

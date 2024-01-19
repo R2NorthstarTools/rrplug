@@ -118,6 +118,8 @@ macro_rules! entry {
                     false // TODO: add this to Plugin
                 }
                 fn OnSqvmCreated(&self, sqvm: *mut squirreldatatypes::CSquirrelVM) {
+                    _ = mid::squirrel::SQFUNCTIONS.try_init();
+
                     let context: squirrelclasstypes::ScriptContext = unsafe { (*sqvm).vmContext }
                         .try_into()
                         .expect("sqvm was not valid :((((");
@@ -230,6 +232,7 @@ macro_rules! entry {
                             &mid::concommands::REGISTER_CONCOMNMADS,
                         );
                     }
+                    mid::squirrel::SQFUNCTIONS.fetch_functions(&dll_ptr);
 
                     let engine_data = if dll_string == "engine.dll" {
                         unsafe {
