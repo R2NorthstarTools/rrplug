@@ -87,7 +87,7 @@ where
 }
 
 /// this is needed because [`Level`] doesn't have the same order
-fn level_to_log(level: Level) -> Option<LogLevel> {
+const fn level_to_log(level: Level) -> Option<LogLevel> {
     match level {
         Level::Error => Some(LogLevel::LogErr),
         Level::Warn => Some(LogLevel::LogWarn),

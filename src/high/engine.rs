@@ -34,7 +34,15 @@ impl EngineToken {
         todo!()
     }
 
-    pub unsafe fn new_unchecked() -> Self {
+    /// allows you to call engine restricted functions without checking if it's the right thread
+    ///
+    /// # Safety
+    /// please only use this if you are sure that it is the engine thread   
+    ///
+    /// can lead to crashes or ub since most functions are not thread safe
+    ///
+    /// this is usually the most sensible solution altought it does at least require you to think from where you call stuff
+    pub const unsafe fn new_unchecked() -> Self {
         Self(PhantomData)
     }
 }
@@ -46,7 +54,7 @@ impl<T> EngineGlobal<T> {
         Self(UnsafeHandle { inner: data })
     }
 
-    pub fn get(&self, _: EngineToken) -> &T {
+    pub const fn get(&self, _: EngineToken) -> &T {
         self.0.get()
     }
 
@@ -60,7 +68,7 @@ impl<T> EngineGlobal<T> {
 }
 
 impl<T: Copy> EngineGlobal<T> {
-    pub fn copy(&self, _: EngineToken) -> T {
+    pub const fn copy(&self, _: EngineToken) -> T {
         self.0.copy()
     }
 }

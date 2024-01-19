@@ -263,7 +263,7 @@ impl ConVarStruct {
             default_value_ptr.copy_from_nonoverlapping(default_value.as_ptr(), default_value.len())
         };
 
-        let help_string = try_cstring(&register_info.help_string)?.into_bytes_with_nul();
+        let help_string = try_cstring(register_info.help_string)?.into_bytes_with_nul();
         let help_string_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&help_string)) };
         unsafe {
             help_string_ptr.copy_from_nonoverlapping(help_string.as_ptr(), help_string.len())

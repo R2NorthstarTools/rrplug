@@ -26,11 +26,11 @@ impl std::fmt::Debug for NorthstarData {
 }
 
 impl NorthstarData {
-    pub fn sys(&self) -> &'static NorthstarSys {
+    pub const fn sys(&self) -> &'static NorthstarSys {
         self.sys.copy()
     }
 
-    pub fn handle(&self) -> HMODULE {
+    pub const fn handle(&self) -> HMODULE {
         self.handle
     }
 }

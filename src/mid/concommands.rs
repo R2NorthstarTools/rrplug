@@ -125,7 +125,7 @@ pub fn find_concommand_with_cvar(
 pub fn find_concommand(name: &str) -> Result<&'static mut ConCommand, CVarQueryError> {
     find_concommand_with_cvar(
         name,
-        &get_engine_data()
+        get_engine_data()
             .ok_or(CVarQueryError::NoCVarInterface)?
             .cvar,
     )
@@ -167,7 +167,7 @@ pub fn find_concommand_base_with_cvar(
 pub fn find_concommand_base(name: &str) -> Result<&'static mut ConCommandBase, CVarQueryError> {
     find_concommand_base_with_cvar(
         name,
-        &get_engine_data()
+        get_engine_data()
             .ok_or(CVarQueryError::NoCVarInterface)?
             .cvar,
     )

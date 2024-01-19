@@ -64,7 +64,7 @@ pub trait SourceInterface<Rtrn = Self> {
         unsafe {
             let create_interface = std::mem::transmute::<_, CreateInterface>(GetProcAddress(
                 dll_ptr,
-                PCSTR("CreateInterface\0".as_ptr().into()),
+                PCSTR("CreateInterface\0".as_ptr()),
             )?);
 
             let interface_name = try_cstring(interface_name).ok()?;
@@ -80,7 +80,7 @@ pub trait SourceInterface<Rtrn = Self> {
             let dll_name = try_cstring(dll_name).ok()?;
             let create_interface = std::mem::transmute::<_, CreateInterface>(GetProcAddress(
                 GetModuleHandleA(PCSTR(dll_name.as_ptr() as *const u8)).ok()?,
-                PCSTR("CreateInterface\0".as_ptr().into()),
+                PCSTR("CreateInterface\0".as_ptr()),
             )?);
 
             let interface_name = try_cstring(interface_name).ok()?;

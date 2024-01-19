@@ -9,7 +9,7 @@ pub struct Interface<T: Sync + Send> {
 }
 
 impl<T: Sync + Send> Interface<T> {
-    pub fn new(vtable: NonNull<*const c_void>, interface_data: T) -> Self {
+    pub const fn new(vtable: NonNull<*const c_void>, interface_data: T) -> Self {
         Self {
             vtable,
             data: interface_data,
@@ -19,5 +19,5 @@ impl<T: Sync + Send> Interface<T> {
 }
 
 pub trait AsInterface: Sized + Sync + Send {
-    fn as_interface(self) -> Interface<Self>;
+    fn to_interface(self) -> Interface<Self>;
 }

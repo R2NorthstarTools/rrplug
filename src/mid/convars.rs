@@ -60,7 +60,7 @@ pub fn find_convar_with_cvar(
 pub fn find_convar(name: &str) -> Result<&'static mut ConVar, CVarQueryError> {
     find_convar_with_cvar(
         name,
-        &get_engine_data()
+        get_engine_data()
             .ok_or(CVarQueryError::NoCVarInterface)?
             .cvar,
     )

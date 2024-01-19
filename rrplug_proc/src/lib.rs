@@ -489,7 +489,7 @@ pub fn as_interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #(#attrs)*
             #vis #defaultness #sig {
                 use rrplug::interfaces::interface::AsInterface;
-                Self::as_interface({
+                Self::to_interface({
                     #(#stmts)*
                 })
             }
@@ -568,14 +568,14 @@ pub fn as_interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
         #(#attrs)*
         impl #generics rrplug::interfaces::interface::AsInterface for #self_ty {
-            fn as_interface(self) -> rrplug::interfaces::interface::Interface<Self> {
+            fn to_interface(self) -> rrplug::interfaces::interface::Interface<Self> {
                     // make these extern c wrapped and offset the self since it will have the vtable
                 // TODO: make generic functions work (big headache)
                 #(
                     #[allow(unsafe_op_in_unsafe_fn)]
                     unsafe extern "C" fn #function_idents #generics(self_: *const std::ffi::c_void, #extern_inputs) #extern_outputs {
                         // transmute because I want to be lazy here
-                        #self_ty_ident::#generics_bracked #function_idents(std::mem::transmute(self_.offset(std::mem::size_of::<usize>() as isize)), #extern_inputs_idents )
+                        #self_ty_ident::#generics_bracked #function_idents(self_.cast::<usize>().add(1).cast::<#self_ty_ident>().as_ref().expect("how!"), #extern_inputs_idents )
                     }
                 )*
 

@@ -18,11 +18,11 @@ pub mod engine_sync;
 pub mod engine_sync {
     #[doc(hidden)]
     #[inline(always)]
-    pub fn init_async_routine() {}
+    pub const fn init_async_routine() {}
 
     #[doc(hidden)]
     #[inline(always)]
-    pub unsafe fn run_async_routine() {}
+    pub const unsafe fn run_async_routine() {}
 }
 
 /// allows some tf2 types to be send and sync
@@ -51,7 +51,7 @@ impl<T> UnsafeHandle<T> {
     }
 
     /// returns a ref to the underlying value
-    pub fn get(&self) -> &T {
+    pub const fn get(&self) -> &T {
         &self.inner
     }
 
@@ -68,7 +68,7 @@ impl<T> UnsafeHandle<T> {
 
 impl<T: Clone + Copy> UnsafeHandle<T> {
     /// copies the underlying value if it has [`Copy`]
-    pub fn copy(&self) -> T {
+    pub const fn copy(&self) -> T {
         self.inner
     }
 }

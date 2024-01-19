@@ -19,7 +19,7 @@ mod test {
             Self { the_line: "line" }
         }
 
-        pub fn get_line(&self) -> &'static str {
+        pub const fn get_line(&self) -> &'static str {
             self.the_line
         }
     }

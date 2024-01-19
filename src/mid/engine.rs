@@ -17,15 +17,15 @@ impl EngineData {
     /// returns the functions and statics needed to register ConVars
     ///
     /// if you need to use it for some reason you can refer to rrplug code in [`crate::high::convars`]
-    pub fn get_convar_ptrs(&self) -> &CvarGlobals {
+    pub const fn get_convar_ptrs(&self) -> &CvarGlobals {
         self.convar
     }
 
     /// returns the function to register concommands
     ///
     /// if you need to use it for some reason you can refer to rrplug code in [`crate::mid::concommands`]
-    pub fn get_concommand_func(&self) -> &RegisterConCommands {
-        &self.concommands
+    pub const fn get_concommand_func(&self) -> &RegisterConCommands {
+        self.concommands
     }
 
     /// # major notes about [`RawCVar`]
@@ -33,8 +33,8 @@ impl EngineData {
     /// [`RawCVar`] has many many unsafe functions
     /// but the `iterator` function should not be invoked
     /// since the returned `iterator` cannot be dropped by rust's default `allocator` which may produce ub.
-    pub fn get_cvar(&self) -> &RawCVar {
-        &self.cvar
+    pub const fn get_cvar(&self) -> &RawCVar {
+        self.cvar
     }
 }
 
@@ -84,12 +84,12 @@ impl<'a> DLLPointer<'a> {
     }
 
     /// return the address of the dll
-    pub fn get_dll_ptr(&self) -> *const c_void {
+    pub const fn get_dll_ptr(&self) -> *const c_void {
         self.ptr
     }
 
     /// return the name of the dll
-    pub fn which_dll(&self) -> &WhichDll {
+    pub const fn which_dll(&self) -> &WhichDll {
         &self.dll
     }
 
@@ -99,7 +99,7 @@ impl<'a> DLLPointer<'a> {
     ///
     /// a really bad idea if you have a bad offset or if you don't know what you are doing.
     /// this is mainly here to give access to the engines functions without having the crate be the provider of them.
-    pub unsafe fn offset(&self, offset: isize) -> *const c_void {
+    pub const unsafe fn offset(&self, offset: isize) -> *const c_void {
         unsafe { self.ptr.offset(offset) }
     }
 }

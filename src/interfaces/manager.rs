@@ -24,8 +24,7 @@ unsafe extern "C" fn create_interface(
     unsafe { CStr::from_ptr(interface_name) }
         .to_str()
         .ok()
-        .map(|name| interfaces.get(name))
-        .flatten()
+        .and_then(|name| interfaces.get(name))
         .map(|interface| interface.copy())
         .unwrap_or_else(|| {
             unsafe { *error = 1 };

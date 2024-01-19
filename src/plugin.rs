@@ -53,6 +53,8 @@ pub trait Plugin: Any + Sync {
     /// using this may be a bad idea since rrplug may not be done initializing everything.
     fn on_module_load() {}
 
+    fn plugins_loaded(&self) {}
+
     /// called on each engine frame (runs on the titanfall 2 thread ofc lol)
     fn runframe(&self, _engine_token: EngineToken) {}
 }

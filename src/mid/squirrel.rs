@@ -113,7 +113,7 @@ bitflags::bitflags! {
 }
 
 impl SQFunctionContext {
-    pub fn contains_context(&self, context: ScriptContext) -> bool {
+    pub const fn contains_context(&self, context: ScriptContext) -> bool {
         match context {
             ScriptContext::SERVER => self.contains(Self::SERVER),
             ScriptContext::CLIENT => self.contains(Self::CLIENT),

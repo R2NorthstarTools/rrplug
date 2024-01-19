@@ -30,7 +30,7 @@ impl<T, const U: usize> std::ops::DerefMut for OffsetStructField<T, U> {
 }
 
 impl<T, const U: usize> OffsetStructField<T, U> {
-    pub fn get_inner(&self) -> &T {
+    pub const fn get_inner(&self) -> &T {
         &self.value
     }
 
@@ -40,7 +40,8 @@ impl<T, const U: usize> OffsetStructField<T, U> {
 }
 
 impl<T: Copy + Clone, const U: usize> OffsetStructField<T, U> {
-    pub fn copy_inner(&self) -> T {
+    /// Returns the copy inner of this [`OffsetStructField<T, U>`].
+    pub const fn copy_inner(&self) -> T {
         self.value
     }
 }

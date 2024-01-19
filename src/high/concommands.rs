@@ -43,6 +43,7 @@ use crate::{
     bindings::cvar::command::{
         CCommand, COMMAND_COMPLETION_ITEM_LENGTH, COMMAND_COMPLETION_MAXITEMS,
     },
+    errors::CompletionError,
     mid::utils::set_c_char_array,
 };
 
@@ -122,9 +123,9 @@ impl<'a> From<*mut [c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize]> for Comman
     }
 }
 impl CommandCompletion<'_> {
-    pub fn push<'b>(&mut self, new: &'b str) -> Result<(), ()> {
+    pub fn push(&mut self, new: &str) -> Result<(), CompletionError> {
         if self.suggestions_left == 0 {
-            return Err(());
+            return Err(CompletionError::NoCompletionSlotsLeft);
         }
 
         unsafe {
@@ -139,7 +140,7 @@ impl CommandCompletion<'_> {
         Ok(())
     }
 
-    pub fn commands_used(&self) -> i32 {
+    pub const fn commands_used(&self) -> i32 {
         (COMMAND_COMPLETION_MAXITEMS - self.suggestions_left) as i32
     }
 }

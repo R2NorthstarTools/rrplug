@@ -13,7 +13,7 @@
 ///
 /// impl Plugin for BasicPlugin {
 /// const PLUGIN_INFO: PluginInfo =
-///         PluginInfo::new("test", "Testtttt", "test", PluginContext::all());
+///         PluginInfo::new("test", "Testttttt", "test", PluginContext::all());
 ///
 ///     fn new(reloaded: bool) -> Self {
 ///         Self {}
@@ -58,7 +58,10 @@ macro_rules! entry {
                     Self
                 }
 
-                fn GetString(&self, prop: plugin_abi::PluginString) -> *const std::ffi::c_char {
+                const fn GetString(
+                    &self,
+                    prop: plugin_abi::PluginString,
+                ) -> *const std::ffi::c_char {
                     match prop {
                         plugin_abi::PluginString::Name => {
                             $plugin::PLUGIN_INFO.get_name().as_ptr() as *const i8
@@ -72,7 +75,7 @@ macro_rules! entry {
                     }
                 }
 
-                fn GetField(&self, prop: plugin_abi::PluginField) -> i64 {
+                const fn GetField(&self, prop: plugin_abi::PluginField) -> i64 {
                     match prop {
                         plugin_abi::PluginField::Context => {
                             $plugin::PLUGIN_INFO.get_context().bits() as i64
@@ -108,8 +111,10 @@ macro_rules! entry {
                         panic!("PLUGIN failed initialization")
                     }
                 }
-                fn Finalize(&self) {}
-                fn Unload(&self) -> bool {
+                fn Finalize(&self) {
+                    PLUGIN.wait().plugins_loaded()
+                }
+                const fn Unload(&self) -> bool {
                     false // TODO: add this to Plugin
                 }
                 fn OnSqvmCreated(&self, sqvm: *mut squirreldatatypes::CSquirrelVM) {
@@ -292,7 +297,7 @@ mod test_entry {
 
     impl Plugin for Test {
         const PLUGIN_INFO: PluginInfo =
-            PluginInfo::new("test", "Test   ", "test", PluginContext::all());
+            PluginInfo::new("test", "Testttttt", "test", PluginContext::all());
 
         fn new(_reloaded: bool) -> Self {
             Self {}
@@ -302,7 +307,7 @@ mod test_entry {
     entry!(Test);
 
     #[test]
-    fn test_init() {
+    const fn test_init() {
         // todo: somehow test all the functions
     }
 }

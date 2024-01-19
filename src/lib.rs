@@ -21,6 +21,7 @@
     clippy::missing_const_for_fn
 )]
 // #![warn(missing_docs)]
+#![allow(clippy::missing_safety_doc)] // TODO: remove before release
 
 #[allow(missing_docs)]
 pub mod bindings;

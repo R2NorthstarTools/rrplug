@@ -102,12 +102,12 @@ impl CSquirrelVMHandle {
     /// [`UnsafeHandle`] : when used outside of engine thread can cause race conditions or ub
     ///
     /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
-    pub unsafe fn get_cs_sqvm(&self) -> UnsafeHandle<*mut CSquirrelVM> {
+    pub const unsafe fn get_cs_sqvm(&self) -> UnsafeHandle<*mut CSquirrelVM> {
         UnsafeHandle::internal_new(self.handle)
     }
 
     /// gets the type of the sqvm :D
-    pub fn get_context(&self) -> ScriptContext {
+    pub const fn get_context(&self) -> ScriptContext {
         self.vm_type
     }
 }
@@ -136,7 +136,7 @@ impl<H: IsSQObject> SQHandle<H> {
     /// # Safety
     ///
     /// this breaks the type guarantees provided by this struct
-    pub unsafe fn new_unchecked(value: SQObject) -> Self {
+    pub const unsafe fn new_unchecked(value: SQObject) -> Self {
         Self {
             inner: value,
             marker: PhantomData,
@@ -144,7 +144,7 @@ impl<H: IsSQObject> SQHandle<H> {
     }
 
     /// a getter
-    pub fn get(&self) -> &SQObject {
+    pub const fn get(&self) -> &SQObject {
         &self.inner
     }
 
@@ -154,7 +154,7 @@ impl<H: IsSQObject> SQHandle<H> {
     }
 
     /// consumes itself and returns the [`SQObject`]
-    pub fn take(self) -> SQObject {
+    pub const fn take(self) -> SQObject {
         self.inner
     }
 }

@@ -20,7 +20,7 @@ impl<T> Iterator for PointerIterator<T> {
 impl<T> PointerIterator<T> {
     /// # Safety
     /// the pointer must be an array of pointers to `T` terminated by a null pointer
-    pub unsafe fn new(ptr: *mut T) -> Self {
+    pub const unsafe fn new(ptr: *mut T) -> Self {
         Self { ptr }
     }
 }

@@ -115,3 +115,16 @@ impl CStringPtrError {
         log::error!("{}", self)
     }
 }
+
+#[derive(Error, Debug)]
+pub enum CompletionError {
+    #[error("no more completion slots remain")]
+    NoCompletionSlotsLeft,
+}
+
+impl CompletionError {
+    /// logs the error with the builtin logger
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}
