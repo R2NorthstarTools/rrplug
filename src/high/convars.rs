@@ -58,6 +58,7 @@
 //! ```
 
 use std::{
+    alloc::{GlobalAlloc, Layout},
     ffi::{c_char, CStr},
     mem,
     ptr::addr_of_mut,
@@ -69,6 +70,7 @@ use crate::{
     errors::{CStringPtrError, RegisterError},
     mid::{
         engine::{get_engine_data, ENGINE_DATA},
+        source_alloc::SOURCE_ALLOC,
         utils::{to_cstring, try_cstring},
     },
 };
@@ -193,7 +195,7 @@ impl ConVarStruct {
     unsafe fn new(engine: &EngineData) -> Self {
         let convar_classes = &engine.convar;
         unsafe {
-            let convar = std::alloc::alloc(std::alloc::Layout::new::<ConVar>()) as *mut ConVar; // TODO: this is not good since if the source allocator decides to drop this concommand bad things will happen
+            let convar = SOURCE_ALLOC.alloc(Layout::new::<ConVar>()) as *mut ConVar;
 
             addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
                 .write(convar_classes.convar_vtable);
@@ -251,20 +253,20 @@ impl ConVarStruct {
         // I think its safe
         // since it should live until process termination so the os would clean it
 
-        let name_ptr = to_cstring(&register_info.name).into_raw(); // TODO: use faillible version
+        let name = try_cstring(&register_info.name)?.into_bytes_with_nul();
+        let name_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&name)) };
+        unsafe { name_ptr.copy_from_nonoverlapping(name.as_ptr(), name.len()) };
 
-        let default_value_ptr = to_cstring(&register_info.default_value).into_raw(); // altough this wouldn't
+        let default_value = try_cstring(&register_info.default_value)?.into_bytes_with_nul();
+        let default_value_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&default_value)) };
+        unsafe {
+            default_value_ptr.copy_from_nonoverlapping(default_value.as_ptr(), default_value.len())
+        };
 
-        let help_bytes = register_info.help_string.as_bytes();
-        let help_string_ptr = match help_bytes.last() {
-            Some(last) => {
-                if *last == b'\0' {
-                    help_bytes.as_ptr() as *mut i8
-                } else {
-                    to_cstring(&register_info.help_string).into_raw()
-                }
-            }
-            None => "\0".as_bytes().as_ptr() as *mut i8,
+        let help_string = try_cstring(&register_info.help_string)?.into_bytes_with_nul();
+        let help_string_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&help_string)) };
+        unsafe {
+            help_string_ptr.copy_from_nonoverlapping(help_string.as_ptr(), help_string.len())
         };
 
         unsafe {
@@ -273,10 +275,10 @@ impl ConVarStruct {
                 .convar_register
                 .ok_or(RegisterError::NoneFunction)?)(
                 self.inner,
-                name_ptr,
-                default_value_ptr,
+                name_ptr as *const i8,
+                default_value_ptr as *const i8,
                 register_info.flags,
-                help_string_ptr,
+                help_string_ptr as *const i8,
                 register_info.bmin,
                 register_info.fmin,
                 register_info.bmax,

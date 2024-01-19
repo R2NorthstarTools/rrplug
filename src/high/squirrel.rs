@@ -13,9 +13,11 @@ use crate::{
         squirrelfunctions::SquirrelFunctions,
     },
     errors::{CallError, SQCompileError},
-    mid::squirrel::{FuncSQFuncInfo, SQFuncInfo, SQFUNCTIONS, SQVM_CLIENT, SQVM_SERVER, SQVM_UI},
+    mid::{
+        squirrel::{FuncSQFuncInfo, SQFuncInfo, SQFUNCTIONS, SQVM_CLIENT, SQVM_SERVER, SQVM_UI},
+        utils::{to_cstring, try_cstring},
+    },
     prelude::{EngineToken, ScriptContext},
-    to_c_string,
 };
 
 #[doc(hidden)]
@@ -62,6 +64,9 @@ impl CSquirrelVMHandle {
     /// defines a constant on the sqvm
     ///
     /// Like `SERVER`, `CLIENT`, `UI`, etc
+    ///
+    /// # Panics
+    /// will panic if the name has a null char
     pub fn define_sq_constant(&self, name: String, value: impl Into<i32>) {
         let sqfunctions = if self.vm_type == ScriptContext::SERVER {
             SQFUNCTIONS.server.wait()
@@ -69,8 +74,7 @@ impl CSquirrelVMHandle {
             SQFUNCTIONS.client.wait()
         };
 
-        // not sure if I need to leak this
-        let name = to_c_string!(name);
+        let name = to_cstring(&name);
 
         unsafe { (sqfunctions.sq_defconst)(self.handle, name.as_ptr(), value.into()) }
     }
@@ -200,12 +204,12 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 pub fn call_sq_function(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctions,
-    function_name: impl Into<String>,
+    function_name: impl AsRef<str>,
 ) -> Result<(), CallError> {
     let mut obj = std::mem::MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
 
-    let function_name = to_c_string!(function_name.into());
+    let function_name = try_cstring(function_name.as_ref())?;
 
     let result = unsafe {
         (sqfunctions.sq_getfunction)(sqvm, function_name.as_ptr(), ptr, std::ptr::null())
@@ -299,9 +303,12 @@ pub fn compile_string(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctions,
     should_throw_error: bool,
-    code: impl Into<String>,
+    code: impl AsRef<str>,
 ) -> Result<(), SQCompileError> {
-    let buffer = to_c_string!(code.into());
+    const BUFFER_NAME: *const i8 = "compile_string\0".as_ptr() as *const i8;
+
+    let buffer =
+        try_cstring(code.as_ref()).unwrap_or_else(|_| to_cstring(&code.as_ref().replace('\0', "")));
 
     let mut compile_buffer = CompileBufferState {
         buffer: buffer.as_ptr(),
@@ -309,13 +316,11 @@ pub fn compile_string(
         bufferAgain: buffer.as_ptr(),
     };
 
-    let name = unsafe { to_c_string!(const "compile_string\0") };
-
     unsafe {
         let result = (sqfunctions.sq_compilebuffer)(
             sqvm,
             &mut compile_buffer as *mut CompileBufferState,
-            name.as_ptr(),
+            BUFFER_NAME,
             -1,
             should_throw_error as u32,
         );

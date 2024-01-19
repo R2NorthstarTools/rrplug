@@ -108,36 +108,36 @@ impl EngineData {
     /// ```
     pub fn register_concommand(
         &self,
-        name: impl Into<String>,
+        name: impl AsRef<str>,
         callback: unsafe extern "C" fn(arg1: *const CCommand),
-        help_string: impl Into<String>,
+        help_string: impl AsRef<str>,
         flags: i32,
     ) -> Result<*mut ConCommand, RegisterError> {
-        let name = name.into();
+        let name = name.as_ref();
         log::info!("Registering ConCommand {}", name);
 
         self.concommands
-            .mid_register_concommand(name, callback, help_string.into(), flags)
+            .mid_register_concommand(name, callback, help_string.as_ref(), flags)
     }
 
     pub fn register_concommand_with_completion(
         &self,
-        name: impl Into<String>,
+        name: impl AsRef<str>,
         callback: unsafe extern "C" fn(arg1: *const CCommand),
-        help_string: impl Into<String>,
+        help_string: impl AsRef<str>,
         flags: i32,
         completion_callback: unsafe extern "C" fn(
             arg1: *const ::std::os::raw::c_char,
             arg2: *mut [::std::os::raw::c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize],
         ) -> ::std::os::raw::c_int,
     ) -> Result<*mut ConCommand, RegisterError> {
-        let name = name.into();
+        let name = name.as_ref();
         log::info!("Registering ConCommand {} with completion", name);
 
         self.concommands.mid_register_concommand_with_completion(
             name,
             callback,
-            help_string.into(),
+            help_string.as_ref(),
             flags,
             completion_callback,
         )

@@ -237,7 +237,7 @@ macro_rules! entry {
                     called_dlls.push(dll_string);
                 }
                 fn RunFrame(&self) {
-                    crate::entry_async_feature!(ASYNC_ENGINE_RUN);
+                    unsafe { $crate::high::engine_sync::run_async_routine() };
                     PLUGIN
                         .wait()
                         .runframe(unsafe { high::engine::EngineToken::new_unchecked() });
@@ -264,34 +264,13 @@ macro_rules! entry {
                             PluginCallbacks::new(),
                         );
                     }
-                    $crate::entry_async_feature!(ASYNC_ENGINE_INIT);
+                    $crate::high::engine_sync::init_async_routine();
                     $plugin::on_module_load();
                 }
                 true
             }
         }
     };
-}
-
-/// wouldn't recommend messing with this
-#[macro_export]
-#[doc(hidden)]
-#[cfg(feature = "async_engine ")]
-macro_rules! entry_async_feature {
-    (ASYNC_ENGINE_INIT) => {
-        $crate::high::engine_sync::init_async_routine()
-    };
-    (ASYNC_ENGINE_RUN) => {
-        unsafe { $crate::high::engine_sync::run_async_routine() }
-    };
-}
-
-#[macro_export]
-#[doc(hidden)]
-#[cfg(not(feature = "async_engine "))]
-macro_rules! entry_async_feature {
-    (ASYNC_ENGINE_INIT) => {};
-    (ASYNC_ENGINE_RUN) => {};
 }
 
 #[cfg(test)]

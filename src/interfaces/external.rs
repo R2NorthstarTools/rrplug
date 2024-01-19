@@ -8,7 +8,7 @@ use windows::{
     },
 };
 
-use crate::{bindings::plugin_abi::CreateInterface, to_c_string};
+use crate::{bindings::plugin_abi::CreateInterface, mid::utils::try_cstring};
 
 #[macro_export]
 macro_rules! create_external_interface {
@@ -67,7 +67,7 @@ pub trait SourceInterface<Rtrn = Self> {
                 PCSTR("CreateInterface\0".as_ptr().into()),
             )?);
 
-            let interface_name = to_c_string!(interface_name);
+            let interface_name = try_cstring(interface_name).ok()?;
             let interface =
                 create_interface(interface_name.as_ptr(), status.as_mut_ptr()) as *const Rtrn;
             interface.as_ref()
@@ -77,13 +77,13 @@ pub trait SourceInterface<Rtrn = Self> {
     unsafe fn from_dll_name(dll_name: &str, interface_name: &str) -> Option<&'static Rtrn> {
         let mut status = MaybeUninit::uninit();
         unsafe {
-            let dll_name = to_c_string!(dll_name);
+            let dll_name = try_cstring(dll_name).ok()?;
             let create_interface = std::mem::transmute::<_, CreateInterface>(GetProcAddress(
                 GetModuleHandleA(PCSTR(dll_name.as_ptr() as *const u8)).ok()?,
                 PCSTR("CreateInterface\0".as_ptr().into()),
             )?);
 
-            let interface_name = to_c_string!(interface_name);
+            let interface_name = try_cstring(interface_name).ok()?;
             let interface =
                 create_interface(interface_name.as_ptr(), status.as_mut_ptr()) as *const Rtrn;
             interface.as_ref()

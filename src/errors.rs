@@ -1,5 +1,7 @@
 //! Errors produced by rrplug that can be retured to the user
 
+use std::ffi::NulError;
+
 use thiserror::Error;
 
 /// Errors that may happen during the registration proccess of anything
@@ -7,6 +9,10 @@ use thiserror::Error;
 /// can be usually ignored since these erorrs would happen rarely and only when something goes wrong with northstar
 #[derive(Error, Debug)]
 pub enum RegisterError {
+    /// invalid cstring
+    #[error("some attribute contained a null char")]
+    InvalidCString(#[from] NulError),
+
     /// A function crutial to some systems was null (this is fatal I think)
     #[error("A core function from c++ is null")]
     NoneFunction,
@@ -23,9 +29,34 @@ impl RegisterError {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum CVarQueryError {
+    /// invalid cstring
+    #[error("some attribute contained a null char")]
+    InvalidCString(#[from] NulError),
+
+    /// the requested cvar doesn't exist
+    #[error("the requested cvar doesn't exist")]
+    NotFound,
+
+    #[error("the cvar interface doesn't exists yet?")]
+    NoCVarInterface,
+}
+
+impl CVarQueryError {
+    /// logs the error with the builtin logger
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}
+
 /// Errors created by calls to sqvm functions
 #[derive(Error, Debug)]
 pub enum CallError {
+    /// invalid function string
+    #[error("function string contained a null char")]
+    InvalidFunctionCString(#[from] NulError),
+
     /// the function that was called isn't on the sqvm
     #[error("{0} function wasn't found on the sqvm; is it global?")]
     FunctionNotFound(String),

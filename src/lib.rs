@@ -15,7 +15,11 @@
 //!
 //! a git [template](https://github.com/catornot/rrplug-template) also exists but it may or not be maintained as well
 
-#![deny(unsafe_op_in_unsafe_fn)]
+#![deny(
+    unsafe_op_in_unsafe_fn,
+    clippy::correctness,
+    clippy::missing_const_for_fn
+)]
 // #![warn(missing_docs)]
 
 #[allow(missing_docs)]

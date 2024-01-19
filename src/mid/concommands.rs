@@ -1,4 +1,5 @@
 //! minimal abstraction for concommands
+use std::alloc::{GlobalAlloc, Layout};
 
 use crate::{
     bindings::cvar::{
@@ -8,11 +9,11 @@ use crate::{
         },
         RawCVar,
     },
-    errors::RegisterError,
-    offset_functions, to_c_string,
+    errors::{CVarQueryError, RegisterError},
+    offset_functions,
 };
 
-use super::engine::get_engine_data;
+use super::{engine::get_engine_data, source_alloc::SOURCE_ALLOC, utils::try_cstring};
 
 offset_functions! {
     REGISTER_CONCOMNMADS + RegisterConCommands for WhichDll::Engine => {
@@ -23,33 +24,31 @@ offset_functions! {
 impl RegisterConCommands {
     pub(crate) fn mid_register_concommand(
         &self,
-        name: String,
+        name: &str,
         callback: unsafe extern "C" fn(arg1: *const CCommand),
-        help_string: String,
+        help_string: &str,
         flags: i32,
     ) -> Result<*mut ConCommand, RegisterError> {
-        let name_ptr = to_c_string!(name).into_raw();
+        // TODO: use IMemAlloc here
+        let name = try_cstring(name)?.into_bytes_with_nul();
+        let name_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&name)) };
+        unsafe { name_ptr.copy_from_nonoverlapping(name.as_ptr(), name.len()) };
 
-        let help_string_ptr = to_c_string!(help_string).into_raw();
+        let help_string = try_cstring(help_string)?.into_bytes_with_nul();
+        let help_string_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&help_string)) };
+        unsafe {
+            help_string_ptr.copy_from_nonoverlapping(help_string.as_ptr(), help_string.len())
+        };
 
-        // let command: *mut ConCommand = unsafe {
-        //     std::mem::transmute((CREATE_OBJECT_FUNC
-        //         .get()
-        //         .ok_or(RegisterError::NoneFunction)?
-        //         .ok_or(RegisterError::NoneFunction))?(
-        //         ObjectType::CONCOMMANDS
-        //     ))
-        // };
-
-        let command = unsafe { std::alloc::alloc(std::alloc::Layout::new::<ConCommand>()) }
+        let command = unsafe { SOURCE_ALLOC.alloc(std::alloc::Layout::new::<ConCommand>()) }
             as *mut ConCommand; // TODO: this is not good since if the source allocator decides to drop this concommand bad things will happen
 
         unsafe {
             self.reg_func.ok_or(RegisterError::NoneFunction)?(
                 command,
-                name_ptr,
+                name_ptr as *const i8,
                 Some(callback),
-                help_string_ptr,
+                help_string_ptr as *const i8,
                 flags,
                 std::ptr::null_mut(),
             )
@@ -59,9 +58,9 @@ impl RegisterConCommands {
 
     pub(crate) fn mid_register_concommand_with_completion(
         &self,
-        name: String,
+        name: &str,
         callback: unsafe extern "C" fn(arg1: *const CCommand),
-        help_string: String,
+        help_string: &str,
         flags: i32,
         completion_callback: unsafe extern "C" fn(
             arg1: *const ::std::os::raw::c_char,
@@ -97,13 +96,20 @@ pub unsafe fn add_completion_callback(
 /// # use rrplug::mid::engine::get_engine_data;
 /// # use rrplug::mid::concommands::find_concommand_with_cvar;
 /// # fn sub() -> Option<()> {
-/// let concommand = find_concommand_with_cvar("force_newgame", &get_engine_data()?.get_cvar())?;
+/// let concommand = find_concommand_with_cvar("force_newgame", &get_engine_data()?.get_cvar()).ok()?;
 /// # Some(())
 /// # }
 /// ```
-pub fn find_concommand_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static mut ConCommand> {
-    let name = to_c_string!(name);
-    unsafe { cvar.find_concommand(name.as_ptr()).as_mut() }
+pub fn find_concommand_with_cvar(
+    name: &str,
+    cvar: &RawCVar,
+) -> Result<&'static mut ConCommand, CVarQueryError> {
+    let name = try_cstring(name)?;
+    unsafe {
+        cvar.find_concommand(name.as_ptr())
+            .as_mut()
+            .ok_or(CVarQueryError::NotFound)
+    }
 }
 
 /// finds a concommand by name
@@ -112,12 +118,17 @@ pub fn find_concommand_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static 
 /// ```no_run
 /// # use rrplug::mid::concommands::find_concommand;
 /// # fn sub() -> Option<()> {
-/// let concommand = find_concommand("force_newgame")?;
+/// let concommand = find_concommand("force_newgame").ok()?;
 /// # Some(())
 /// # }
 /// ```
-pub fn find_concommand(name: &str) -> Option<&'static mut ConCommand> {
-    find_concommand_with_cvar(name, &get_engine_data()?.cvar)
+pub fn find_concommand(name: &str) -> Result<&'static mut ConCommand, CVarQueryError> {
+    find_concommand_with_cvar(
+        name,
+        &get_engine_data()
+            .ok_or(CVarQueryError::NoCVarInterface)?
+            .cvar,
+    )
 }
 
 /// finds a concommand base by name
@@ -127,16 +138,20 @@ pub fn find_concommand(name: &str) -> Option<&'static mut ConCommand> {
 /// # use rrplug::mid::engine::get_engine_data;
 /// # use rrplug::mid::concommands::find_concommand_base_with_cvar;
 /// # fn sub() -> Option<()> {
-/// let base = find_concommand_base_with_cvar("spewlog_enable", &get_engine_data()?.get_cvar())?;
+/// let base = find_concommand_base_with_cvar("spewlog_enable", &get_engine_data()?.get_cvar()).ok()?;
 /// # Some(())
 /// # }
 /// ```
 pub fn find_concommand_base_with_cvar(
     name: &str,
     cvar: &RawCVar,
-) -> Option<&'static mut ConCommandBase> {
-    let name = to_c_string!(name);
-    unsafe { cvar.find_command_base(name.as_ptr()).as_mut() }
+) -> Result<&'static mut ConCommandBase, CVarQueryError> {
+    let name = try_cstring(name)?;
+    unsafe {
+        cvar.find_command_base(name.as_ptr())
+            .as_mut()
+            .ok_or(CVarQueryError::NotFound)
+    }
 }
 
 /// finds a concommand base by name
@@ -145,10 +160,15 @@ pub fn find_concommand_base_with_cvar(
 /// ```no_run
 /// # use rrplug::mid::concommands::find_concommand_base;
 /// # fn sub() -> Option<()> {
-/// let base = find_concommand_base("spewlog_enable")?;
+/// let base = find_concommand_base("spewlog_enable").ok()?;
 /// # Some(())
 /// # }
 /// ```
-pub fn find_concommand_base(name: &str) -> Option<&'static mut ConCommandBase> {
-    find_concommand_base_with_cvar(name, &get_engine_data()?.cvar)
+pub fn find_concommand_base(name: &str) -> Result<&'static mut ConCommandBase, CVarQueryError> {
+    find_concommand_base_with_cvar(
+        name,
+        &get_engine_data()
+            .ok_or(CVarQueryError::NoCVarInterface)?
+            .cvar,
+    )
 }

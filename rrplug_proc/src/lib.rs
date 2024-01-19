@@ -142,9 +142,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 if !input.is_empty() {
                     match input
                         .split('|')
-                        .map(|vm| {
-                            dbg!("SQFunctionContext::".to_string() + vm.to_uppercase().as_str())
-                        })
+                        .map(|vm| "SQFunctionContext::".to_string() + vm.to_uppercase().as_str())
                         .map(|vm| parse_str::<TypePath>(&vm))
                         .collect::<Result<Vec<TypePath>, SynError>>()
                     {

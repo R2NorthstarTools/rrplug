@@ -23,8 +23,9 @@ use crate::{
         squirrel_traits::{GetFromSQObject, PushToSquirrelVm},
         vector::Vector3,
     },
-    to_c_string,
 };
+
+use super::utils::{to_cstring, try_cstring};
 
 /// functions that used to interact with the sqvm
 ///
@@ -158,10 +159,10 @@ pub fn push_sq_bool(sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions, boo
 pub fn push_sq_string(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctions,
-    string: impl Into<String>,
+    string: impl AsRef<str>,
 ) {
-    // boxing this would be a good idea and leaking; altough we don't need to?
-    let cstring = to_c_string!(string.into());
+    let cstring = try_cstring(string.as_ref())
+        .unwrap_or_else(|_| to_cstring(&string.as_ref().replace('\0', "")));
     // its impossble for it to crash since we replace null with space if it does it must be reported
     unsafe { (sqfunctions.sq_pushstring)(sqvm, cstring.as_ptr(), -1) }; // why -1?
 }
@@ -304,15 +305,19 @@ pub fn get_sq_object(
 pub fn get_sq_function_object(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &SquirrelFunctions,
-    function_name: impl Into<String>,
+    function_name: impl AsRef<str>,
 ) -> Result<SQHandle<SQClosure>, CallError> {
     let mut obj = MaybeUninit::<SQObject>::zeroed();
-    let ptr = obj.as_mut_ptr();
 
-    let function_name = to_c_string!(function_name.into());
+    let function_name = try_cstring(function_name.as_ref())?;
 
     let result = unsafe {
-        (sqfunctions.sq_getfunction)(sqvm, function_name.as_ptr(), ptr, std::ptr::null())
+        (sqfunctions.sq_getfunction)(
+            sqvm,
+            function_name.as_ptr(),
+            obj.as_mut_ptr(),
+            std::ptr::null(),
+        )
     };
 
     if result != 0 {

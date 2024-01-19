@@ -2,7 +2,7 @@
 
 use std::ffi::c_void;
 
-use crate::to_c_string;
+use crate::errors::CVarQueryError;
 use crate::{
     bindings::cvar::{
         command::ConCommandBase,
@@ -13,6 +13,7 @@ use crate::{
 };
 
 use super::engine::get_engine_data;
+use super::utils::try_cstring;
 
 offset_functions! {
     CVAR_GLOBALS + CvarGlobals for WhichDll::Engine => {
@@ -30,13 +31,20 @@ offset_functions! {
 /// # use rrplug::mid::engine::get_engine_data;
 /// # use rrplug::mid::convars::find_convar_with_cvar;
 /// # fn sub() -> Option<()> {
-/// let convar = find_convar_with_cvar("spewlog_enable", &get_engine_data()?.get_cvar())?;
+/// let convar = find_convar_with_cvar("spewlog_enable", &get_engine_data()?.get_cvar()).ok()?;
 /// # Some(())
 /// # }
 /// ```
-pub fn find_convar_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static mut ConVar> {
-    let name = to_c_string!(name);
-    unsafe { cvar.find_convar(name.as_ptr()).as_mut() }
+pub fn find_convar_with_cvar(
+    name: &str,
+    cvar: &RawCVar,
+) -> Result<&'static mut ConVar, CVarQueryError> {
+    let name = try_cstring(name)?;
+    unsafe {
+        cvar.find_convar(name.as_ptr())
+            .as_mut()
+            .ok_or(CVarQueryError::NotFound)
+    }
 }
 
 /// finds a convar by name
@@ -45,10 +53,15 @@ pub fn find_convar_with_cvar(name: &str, cvar: &RawCVar) -> Option<&'static mut 
 /// ```no_run
 /// # use rrplug::mid::convars::find_convar;
 /// # fn sub() -> Option<()> {
-/// let convar = find_convar("spewlog_enable")?;
+/// let convar = find_convar("spewlog_enable").ok()?;
 /// # Some(())
 /// # }
 /// ```
-pub fn find_convar(name: &str) -> Option<&'static mut ConVar> {
-    find_convar_with_cvar(name, &get_engine_data()?.cvar)
+pub fn find_convar(name: &str) -> Result<&'static mut ConVar, CVarQueryError> {
+    find_convar_with_cvar(
+        name,
+        &get_engine_data()
+            .ok_or(CVarQueryError::NoCVarInterface)?
+            .cvar,
+    )
 }

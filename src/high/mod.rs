@@ -13,6 +13,18 @@ pub mod vector;
 #[cfg(feature = "async_engine ")]
 pub mod engine_sync;
 
+#[doc(hidden)]
+#[cfg(not(feature = "async_engine "))]
+pub mod engine_sync {
+    #[doc(hidden)]
+    #[inline(always)]
+    pub fn init_async_routine() {}
+
+    #[doc(hidden)]
+    #[inline(always)]
+    pub unsafe fn run_async_routine() {}
+}
+
 /// allows some tf2 types to be send and sync
 ///
 /// used to store tf2 pointers across threads
