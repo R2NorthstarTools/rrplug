@@ -67,8 +67,10 @@ use super::engine::EngineData;
 use crate::{
     bindings::cvar::convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
     errors::{CStringPtrError, RegisterError},
-    mid::engine::{get_engine_data, ENGINE_DATA},
-    to_c_string,
+    mid::{
+        engine::{get_engine_data, ENGINE_DATA},
+        utils::{to_cstring, try_cstring},
+    },
 };
 
 /// the state of the convar in all of its possible types
@@ -249,9 +251,9 @@ impl ConVarStruct {
         // I think its safe
         // since it should live until process termination so the os would clean it
 
-        let name_ptr = to_c_string!(register_info.name).into_raw();
+        let name_ptr = to_cstring(&register_info.name).into_raw(); // TODO: use faillible version
 
-        let default_value_ptr = to_c_string!(register_info.default_value).into_raw(); // altough this wouldn't
+        let default_value_ptr = to_cstring(&register_info.default_value).into_raw(); // altough this wouldn't
 
         let help_bytes = register_info.help_string.as_bytes();
         let help_string_ptr = match help_bytes.last() {
@@ -259,7 +261,7 @@ impl ConVarStruct {
                 if *last == b'\0' {
                     help_bytes.as_ptr() as *mut i8
                 } else {
-                    to_c_string!(register_info.help_string).into_raw()
+                    to_cstring(&register_info.help_string).into_raw()
                 }
             }
             None => "\0".as_bytes().as_ptr() as *mut i8,
@@ -287,7 +289,7 @@ impl ConVarStruct {
 
     ///
     pub fn find_convar_by_name(name: &str) -> Option<Self> {
-        let name = to_c_string!(name);
+        let name = try_cstring(name).ok()?;
 
         Some(Self {
             inner: unsafe {
@@ -436,7 +438,7 @@ impl ConVarStruct {
     /// set the string value of the convar
     ///
     /// only safe on the titanfall thread
-    pub fn set_value_string(&self, new_value: String) {
+    pub fn set_value_string(&self, new_value: impl AsRef<str>) {
         unsafe {
             if self.has_flags(FCVAR_NEVER_AS_STRING.try_into().unwrap()) {
                 return;
@@ -449,7 +451,7 @@ impl ConVarStruct {
 
             let func = mem::transmute::<_, fn(*const ConVar, *const c_char)>(set_value_string);
 
-            let string_value = to_c_string!(new_value);
+            let string_value = to_cstring(new_value.as_ref());
             func(self.inner, string_value.as_ptr())
         }
     }

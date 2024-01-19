@@ -12,7 +12,10 @@ use crate::{
         squirrelfunctions::SquirrelFunctions,
     },
     high::squirrel_traits::PushToSquirrelVm,
-    mid::squirrel::SQFUNCTIONS,
+    mid::{
+        squirrel::{SQFUNCTIONS, SQVM_CLIENT, SQVM_SERVER, SQVM_UI},
+        utils::to_cstring,
+    },
     to_c_string,
 };
 
@@ -86,9 +89,18 @@ pub unsafe fn run_async_routine() {
             } => {
                 // TODO: when done with sqvm global add it here
                 let (sqvm, sqfunctions) = match context {
-                    ScriptContext::SERVER => (std::ptr::null_mut(), SQFUNCTIONS.server.wait()),
-                    ScriptContext::CLIENT => (std::ptr::null_mut(), SQFUNCTIONS.client.wait()),
-                    ScriptContext::UI => (std::ptr::null_mut(), SQFUNCTIONS.client.wait()),
+                    ScriptContext::SERVER => {
+                        (SQVM_SERVER.get(token).borrow(), SQFUNCTIONS.server.wait())
+                    }
+                    ScriptContext::CLIENT => {
+                        (SQVM_CLIENT.get(token).borrow(), SQFUNCTIONS.client.wait())
+                    }
+                    ScriptContext::UI => (SQVM_UI.get(token).borrow(), SQFUNCTIONS.client.wait()),
+                };
+
+                let Some(sqvm) = sqvm.map(|s| s) else {
+                    log::warn!("a async sq function was called while the sqvm was destroyed!");
+                    return;
                 };
 
                 let mut function_obj = MaybeUninit::<SQObject>::zeroed();
@@ -96,7 +108,7 @@ pub unsafe fn run_async_routine() {
                 let result = unsafe {
                     (sqfunctions.sq_getfunction)(
                         sqvm,
-                        to_c_string!(function_name).as_ptr(),
+                        to_cstring(&function_name).as_ptr(),
                         function_obj.as_mut_ptr(),
                         std::ptr::null(),
                     )

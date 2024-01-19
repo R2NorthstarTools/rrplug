@@ -50,11 +50,11 @@ pub mod rrplug {
 #[cfg(test)]
 mod test {
     use crate as rrplug;
-    use rrplug::high::{
-        northstar::SQFuncInfo,
-        squirrel_traits::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName},
-    };
     use rrplug::prelude::*;
+    use rrplug::{
+        high::squirrel_traits::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName},
+        mid::squirrel::{SQFuncInfo, SQFunctionContext},
+    };
     use rrplug_proc::*;
 
     #[convar]
@@ -110,7 +110,7 @@ mod test {
             sq_func_name: "test",
             types: "string test1, int test2, int test3, void functionref(string) test4".into(),
             return_type: <Vec<TestStruct> as SQVMName>::get_sqvm_name(),
-            vm: ScriptVmType::Server,
+            vm: SQFunctionContext::SERVER,
             function: Some(sq_func_test_sqfunction),
         };
         assert_eq!(test_sqfunction(), sqfuncdef);

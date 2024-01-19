@@ -270,6 +270,26 @@ pub enum ScriptContext {
     CLIENT = 1,
     UI = 2,
 }
+impl TryFrom<i32> for ScriptContext {
+    type Error = i32;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        if value <= Self::UI as i32 && value >= Self::SERVER as i32 {
+            Ok(unsafe { std::mem::transmute(value) })
+        } else {
+            Err(value)
+        }
+    }
+}
+impl std::fmt::Display for ScriptContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ScriptContext::SERVER => f.write_str("SERVER"),
+            ScriptContext::CLIENT => f.write_str("CLIENT"),
+            ScriptContext::UI => f.write_str("UI"),
+        }
+    }
+}
 pub type RegisterSquirrelFuncType = unsafe extern "C" fn(
     sqvm: *mut CSquirrelVM,
     funcReg: *mut SQFuncRegistration,

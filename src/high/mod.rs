@@ -27,14 +27,14 @@ pub struct UnsafeHandle<T> {
 }
 
 impl<T> UnsafeHandle<T> {
-    pub(crate) fn internal_new(value: T) -> Self {
+    pub(crate) const fn internal_new(value: T) -> Self {
         Self { inner: value }
     }
 
     /// creates a new [`UnsafeHandle`]
     /// # Safety
     /// the handle should be used corretly as to not cause race conditions
-    pub unsafe fn new(value: T) -> Self {
+    pub const unsafe fn new(value: T) -> Self {
         Self { inner: value }
     }
 

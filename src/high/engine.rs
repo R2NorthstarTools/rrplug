@@ -42,7 +42,7 @@ impl EngineToken {
 pub struct EngineGlobal<T>(UnsafeHandle<T>);
 
 impl<T> EngineGlobal<T> {
-    pub fn new(data: T) -> Self {
+    pub const fn new(data: T) -> Self {
         Self(UnsafeHandle { inner: data })
     }
 

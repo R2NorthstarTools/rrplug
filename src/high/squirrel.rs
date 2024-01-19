@@ -5,11 +5,7 @@
 use parking_lot::Mutex;
 use std::marker::PhantomData;
 
-use super::{
-    northstar::{FuncSQFuncInfo, SQFuncInfo, ScriptVmType},
-    squirrel_traits::IsSQObject,
-    UnsafeHandle,
-};
+use super::{squirrel_traits::IsSQObject, UnsafeHandle};
 use crate::{
     bindings::{
         squirrelclasstypes::{CompileBufferState, SQRESULT},
@@ -17,7 +13,8 @@ use crate::{
         squirrelfunctions::SquirrelFunctions,
     },
     errors::{CallError, SQCompileError},
-    mid::squirrel::SQFUNCTIONS,
+    mid::squirrel::{FuncSQFuncInfo, SQFuncInfo, SQFUNCTIONS, SQVM_CLIENT, SQVM_SERVER, SQVM_UI},
+    prelude::{EngineToken, ScriptContext},
     to_c_string,
 };
 
@@ -30,21 +27,43 @@ pub static FUNCTION_SQ_REGISTER: Mutex<Vec<SQFuncInfo>> = Mutex::new(Vec::new())
 #[derive(Debug)]
 pub struct CSquirrelVMHandle {
     handle: *mut CSquirrelVM,
-    vm_type: ScriptVmType,
+    vm_type: ScriptContext,
 }
 
 impl CSquirrelVMHandle {
     /// **should** not be used outside of the [`crate::entry`] macro
     #[doc(hidden)]
-    pub fn new(handle: *mut CSquirrelVM, vm_type: ScriptVmType) -> Self {
-        Self { handle, vm_type }
+    pub fn new(
+        handle: *mut CSquirrelVM,
+        context: ScriptContext,
+        is_being_dropped: bool,
+        token: EngineToken,
+    ) -> Self {
+        unsafe {
+            match (context, is_being_dropped) {
+                (ScriptContext::SERVER, true) => {
+                    _ = SQVM_SERVER.get(token).replace(Some((*handle).sqvm))
+                }
+                (ScriptContext::SERVER, false) => _ = SQVM_SERVER.get(token).replace(None),
+                (ScriptContext::CLIENT, true) => {
+                    _ = SQVM_CLIENT.get(token).replace(Some((*handle).sqvm))
+                }
+                (ScriptContext::CLIENT, false) => _ = SQVM_CLIENT.get(token).replace(None),
+                (ScriptContext::UI, true) => _ = SQVM_UI.get(token).replace(Some((*handle).sqvm)),
+                (ScriptContext::UI, false) => _ = SQVM_UI.get(token).replace(None),
+            }
+        }
+        Self {
+            handle,
+            vm_type: context,
+        }
     }
 
     /// defines a constant on the sqvm
     ///
     /// Like `SERVER`, `CLIENT`, `UI`, etc
     pub fn define_sq_constant(&self, name: String, value: impl Into<i32>) {
-        let sqfunctions = if self.vm_type == ScriptVmType::Server {
+        let sqfunctions = if self.vm_type == ScriptContext::SERVER {
             SQFUNCTIONS.server.wait()
         } else {
             SQFUNCTIONS.client.wait()
@@ -84,7 +103,7 @@ impl CSquirrelVMHandle {
     }
 
     /// gets the type of the sqvm :D
-    pub fn get_context(&self) -> ScriptVmType {
+    pub fn get_context(&self) -> ScriptContext {
         self.vm_type
     }
 }

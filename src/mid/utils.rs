@@ -1,4 +1,4 @@
-use std::ffi::{c_char, CStr};
+use std::ffi::{c_char, CStr, CString, NulError};
 
 #[inline]
 pub unsafe fn set_c_char_array<const U: usize>(buf: &mut [c_char; U], new: &str) {
@@ -20,4 +20,14 @@ pub unsafe fn from_char_ptr<T: From<String>>(ptr: *const c_char) -> T {
 #[inline]
 pub unsafe fn str_from_char_ptr<'a>(ptr: *const c_char) -> Option<&'a str> {
     unsafe { CStr::from_ptr(ptr) }.to_str().ok()
+}
+
+#[inline]
+pub fn to_cstring(s: &str) -> CString {
+    CString::new(s).expect("cstring had a null char")
+}
+
+#[inline]
+pub fn try_cstring(s: &str) -> Result<CString, NulError> {
+    CString::new(s)
 }

@@ -31,7 +31,7 @@ macro_rules! entry {
         pub(crate) mod exports {
             use super::$plugin;
 
-            use high::{engine::EngineData, northstar::ScriptVmType};
+            use high::engine::EngineData;
             use mid::squirrel::SQFUNCTIONS;
             use $crate::bindings::{plugin_abi, squirrelclasstypes, squirreldatatypes};
             use $crate::exports::log;
@@ -102,29 +102,19 @@ macro_rules! entry {
                     false // TODO: add this to Plugin
                 }
                 fn OnSqvmCreated(&self, sqvm: *mut squirreldatatypes::CSquirrelVM) {
-                    let context = std::convert::Into::<ScriptVmType>::into(unsafe {
-                        (*sqvm).vmContext // rewrite later
-                    });
-                    log::info!("PLUGIN_INFORM_SQVM_CREATED called {}", context);
+                    let context: squirrelclasstypes::ScriptContext = unsafe { (*sqvm).vmContext }
+                        .try_into()
+                        .expect("sqvm was not valid :((((");
 
                     let locked_register_functions = high::squirrel::FUNCTION_SQ_REGISTER.lock();
 
-                    let sq_functions = match context {
-                        ScriptVmType::Server => SQFUNCTIONS.server.get(),
-                        ScriptVmType::Client => SQFUNCTIONS.client.get(),
-                        ScriptVmType::Ui => SQFUNCTIONS.client.get(),
-                        _ => {
-                            log::error!("invalid ScriptContext");
-                            return;
-                        }
-                    }
-                    .expect("SQFUNCTIONS should be initialized at this point");
+                    let sq_functions = SQFUNCTIONS.from_cssqvm(sqvm);
 
                     let sq_register_func = sq_functions.register_squirrel_func;
 
                     for func_info in locked_register_functions
                         .iter()
-                        .filter(|info| info.vm.is_right_vm(&context))
+                        .filter(|info| info.vm.contains_context(context))
                     {
                         log::info!(
                             "Registering {context} function {} with types: {}",
@@ -184,16 +174,19 @@ macro_rules! entry {
                         }
                     }
 
-                    let handle = high::squirrel::CSquirrelVMHandle::new(sqvm, context);
+                    let token = unsafe { high::engine::EngineToken::new_unchecked() };
+                    let handle =
+                        high::squirrel::CSquirrelVMHandle::new(sqvm, context, false, token);
 
-                    PLUGIN.wait().on_sqvm_created(&handle);
+                    PLUGIN.wait().on_sqvm_created(&handle, token);
                 }
                 fn OnSqvmDestroying(&self, sqvm: *mut squirreldatatypes::CSquirrelVM) {
-                    let context = std::convert::Into::<ScriptVmType>::into(unsafe {
-                        (*sqvm).vmContext // rewrite later
-                    });
-                    let handle = high::squirrel::CSquirrelVMHandle::new(sqvm, context);
-                    PLUGIN.wait().on_sqvm_destroyed(&handle);
+                    let context: squirrelclasstypes::ScriptContext = unsafe { (*sqvm).vmContext }
+                        .try_into()
+                        .expect("sqvm was not valid :((((");
+                    let token = unsafe { high::engine::EngineToken::new_unchecked() };
+                    let handle = high::squirrel::CSquirrelVMHandle::new(sqvm, context, true, token);
+                    PLUGIN.wait().on_sqvm_destroyed(&handle, token);
                 }
                 fn OnLibraryLoaded(
                     &self,
@@ -237,13 +230,17 @@ macro_rules! entry {
                         None
                     };
 
-                    PLUGIN.wait().on_dll_load(engine_data, &dll_ptr);
+                    PLUGIN.wait().on_dll_load(engine_data, &dll_ptr, unsafe {
+                        high::engine::EngineToken::new_unchecked()
+                    });
 
                     called_dlls.push(dll_string);
                 }
                 fn RunFrame(&self) {
-                    $crate::entry_async_feature!(ASYNC_ENGINE_RUN);
-                    PLUGIN.wait().runframe();
+                    crate::entry_async_feature!(ASYNC_ENGINE_RUN);
+                    PLUGIN
+                        .wait()
+                        .runframe(unsafe { high::engine::EngineToken::new_unchecked() });
                 }
             }
 

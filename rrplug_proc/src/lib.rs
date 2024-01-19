@@ -6,7 +6,7 @@ use quote::{format_ident, quote, quote_spanned, ToTokens};
 use syn::{
     self, parse, parse_macro_input, parse_str, punctuated::Punctuated, spanned::Spanned,
     AngleBracketedGenericArguments, DeriveInput, Error as SynError, FnArg, Ident, ImplItem,
-    ImplItemFn, ItemFn, ItemImpl, ReturnType, Stmt, Token, Type,
+    ImplItemFn, ItemFn, ItemImpl, ReturnType, Stmt, Token, Type, TypePath,
 };
 
 #[macro_use]
@@ -124,32 +124,34 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         sub_stms.insert(0, s);
     }
 
-    let mut script_vm_func = "client";
-    let mut script_vm = "Client";
+    let mut script_vm: Punctuated<TypePath, Token![|]> = Punctuated::new();
+
+    if !args.iter().any(|arg| arg.ident.to_string() == "VM") {
+        return SynError::new(
+            Span::mixed_site(),
+            "consider specifying a VM parameter in macro's attributes. ex : VM = \"UI | CLIENT\"",
+        )
+        .to_compile_error()
+        .into();
+    }
 
     for arg in args {
         let input = arg.arg.to_token_stream().to_string().replace('"', "");
         match &arg.ident.to_string()[..] {
-            "VM" if input.to_uppercase().ends_with("UI") => {
-                script_vm = "Ui";
-                script_vm_func = "client";
-            }
-            "VM" if input.to_uppercase().ends_with("SERVER") => {
-                script_vm = "Server";
-                script_vm_func = "server";
-            }
-            "VM" if input.to_uppercase().ends_with("UICLIENT") => {
-                script_vm = "UiClient";
-                script_vm_func = "client";
-            }
-            "VM" if input.to_uppercase().ends_with("CLIENT") => {
-                script_vm = "Client";
-                script_vm_func = "client";
-            }
             "VM" => {
-                return SynError::new(arg.ident.span(), format!("invalid VM {}", input))
-                    .to_compile_error()
-                    .into();
+                if !input.is_empty() {
+                    match input
+                        .split('|')
+                        .map(|vm| {
+                            dbg!("SQFunctionContext::".to_string() + vm.to_uppercase().as_str())
+                        })
+                        .map(|vm| parse_str::<TypePath>(&vm))
+                        .collect::<Result<Vec<TypePath>, SynError>>()
+                    {
+                        Ok(exprs) => exprs.into_iter().for_each(|expr| script_vm.push(expr)),
+                        Err(err) => return err.to_compile_error().into(),
+                    }
+                }
             }
             "ExportName" => export_name = input,
             "ReturnOverwrite" => {
@@ -168,19 +170,17 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
     }
-    let script_vm_type = format_ident!("{script_vm}");
-    let script_vm_func = format_ident!("{script_vm_func}");
 
     let out: TokenStream = quote! {
         #[doc(hidden)]
         #[doc = "generated ffi function for #func_name"]
         #vis extern "C" fn #sq_functions_func (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
             use rrplug::high::squirrel_traits::{GetFromSquirrelVm,ReturnToVm};
-            let sq_functions = SQFUNCTIONS.#script_vm_func.wait();
+            let sq_functions = SQFUNCTIONS.from_sqvm(sqvm);
 
             #(#sub_stms)*
 
-            fn inner_function( sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM, sq_functions: &SquirrelFunctions #(, #input_vec)* ) #output {
+            fn inner_function( sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM, sq_functions: &'static SquirrelFunctions #(, #input_vec)* ) #output {
                 #(#stmts)*
             }
 
@@ -188,8 +188,9 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         #(#attrs)*
-        #vis fn #ident () -> rrplug::high::northstar::SQFuncInfo {
+        #vis fn #ident () -> rrplug::mid::squirrel::SQFuncInfo {
             use rrplug::high::squirrel_traits::SQVMName;
+            use rrplug::mid::squirrel::SQFunctionContext;
 
             let mut types = String::new();
             #(
@@ -202,12 +203,12 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                 types.push_str(stringify!(#input_var_names));
             )*
 
-            rrplug::high::northstar::SQFuncInfo{
+            rrplug::mid::squirrel::SQFuncInfo {
                 cpp_func_name: #func_name,
                 sq_func_name: #export_name,
                 types: types,
                 return_type: <#out as SQVMName>::get_sqvm_name(),
-                vm: ScriptVmType::#script_vm_type,
+                vm: #script_vm,
                 function: Some( #sq_functions_func ),
             }
         }
@@ -345,7 +346,6 @@ pub fn completion(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 #(#stmts)*
             }
 
-            
             _ = inner_function(current, &mut suggestions);
 
             suggestions.commands_used()

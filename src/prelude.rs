@@ -9,8 +9,7 @@ pub use crate::{
     high::{
         concommands::CCommandResult,
         convars::{ConVarRegister, ConVarStruct},
-        engine::EngineData,
-        northstar::ScriptVmType,
+        engine::{EngineData, EngineGlobal, EngineToken},
         squirrel::{register_sq_functions, CSquirrelVMHandle},
         vector::Vector3,
     },

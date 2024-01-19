@@ -6,17 +6,19 @@
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove later
 
-use std::{ffi::CStr, mem::MaybeUninit};
+use std::{cell::RefCell, ffi::CStr, mem::MaybeUninit};
 
 use once_cell::sync::OnceCell;
 
 use crate::{
     bindings::{
-        squirreldatatypes::{HSquirrelVM, SQClosure, SQObject},
+        squirrelclasstypes::{SQFunction, ScriptContext},
+        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
         squirrelfunctions::SquirrelFunctions,
     },
     errors::CallError,
     high::{
+        engine::EngineGlobal,
         squirrel::SQHandle,
         squirrel_traits::{GetFromSQObject, PushToSquirrelVm},
         vector::Vector3,
@@ -32,6 +34,13 @@ pub static SQFUNCTIONS: SqFunctions = SqFunctions {
     server: OnceCell::new(),
 };
 
+pub static SQVM_SERVER: EngineGlobal<RefCell<Option<*mut HSquirrelVM>>> =
+    EngineGlobal::new(RefCell::new(None));
+pub static SQVM_UI: EngineGlobal<RefCell<Option<*mut HSquirrelVM>>> =
+    EngineGlobal::new(RefCell::new(None));
+pub static SQVM_CLIENT: EngineGlobal<RefCell<Option<*mut HSquirrelVM>>> =
+    EngineGlobal::new(RefCell::new(None));
+
 /// functions that are used to interact with the sqvm
 ///
 /// client functions are both for ui and client vms
@@ -43,18 +52,74 @@ pub struct SqFunctions {
     pub server: OnceCell<SquirrelFunctions>,
 }
 
-// maybe this will work in the future
-// const fn get_sq_function<const T: i8>() -> &'static OnceCell<SquirrelFunctionsUnwraped> {
-//     const SERVER: i8 = ScriptVmType::Server as i8;
-//     const CLIENT: i8 = ScriptVmType::Client as i8;
-//     const UI: i8 = ScriptVmType::Ui as i8;
-//     match T {
-//         SERVER => &SQFUNCTIONS.server,
-//         CLIENT => &SQFUNCTIONS.client,
-//         UI => &SQFUNCTIONS.client,
-//         _ => unreachable!(),
-//     }
-// }
+impl SqFunctions {
+    pub fn from_sqvm(&'static self, sqvm: *mut HSquirrelVM) -> &'static SquirrelFunctions {
+        self.from_cssqvm(unsafe { (*(*sqvm).sharedState).cSquirrelVM })
+    }
+    pub fn from_cssqvm(&'static self, sqvm: *mut CSquirrelVM) -> &'static SquirrelFunctions {
+        const SERVER: i32 = ScriptContext::SERVER as i32;
+        const CLIENT: i32 = ScriptContext::CLIENT as i32;
+        const UI: i32 = ScriptContext::UI as i32;
+
+        match unsafe { (*(sqvm)).vmContext } {
+            SERVER => self.server.wait(),
+            CLIENT | UI => self.client.wait(),
+            _ => {
+                #[cfg(not(debug_assertions))]
+                unreachable!();
+                #[cfg(debug_assertions)]
+                panic!("vmContext was somehow something other than the valid vms");
+            }
+        }
+    }
+}
+
+/// function type which is used in `register_sq_functions` to get [`SQFuncInfo`]
+pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
+
+/// holds infomation about a sq function for it to be registered corretly
+///
+/// it creates a native closure btw but sqfunction is also a valid name for it.
+/// sqfunction is used in a lot of places with diffrent meanings `¯\_(ツ)_/¯`
+#[derive(Debug, PartialEq, Eq)]
+pub struct SQFuncInfo {
+    /// the name used in source code
+    pub cpp_func_name: &'static str,
+    /// name of the defined
+    pub sq_func_name: &'static str,
+    /// the arguments of the function in squirrel form
+    ///
+    /// # Example
+    /// ```
+    /// let types = "string name, int id";
+    /// ```
+    pub types: String,
+    /// the return value of the function in squirrel form
+    pub return_type: String,
+    /// the which vm should be used to register the function on
+    pub vm: SQFunctionContext,
+    /// the actual function pointer
+    pub function: SQFunction,
+}
+
+bitflags::bitflags! {
+    #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
+    pub struct SQFunctionContext: u32 {
+        const SERVER = 0b001;
+        const CLIENT = 0b010;
+        const UI = 0b100;
+    }
+}
+
+impl SQFunctionContext {
+    pub fn contains_context(&self, context: ScriptContext) -> bool {
+        match context {
+            ScriptContext::SERVER => self.contains(Self::SERVER),
+            ScriptContext::CLIENT => self.contains(Self::CLIENT),
+            ScriptContext::UI => self.contains(Self::UI),
+        }
+    }
+}
 
 /// pushes a `Vec<T>` to the sqvm
 #[inline]
