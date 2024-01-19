@@ -2,14 +2,15 @@
 
 pub use crate::{
     bindings::{
-        squirrelclasstypes::ScriptContext, squirreldatatypes::HSquirrelVM,
-        squirrelfunctions::SquirrelFunctions,
+        plugin_abi::PluginContext, squirrelclasstypes::ScriptContext,
+        squirreldatatypes::HSquirrelVM, squirrelfunctions::SquirrelFunctions,
     },
     entry,
     high::{
         concommands::CCommandResult,
         convars::{ConVarRegister, ConVarStruct},
         engine::{EngineData, EngineGlobal, EngineToken},
+        northstar::PluginInfo,
         squirrel::{register_sq_functions, CSquirrelVMHandle},
         vector::Vector3,
     },

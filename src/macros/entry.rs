@@ -12,6 +12,9 @@
 /// pub struct BasicPlugin;
 ///
 /// impl Plugin for BasicPlugin {
+/// const PLUGIN_INFO: PluginInfo =
+///         PluginInfo::new("test", "Testtttt", "test", PluginContext::all());
+///
 ///     fn new(reloaded: bool) -> Self {
 ///         Self {}
 ///     }
@@ -57,15 +60,23 @@ macro_rules! entry {
 
                 fn GetString(&self, prop: plugin_abi::PluginString) -> *const std::ffi::c_char {
                     match prop {
-                        plugin_abi::PluginString::Name => todo!(),
-                        plugin_abi::PluginString::LogName => todo!(),
-                        plugin_abi::PluginString::DependencyName => todo!(),
+                        plugin_abi::PluginString::Name => {
+                            $plugin::PLUGIN_INFO.get_name().as_ptr() as *const i8
+                        }
+                        plugin_abi::PluginString::LogName => {
+                            $plugin::PLUGIN_INFO.get_log_name().as_ptr() as *const i8
+                        }
+                        plugin_abi::PluginString::DependencyName => {
+                            $plugin::PLUGIN_INFO.get_dependency_name().as_ptr() as *const i8
+                        }
                     }
                 }
 
                 fn GetField(&self, prop: plugin_abi::PluginField) -> i64 {
                     match prop {
-                        plugin_abi::PluginField::Context => todo!(),
+                        plugin_abi::PluginField::Context => {
+                            $plugin::PLUGIN_INFO.get_context().bits() as i64
+                        }
                     }
                 }
             }
@@ -280,6 +291,9 @@ mod test_entry {
     pub struct Test;
 
     impl Plugin for Test {
+        const PLUGIN_INFO: PluginInfo =
+            PluginInfo::new("test", "Test   ", "test", PluginContext::all());
+
         fn new(_reloaded: bool) -> Self {
             Self {}
         }

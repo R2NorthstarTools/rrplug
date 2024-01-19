@@ -10,6 +10,7 @@ use std::any::Any;
 use crate::{
     high::{
         engine::{EngineData, EngineToken},
+        northstar::PluginInfo,
         squirrel::CSquirrelVMHandle,
     },
     mid::engine::DLLPointer,
@@ -19,6 +20,8 @@ use crate::{
 ///
 /// it is unsafe to run any titanfall engine functions on it
 pub trait Plugin: Any + Sync {
+    const PLUGIN_INFO: PluginInfo;
+
     /// init function
     ///
     /// TODO: redo docs for this about registering sq functions
