@@ -13,7 +13,7 @@
 ///
 /// impl Plugin for BasicPlugin {
 /// const PLUGIN_INFO: PluginInfo =
-///         PluginInfo::new("test", "Testttttt", "test", PluginContext::all());
+///         PluginInfo::new("test\0", "Testttttt\0", "test\0", PluginContext::all());
 ///
 ///     fn new(reloaded: bool) -> Self {
 ///         Self {}
@@ -300,7 +300,7 @@ mod test_entry {
 
     impl Plugin for Test {
         const PLUGIN_INFO: PluginInfo =
-            PluginInfo::new("test", "Testttttt", "test", PluginContext::all());
+            PluginInfo::new("test\0", "Testttttt\0", "test\0", PluginContext::all());
 
         fn new(_reloaded: bool) -> Self {
             Self {}

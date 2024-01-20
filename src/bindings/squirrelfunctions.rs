@@ -61,7 +61,7 @@ offset_functions! {
         sq_defconst = sq_defconstType where offset(0x12120);
 
         sq_compilebuffer = sq_compilebufferType where offset(0x3110);
-        sq_pushroottable = sq_pushroottableType where offset(0x5840);
+        sq_pushroottable = sq_pushroottableType where offset(0x5860);
         sq_call = sq_callType where offset(0x8650);
         sq_compilefile = sq_compilefileType where offset(0xF950);
 

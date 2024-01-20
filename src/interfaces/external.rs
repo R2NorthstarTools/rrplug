@@ -26,6 +26,7 @@ macro_rules! create_external_interface {
             }
 
             impl $crate::interfaces::external::SourceInterface for $interface_name {
+                #[inline]
                 fn get_vtable(&self) -> core::ptr::NonNull<fn()> {
                     self.vtable
                 }
@@ -44,7 +45,10 @@ macro_rules! create_external_interface {
             $(
                 $func_vis unsafe fn $name( &self, $($arg_name: $arg,)* ) -> $output {
                     use $crate::interfaces::external::SourceInterface;
-                    unsafe { (std::mem::transmute::<_,unsafe extern "C" fn($($arg),*) -> $output>(self.get_func($mod_name::Counter::$name as usize)))( $($arg_name),* ) }
+                    use std::ffi::c_void;
+                    unsafe { (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg),*) -> $output>(self.get_func($mod_name::Counter::$name as usize)))(
+                        self as *const Self as *const c_void, $($arg_name),*
+                    ) }
                 }
             )*
         }
@@ -54,6 +58,7 @@ macro_rules! create_external_interface {
 pub trait SourceInterface<Rtrn = Self> {
     fn get_vtable(&self) -> NonNull<fn()>;
 
+    #[inline]
     fn get_func(&self, index: usize) -> fn() {
         unsafe { *self.get_vtable().as_ptr().add(index) }
     }
