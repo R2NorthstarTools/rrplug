@@ -1042,7 +1042,7 @@ pub mod root {
         fMin: f32,
         bMax: bool,
         fMax: f32,
-        pCallback: *mut ::std::os::raw::c_void,
+        pCallback: FnChangeCallback_t,
     );
     extern "C" {
         #[link_name = "\u{1}?conVarRegister@@3P6AXPEAVConVar@@PEBD1H1_NM2MPEAX@ZEA"]

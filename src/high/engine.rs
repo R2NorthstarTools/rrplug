@@ -163,8 +163,12 @@ impl EngineData {
     ) -> Result<(), RegisterError> {
         use super::convars::{ConVarRegister, ConVarStruct};
 
-        let mut convar = ConVarStruct::try_new().ok_or(RegisterError::NoneResult)?;
-        let register_info = ConVarRegister::new(name, default_value, flags, help_string);
-        convar.private_register(register_info, self)
+        ConVarStruct::try_new(&ConVarRegister::new(
+            name,
+            default_value,
+            flags,
+            help_string,
+        ))
+        .map(|_| ())
     }
 }

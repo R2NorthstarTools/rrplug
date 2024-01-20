@@ -28,18 +28,17 @@
 //!         return;
 //!     };
 //!
-//!     let mut convar = ConVarStruct::try_new().unwrap(); // creates the convar struct
 //!     let register_info = ConVarRegister { // struct containing info the convar ( there is a lot of stuff )
-//!         callback: Some(cool_convar_change_callback),
 //!         ..ConVarRegister::mandatory(
 //!         "cool_convar",
-//!         "cool_convar",
+//!         "cool_default",
 //!         0,
-//!         "cool_convar",
+//!         "this is a cool convar",
 //!     )
 //!     };
-//!
-//!     convar.register(register_info).unwrap(); // register the convar
+//!    
+//!     let convar = ConVarStruct::try_new(&register_info).unwrap(); // create and register the convar
+//!     _ = COOLCONVAR.set(convar);
 //! }
 //!
 //! // to access your convar, you will have to save them into a static or in the plugin struct
@@ -185,43 +184,13 @@ pub struct ConVarStruct {
 }
 
 impl ConVarStruct {
-    /// Creates an unregistered convar
-    ///
-    /// Would only fail if something goes wrong with northstar
-    pub fn try_new() -> Option<Self> {
-        get_engine_data().map(move |engine| unsafe { Self::new(engine) })
-    }
-
-    unsafe fn new(engine: &EngineData) -> Self {
-        let convar_classes = &engine.convar;
-        unsafe {
-            let convar = SOURCE_ALLOC.alloc(Layout::new::<ConVar>()) as *mut ConVar;
-
-            addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
-                .write(convar_classes.convar_vtable);
-
-            addr_of_mut!((*convar).m_ConCommandBase.s_pConCommandBases)
-                .write(convar_classes.iconvar_vtable);
-
-            #[allow(clippy::crosspointer_transmute)] // its what c++ this->convar_malloc is
-            (convar_classes.convar_malloc)(mem::transmute(addr_of_mut!((*convar).m_pMalloc)), 0, 0);
-            // Allocate new memory for ConVar.
-
-            Self {
-                inner: &mut *convar, // no way this is invalid
-            }
-        }
-    }
-
-    /// registers a convar from [`ConVarRegister`]
+    /// creates and registers a convar from [`ConVarRegister`]
     ///
     /// this functions leaks the strings since convars live for the lifetime of the game :)
     ///
     /// # Example
     /// ```no_run
     /// # use rrplug::prelude::*;
-    ///
-    /// let mut convar = ConVarStruct::try_new().unwrap(); // creates the convar struct
     /// let register_info = ConVarRegister { // struct containing info the convar ( there is a lot of stuff )
     ///     ..ConVarRegister::mandatory(
     ///     "a_convar",
@@ -231,27 +200,38 @@ impl ConVarStruct {
     /// )
     /// };
     ///
-    /// convar.register(register_info).unwrap(); // register the convar
+    /// let convar = ConVarStruct::try_new(&register_info).unwrap(); // create and register the convar
     /// ```
-    pub fn register(&mut self, register_info: ConVarRegister) -> Result<(), RegisterError> {
-        let engine_data = get_engine_data().ok_or(RegisterError::NoneFunction)?;
-
-        self.private_register(register_info, engine_data)
+    pub fn try_new(register_info: &ConVarRegister) -> Result<Self, RegisterError> {
+        get_engine_data()
+            .map(move |engine| unsafe { Self::internal_try_new(engine, register_info) })
+            .unwrap_or_else(|| Err(RegisterError::NoneFunction))
     }
 
-    pub(crate) fn private_register(
-        &mut self,
-        register_info: ConVarRegister,
+    #[inline]
+    unsafe fn internal_try_new(
         engine_data: &EngineData,
-    ) -> Result<(), RegisterError> {
-        log::info!("Registering ConVar {}", register_info.name);
+        register_info: &ConVarRegister,
+    ) -> Result<Self, RegisterError> {
+        let convar_classes = engine_data.convar;
+        let convar = unsafe {
+            let convar = SOURCE_ALLOC.alloc(Layout::new::<ConVar>()) as *mut ConVar;
+
+            addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
+                .write(convar_classes.convar_vtable);
+
+            addr_of_mut!((*convar).m_ConCommandBase.s_pConCommandBases)
+                .write(convar_classes.iconvar_vtable);
+
+            #[allow(clippy::crosspointer_transmute)] // its what c++ this->convar_malloc is
+            (convar_classes.convar_malloc)(mem::transmute(addr_of_mut!((*convar).m_pMalloc)), 0, 0); // Allocate new memory for ConVar.
+
+            convar
+        };
 
         debug_assert!(!register_info.name.is_empty());
 
-        // the following stuff may still leak memory
-        // has to be investigated
-        // I think its safe
-        // since it should live until process termination so the os would clean it
+        // TODO: could be optimized to not allocated a cstring
 
         let name = try_cstring(&register_info.name)?.into_bytes_with_nul();
         let name_ptr =
@@ -285,8 +265,8 @@ impl ConVarStruct {
         };
 
         unsafe {
-            (engine_data.convar.convar_register)(
-                self.inner,
+            (convar_classes.convar_register)(
+                convar,
                 name_ptr as *const i8,
                 default_value_ptr as *const i8,
                 register_info.flags,
@@ -295,13 +275,17 @@ impl ConVarStruct {
                 register_info.fmin,
                 register_info.bmax,
                 register_info.fmax,
-                mem::transmute(register_info.callback),
+                register_info.callback,
             )
         }
-        Ok(())
+
+        log::info!("Registering ConVar {}", register_info.name);
+
+        Ok(Self {
+            inner: unsafe { &mut *convar }, // no way this is invalid
+        })
     }
 
-    ///
     pub fn find_convar_by_name(name: &str) -> Option<Self> {
         let name = try_cstring(name).ok()?;
 
