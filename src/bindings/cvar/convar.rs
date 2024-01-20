@@ -1032,20 +1032,18 @@ pub mod root {
             ConVar_ConVar_destructor(self)
         }
     }
-    pub type ConVarRegisterType = ::std::option::Option<
-        unsafe extern "C" fn(
-            pConVar: *mut root::ConVar,
-            pszName: *const ::std::os::raw::c_char,
-            pszDefaultValue: *const ::std::os::raw::c_char,
-            nFlags: ::std::os::raw::c_int,
-            pszHelpString: *const ::std::os::raw::c_char,
-            bMin: bool,
-            fMin: f32,
-            bMax: bool,
-            fMax: f32,
-            pCallback: *mut ::std::os::raw::c_void,
-        ),
-    >;
+    pub type ConVarRegisterType = unsafe extern "C" fn(
+        pConVar: *mut root::ConVar,
+        pszName: *const ::std::os::raw::c_char,
+        pszDefaultValue: *const ::std::os::raw::c_char,
+        nFlags: ::std::os::raw::c_int,
+        pszHelpString: *const ::std::os::raw::c_char,
+        bMin: bool,
+        fMin: f32,
+        bMax: bool,
+        fMax: f32,
+        pCallback: *mut ::std::os::raw::c_void,
+    );
     extern "C" {
         #[link_name = "\u{1}?conVarRegister@@3P6AXPEAVConVar@@PEBD1H1_NM2MPEAX@ZEA"]
         pub static mut conVarRegister: root::ConVarRegisterType;

@@ -254,26 +254,38 @@ impl ConVarStruct {
         // since it should live until process termination so the os would clean it
 
         let name = try_cstring(&register_info.name)?.into_bytes_with_nul();
-        let name_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&name)) };
+        let name_ptr =
+            unsafe {
+                SOURCE_ALLOC.alloc(Layout::array::<c_char>(name.len()).expect(
+                    "the Layout for a char array became too large : string allocation failed",
+                ))
+            };
         unsafe { name_ptr.copy_from_nonoverlapping(name.as_ptr(), name.len()) };
 
         let default_value = try_cstring(&register_info.default_value)?.into_bytes_with_nul();
-        let default_value_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&default_value)) };
+        let default_value_ptr =
+            unsafe {
+                SOURCE_ALLOC.alloc(Layout::array::<c_char>(default_value.len()).expect(
+                    "the Layout for a char array became too large : string allocation failed",
+                ))
+            };
         unsafe {
             default_value_ptr.copy_from_nonoverlapping(default_value.as_ptr(), default_value.len())
         };
 
         let help_string = try_cstring(register_info.help_string)?.into_bytes_with_nul();
-        let help_string_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&help_string)) };
+        let help_string_ptr =
+            unsafe {
+                SOURCE_ALLOC.alloc(Layout::array::<c_char>(help_string.len()).expect(
+                    "the Layout for a char array became too large : string allocation failed",
+                ))
+            };
         unsafe {
             help_string_ptr.copy_from_nonoverlapping(help_string.as_ptr(), help_string.len())
         };
 
         unsafe {
-            (engine_data
-                .convar
-                .convar_register
-                .ok_or(RegisterError::NoneFunction)?)(
+            (engine_data.convar.convar_register)(
                 self.inner,
                 name_ptr as *const i8,
                 default_value_ptr as *const i8,

@@ -1,5 +1,8 @@
 //! minimal abstraction for concommands
-use std::alloc::{GlobalAlloc, Layout};
+use std::{
+    alloc::{GlobalAlloc, Layout},
+    ffi::c_char,
+};
 
 use crate::{
     bindings::cvar::{
@@ -31,11 +34,21 @@ impl RegisterConCommands {
     ) -> Result<*mut ConCommand, RegisterError> {
         // TODO: use IMemAlloc here
         let name = try_cstring(name)?.into_bytes_with_nul();
-        let name_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&name)) };
+        let name_ptr =
+            unsafe {
+                SOURCE_ALLOC.alloc(Layout::array::<c_char>(name.len()).expect(
+                    "the Layout for a char array became too large : string allocation failed",
+                ))
+            };
         unsafe { name_ptr.copy_from_nonoverlapping(name.as_ptr(), name.len()) };
 
         let help_string = try_cstring(help_string)?.into_bytes_with_nul();
-        let help_string_ptr = unsafe { SOURCE_ALLOC.alloc(Layout::for_value(&help_string)) };
+        let help_string_ptr =
+            unsafe {
+                SOURCE_ALLOC.alloc(Layout::array::<c_char>(help_string.len()).expect(
+                    "the Layout for a char array became too large : string allocation failed",
+                ))
+            };
         unsafe {
             help_string_ptr.copy_from_nonoverlapping(help_string.as_ptr(), help_string.len())
         };

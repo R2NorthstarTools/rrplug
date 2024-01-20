@@ -17,10 +17,10 @@ use super::utils::try_cstring;
 
 offset_functions! {
     CVAR_GLOBALS + CvarGlobals for WhichDll::Engine => {
-        convar_vtable = *mut c_void where offset(0x67FD28);
-        convar_register = ConVarRegisterType where offset(0x67FD28);
+        convar_vtable = *mut c_void where offset(0x415C20);
+        convar_register = ConVarRegisterType where offset(0x417230);
         iconvar_vtable = *mut ConCommandBase where offset(0x67FD28);
-        convar_malloc = ConVarMallocType where offset(0x67FD28);
+        convar_malloc = ConVarMallocType where offset(0x415C20);
     }
 }
 
