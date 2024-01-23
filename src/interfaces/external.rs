@@ -10,6 +10,8 @@ use windows::{
 
 use crate::{bindings::plugin_abi::CreateInterface, mid::utils::try_cstring};
 
+// TODO: impl Sync and Send for interfaces since they are unsafe the reponsibility falls on the user to mamnage from where they are called and some are thread safe
+
 #[macro_export]
 macro_rules! create_external_interface {
     { $struct_vis:vis $interface_name:ident + $mod_name:ident => {$($func_vis:vis fn $name:ident( $( $arg_name:ident : $arg:ty),*) -> $output:ty );*;}} => {

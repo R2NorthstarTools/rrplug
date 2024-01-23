@@ -28,7 +28,7 @@ offset_functions! {
 
         sq_raiseerror = sq_raiseerrorType where offset(0x8440);
 
-        sq_getstring = sq_getstringType where offset(0x5840);
+        sq_getstring = sq_getstringType where offset(0x60A0);
         sq_getinteger = sq_getintegerType where offset(0x60C0);
         sq_getfloat = sq_getfloatType where offset(0x60E0);
         sq_getbool = sq_getboolType where offset(0x6110);

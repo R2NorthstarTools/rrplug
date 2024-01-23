@@ -43,16 +43,16 @@ impl CSquirrelVMHandle {
     ) -> Self {
         unsafe {
             match (context, is_being_dropped) {
-                (ScriptContext::SERVER, true) => {
+                (ScriptContext::SERVER, false) => {
                     _ = SQVM_SERVER.get(token).replace(Some((*handle).sqvm))
                 }
-                (ScriptContext::SERVER, false) => _ = SQVM_SERVER.get(token).replace(None),
-                (ScriptContext::CLIENT, true) => {
+                (ScriptContext::SERVER, true) => _ = SQVM_SERVER.get(token).replace(None),
+                (ScriptContext::CLIENT, false) => {
                     _ = SQVM_CLIENT.get(token).replace(Some((*handle).sqvm))
                 }
-                (ScriptContext::CLIENT, false) => _ = SQVM_CLIENT.get(token).replace(None),
-                (ScriptContext::UI, true) => _ = SQVM_UI.get(token).replace(Some((*handle).sqvm)),
-                (ScriptContext::UI, false) => _ = SQVM_UI.get(token).replace(None),
+                (ScriptContext::CLIENT, true) => _ = SQVM_CLIENT.get(token).replace(None),
+                (ScriptContext::UI, false) => _ = SQVM_UI.get(token).replace(Some((*handle).sqvm)),
+                (ScriptContext::UI, true) => _ = SQVM_UI.get(token).replace(None),
             }
         }
         Self {

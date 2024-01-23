@@ -10,11 +10,11 @@ pub mod squirrel;
 pub mod squirrel_traits;
 pub mod vector;
 
-#[cfg(feature = "async_engine ")]
+#[cfg(feature = "async_engine")]
 pub mod engine_sync;
 
 #[doc(hidden)]
-#[cfg(not(feature = "async_engine "))]
+#[cfg(not(feature = "async_engine"))]
 pub mod engine_sync {
     #[doc(hidden)]
     #[inline(always)]

@@ -41,3 +41,8 @@ pub unsafe fn register_interface<T: Send + Sync + 'static + AsInterface>(
         UnsafeHandle::internal_new(Box::leak(Box::new(interface)) as *const _ as *const c_void),
     );
 }
+
+// TODO: implement this
+// pub unsafe fn get_local(
+
+// )

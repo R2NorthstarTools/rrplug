@@ -25,5 +25,4 @@ default-target = "x86_64-pc-windows-msvc"
 targets = ["x86_64-pc-windows-msvc"]
 
 [features]
-default = []
 async_engine = []

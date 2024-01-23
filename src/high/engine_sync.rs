@@ -162,6 +162,8 @@ macro_rules! into_squirrel_args_impl{
     )* }
 }
 
+// TODO: add single parameter
+
 into_squirrel_args_impl! {
     (T1: 0);
     (T1: 0, T2: 1);

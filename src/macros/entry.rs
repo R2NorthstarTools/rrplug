@@ -32,6 +32,7 @@ macro_rules! entry {
         pub(crate) use exports::PLUGIN;
         #[doc(hidden)]
         pub(crate) mod exports {
+            #![allow(non_snake_case)]
             use super::$plugin;
 
             use high::engine::EngineData;
