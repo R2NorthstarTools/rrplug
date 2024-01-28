@@ -66,8 +66,15 @@ impl SqFunctions {
 
     #[doc(hidden)]
     pub fn try_init(&self) -> Option<()> {
-        self.client.set(SQUIRREL_CLIENT_FUNCS.wait().into()).ok()?;
-        self.server.set(SQUIRREL_SERVER_FUNCS.wait().into()).ok()?;
+        self.server
+            .set(
+                SQUIRREL_SERVER_FUNCS
+                    .get()
+                    .expect("server functions have to always be present!")
+                    .into(),
+            )
+            .ok()?;
+        self.client.set(SQUIRREL_CLIENT_FUNCS.get()?.into()).ok()?; // client functions can be absent on dedicated servers
 
         None
     }
