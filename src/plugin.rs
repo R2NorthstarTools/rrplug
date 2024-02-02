@@ -13,7 +13,7 @@ use crate::{
         northstar::PluginInfo,
         squirrel::CSquirrelVMHandle,
     },
-    mid::engine::DLLPointer,
+    mid::{engine::DLLPointer, reloading},
 };
 
 /// Trait for defining the callbacks and entry point of the plugin
@@ -57,4 +57,11 @@ pub trait Plugin: Any + Sync {
 
     /// called on each engine frame (runs on the titanfall 2 thread ofc lol)
     fn runframe(&self, _engine_token: EngineToken) {}
+
+    /// called before the plugin is unloaded
+    ///
+    /// the plugin can deny to unload itself to prevent ub if reloaded
+    fn on_reload_request(&self) -> reloading::ReloadResponse {
+        reloading::ReloadResponse::deny_reload()
+    }
 }

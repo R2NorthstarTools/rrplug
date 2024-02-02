@@ -115,8 +115,8 @@ macro_rules! entry {
                 fn Finalize(&self) {
                     PLUGIN.wait().plugins_loaded()
                 }
-                const fn Unload(&self) -> bool {
-                    false // TODO: add this to Plugin
+                fn Unload(&self) -> bool {
+                    PLUGIN.wait().on_reload_request().should_reload()
                 }
                 fn OnSqvmCreated(&self, sqvm: *mut squirreldatatypes::CSquirrelVM) {
                     _ = mid::squirrel::SQFUNCTIONS.try_init();

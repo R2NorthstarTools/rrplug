@@ -1,5 +1,7 @@
 //! prelude for rrplug
 
+// TODO: add whole modules instead of normal stuff
+
 pub use crate::{
     bindings::{
         plugin_abi::PluginContext, squirrelclasstypes::ScriptContext,
@@ -16,6 +18,7 @@ pub use crate::{
     },
     mid::{
         engine::{DLLPointer, WhichDll},
+        reloading,
         squirrel::SQFUNCTIONS,
     },
     plugin::Plugin,
