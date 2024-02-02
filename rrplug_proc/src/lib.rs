@@ -179,6 +179,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             #(#sub_stms)*
 
             fn inner_function( sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM, sq_functions: &'static SquirrelFunctions #(, #input_vec)* ) #output {
+                let engine_token = unsafe { rrplug::high::engine::EngineToken::new_unchecked() };
                 #(#stmts)*
             }
 
@@ -258,6 +259,7 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #(#attrs)*
         #vis unsafe extern "C" fn #ident (ccommand: *const rrplug::bindings::cvar::command::CCommand) {
             fn inner_function ( #input ) #output {
+                let engine_token = unsafe { rrplug::high::engine::EngineToken::new_unchecked() };
                 #(#stmts)*
             }
 
@@ -341,6 +343,7 @@ pub fn completion(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 
             fn inner_function ( #ident1 : rrplug::high::concommands::CurrentCommand, #ident2: &mut rrplug::high::concommands::CommandCompletion ) #output {
+                let engine_token = unsafe { rrplug::high::engine::EngineToken::new_unchecked() };
                 #(#stmts)*
             }
 
@@ -399,6 +402,7 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
             float_old_value: f32
         ) {
             fn inner_function ( #input ) #output {
+                let engine_token = unsafe { rrplug::high::engine::EngineToken::new_unchecked() };
                 #(#stmts)*
             }
 

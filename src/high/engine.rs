@@ -24,11 +24,13 @@ use super::UnsafeHandle;
 #[doc(hidden)]
 pub static CALLED_DLLS: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
+/// a ZST marker to provided a invariance to safe and unsafe apis of rrplug of running on engine threads
 #[derive(Debug, Clone, Copy)]
 pub struct EngineToken(PhantomData<*mut UnsafeCell<()>>);
 
 impl EngineToken {
     /// this is a super expensive operation that checks if this is the engine thread
+    #[doc(hidden)]
     pub fn try_new() -> Option<Self> {
         // TODO: finish this
         todo!()
@@ -47,6 +49,7 @@ impl EngineToken {
     }
 }
 
+/// struct that guarantees that a value will only be accessed on the engine thread using [`EngineToken `]
 pub struct EngineGlobal<T>(UnsafeHandle<T>);
 
 impl<T> EngineGlobal<T> {
@@ -107,7 +110,8 @@ impl EngineData {
     /// # use rrplug::errors::RegisterError;
     /// # use rrplug::prelude::*;
     /// # let engine = get_engine_data().unwrap();
-    /// engine.register_concommand("cool_command", cool_command, "this is cool_command", 0).expect("failed to register cool_command");
+    /// # let engine_token = unsafe { EngineToken::new_unchecked() };
+    /// engine.register_concommand("cool_command", cool_command, "this is cool_command", 0, engine_token).expect("failed to register cool_command");
     ///
     /// #[rrplug::concommand]
     /// fn cool_command() {
@@ -120,6 +124,7 @@ impl EngineData {
         callback: unsafe extern "C" fn(arg1: *const CCommand),
         help_string: impl AsRef<str>,
         flags: i32,
+        _: EngineToken,
     ) -> Result<*mut ConCommand, RegisterError> {
         let name = name.as_ref();
         log::info!("Registering ConCommand {}", name);
@@ -138,6 +143,7 @@ impl EngineData {
             arg1: *const ::std::os::raw::c_char,
             arg2: *mut [::std::os::raw::c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize],
         ) -> ::std::os::raw::c_int,
+        _: EngineToken,
     ) -> Result<*mut ConCommand, RegisterError> {
         let name = name.as_ref();
         log::info!("Registering ConCommand {} with completion", name);
@@ -160,15 +166,31 @@ impl EngineData {
         default_value: impl Into<String>,
         help_string: &'static str,
         flags: i32,
+        token: EngineToken,
     ) -> Result<(), RegisterError> {
         use super::convars::{ConVarRegister, ConVarStruct};
 
-        ConVarStruct::try_new(&ConVarRegister::new(
-            name,
-            default_value,
-            flags,
-            help_string,
-        ))
+        ConVarStruct::try_new(
+            &ConVarRegister::new(name, default_value, flags, help_string),
+            token,
+        )
         .map(|_| ())
     }
+}
+
+// hacky way to test compile failure
+
+#[cfg(doctest)]
+mod doctest {
+    #![allow(unused)]
+    use super::*;
+
+    /// ```compile_fail
+    /// use super::*;
+    /// let engine_token = unsafe { EngineToken::new_unchecked() };
+    /// #[allow(unused)]
+    /// std::thread::spawn(move || {let e = engine_token; panic!()} );
+    /// _ = engine_token;
+    /// ```
+    const fn test_engine_token() {}
 }

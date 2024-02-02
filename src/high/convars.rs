@@ -23,7 +23,7 @@
 //! use rrplug::exports::OnceCell; // just as a example
 //!
 //! // inside Plugin impl
-//! fn on_engine_load(engine_data: Option<&EngineData>, _dll_ptr: &DLLPointer) {
+//! fn on_engine_load(engine_data: Option<&EngineData>, _dll_ptr: &DLLPointer, engine_token: EngineToken) {
 //!     let Some(_) = engine_data else {
 //!         return;
 //!     };
@@ -37,7 +37,7 @@
 //!     )
 //!     };
 //!    
-//!     let convar = ConVarStruct::try_new(&register_info).unwrap(); // create and register the convar
+//!     let convar = ConVarStruct::try_new(&register_info, engine_token).unwrap(); // create and register the convar
 //!     _ = COOLCONVAR.set(convar);
 //! }
 //!
@@ -51,13 +51,14 @@
 //!     let convar = COOLCONVAR.wait();
 //!
 //!     log::info!("convar name: {}", convar.get_name());
-//!     log::info!("new value: {}", convar.get_value().value.unwrap());
+//!     log::info!("new value: {}", convar.get_value().value);
 //!     log::info!("old value: {}", old_value)
 //! }
 //! ```
 
 use std::{
     alloc::{GlobalAlloc, Layout},
+    borrow::Cow,
     ffi::{c_char, CStr},
     mem,
     ptr::addr_of_mut,
@@ -72,17 +73,18 @@ use crate::{
         source_alloc::SOURCE_ALLOC,
         utils::{to_cstring, try_cstring},
     },
+    prelude::EngineToken,
 };
 
 /// the state of the convar in all of its possible types
 ///
 /// values are always valid
 #[derive(Debug, PartialEq)]
-pub struct ConVarValues<'a> {
+pub struct ConVarValues {
     /// string value
     ///
     /// the strings should always be valid utf8
-    pub value: Result<&'a str, CStringPtrError>,
+    pub value: String,
     /// float value
     pub value_float: f32,
     ///
@@ -191,6 +193,7 @@ impl ConVarStruct {
     /// # Example
     /// ```no_run
     /// # use rrplug::prelude::*;
+    /// # let engine_token = unsafe { EngineToken::new_unchecked() };
     /// let register_info = ConVarRegister { // struct containing info the convar ( there is a lot of stuff )
     ///     ..ConVarRegister::mandatory(
     ///     "a_convar",
@@ -200,9 +203,9 @@ impl ConVarStruct {
     /// )
     /// };
     ///
-    /// let convar = ConVarStruct::try_new(&register_info).unwrap(); // create and register the convar
+    /// let convar = ConVarStruct::try_new(&register_info, engine_token).unwrap(); // create and register the convar
     /// ```
-    pub fn try_new(register_info: &ConVarRegister) -> Result<Self, RegisterError> {
+    pub fn try_new(register_info: &ConVarRegister, _: EngineToken) -> Result<Self, RegisterError> {
         get_engine_data()
             .map(move |engine| unsafe { Self::internal_try_new(engine, register_info) })
             .unwrap_or_else(|| Err(RegisterError::NoneFunction))
@@ -286,7 +289,7 @@ impl ConVarStruct {
         })
     }
 
-    pub fn find_convar_by_name(name: &str) -> Option<Self> {
+    pub fn find_convar_by_name(name: &str, _: EngineToken) -> Option<Self> {
         let name = try_cstring(name).ok()?;
 
         Some(Self {
@@ -301,8 +304,6 @@ impl ConVarStruct {
     }
 
     /// get the name of the convar
-    ///
-    /// only really safe on the titanfall thread
     pub fn get_name(&self) -> String {
         unsafe {
             CStr::from_ptr(self.inner.m_ConCommandBase.m_pszName)
@@ -312,8 +313,6 @@ impl ConVarStruct {
     }
 
     /// get the value inside the convar
-    ///
-    /// only safe on the titanfall thread
     pub fn get_value(&self) -> ConVarValues {
         unsafe {
             let value = &self.inner.m_Value;
@@ -325,10 +324,10 @@ impl ConVarStruct {
                         .expect("supposed to always work"),
                 ) {
                 CStr::from_ptr(value.m_pszString)
-                    .to_str()
-                    .map_err(|err| err.into())
+                    .to_string_lossy()
+                    .to_string()
             } else {
-                Err(CStringPtrError::None)
+                "".to_string()
             };
 
             ConVarValues {
@@ -339,12 +338,7 @@ impl ConVarStruct {
         }
     }
 
-    // add a real String version
-
-    /// get the value as a string
-    ///
-    /// only safe on the titanfall thread
-    pub fn get_value_string(&self) -> Result<&str, CStringPtrError> {
+    pub fn get_value_c_str(&self) -> Option<&CStr> {
         unsafe {
             let value = &self.inner.m_Value;
 
@@ -355,43 +349,61 @@ impl ConVarStruct {
                         .expect("supposed to always work"),
                 )
             {
-                return Err(CStringPtrError::None);
+                return None;
             }
 
-            CStr::from_ptr(value.m_pszString)
-                .to_str()
-                .map_err(|err| err.into())
+            Some(CStr::from_ptr(value.m_pszString))
         }
     }
 
-    /// get the value as a i32
+    /// get the value as a cow string which will be a owned value if the string in the convar is not a utf-8 string
+    /// or if the string was invalid
+    pub fn get_value_cow(&self) -> Cow<str> {
+        self.get_value_c_str()
+            .map(|cstr| cstr.to_string_lossy())
+            .unwrap_or_default()
+    }
+
+    /// get the value as a string
+    pub fn get_value_string(&self) -> String {
+        self.get_value_cow().to_string()
+    }
+
+    /// Returns the a [`str`] reprensentation of the [`ConVarStruct`] value.
     ///
-    /// only safe on the titanfall thread
+    /// # Errors
+    ///
+    /// This function will return an error if the string is invalid, if it's not utf-8 valid or if the convar can't be a string.
+    pub fn get_value_str(&self) -> Result<&str, CStringPtrError> {
+        self.get_value_c_str()
+            .ok_or(CStringPtrError::None)?
+            .to_str()
+            .map_err(|err| err.into())
+    }
+
+    /// get the value as a i32
     pub fn get_value_i32(&self) -> i32 {
         self.inner.m_Value.m_nValue
     }
 
     /// get the value as a bool
-    ///
-    /// only safe on the titanfall thread
     pub fn get_value_bool(&self) -> bool {
         self.inner.m_Value.m_nValue != 0
     }
 
     /// get the value as a f32
-    ///
-    /// only safe on the titanfall thread
     pub fn get_value_f32(&self) -> f32 {
         self.inner.m_Value.m_fValue
     }
 
-    // todo: add exclusive access set_value s aka &mut self
+    // TODO: add exclusive access set_value s aka &mut self
+    // this really should not be a &self
 
     /// set the int value of the convar
     /// also sets float and string
     ///
     /// only safe on the titanfall thread
-    pub fn set_value_i32(&self, new_value: i32) {
+    pub fn set_value_i32(&self, new_value: i32, _: EngineToken) {
         unsafe {
             let value = &self.inner.m_Value;
 
@@ -414,7 +426,7 @@ impl ConVarStruct {
     /// also sets int and string
     ///
     /// only safe on the titanfall thread
-    pub fn set_value_f32(&self, new_value: f32) {
+    pub fn set_value_f32(&self, new_value: f32, _: EngineToken) {
         unsafe {
             let value = &self.inner.m_Value;
 
@@ -436,7 +448,7 @@ impl ConVarStruct {
     /// set the string value of the convar
     ///
     /// only safe on the titanfall thread
-    pub fn set_value_string(&self, new_value: impl AsRef<str>) {
+    pub fn set_value_string(&self, new_value: impl AsRef<str>, _: EngineToken) {
         unsafe {
             if self.has_flags(FCVAR_NEVER_AS_STRING.try_into().unwrap()) {
                 return;
@@ -455,38 +467,30 @@ impl ConVarStruct {
     }
 
     /// fr why would you need this?
-    ///
-    /// only safe on the titanfall thread
     pub fn get_help_text(&self) -> String {
         let help = self.inner.m_ConCommandBase.m_pszHelpString;
         unsafe { CStr::from_ptr(help).to_string_lossy().to_string() }
     }
 
     /// returns [`true`] if the convar is registered
-    ///
-    /// only safe on the titanfall thread
     pub fn is_registered(&self) -> bool {
         self.inner.m_ConCommandBase.m_bRegistered
     }
 
     /// returns [`true`] if the given flags are set for this convar
-    ///
-    /// only safe on the titanfall thread
     pub fn has_flags(&self, flags: i32) -> bool {
         self.inner.m_ConCommandBase.m_nFlags & flags != 0
     }
 
     /// adds flags to the convar
-    ///
-    /// only safe on the titanfall thread
-    pub fn add_flags(&mut self, flags: i32) {
+    pub fn add_flags(&mut self, flags: i32, _: EngineToken) {
         self.inner.m_ConCommandBase.m_nFlags |= flags
     }
 
     /// removes flags from the convar
     ///
     /// only safe on the titanfall thread
-    pub fn remove_flags(&mut self, flags: i32) {
+    pub fn remove_flags(&mut self, flags: i32, _: EngineToken) {
         self.inner.m_ConCommandBase.m_nFlags &= !flags // TODO: figure out if this still needs fixing
     }
 
