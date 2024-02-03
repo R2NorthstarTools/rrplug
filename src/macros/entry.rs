@@ -227,10 +227,13 @@ macro_rules! entry {
                     );
 
                     unsafe {
-                        mid::convars::CvarGlobals::try_init(&dll_ptr, &mid::convars::CVAR_GLOBALS);
-                        mid::concommands::RegisterConCommands::try_init(
+                        mid::engine::convars::CvarGlobals::try_init(
                             &dll_ptr,
-                            &mid::concommands::REGISTER_CONCOMNMADS,
+                            &mid::engine::convars::CVAR_GLOBALS,
+                        );
+                        mid::engine::concommands::RegisterConCommands::try_init(
+                            &dll_ptr,
+                            &mid::engine::concommands::REGISTER_CONCOMNMADS,
                         );
                     }
                     mid::squirrel::SQFUNCTIONS.fetch_functions(&dll_ptr);

@@ -9,14 +9,18 @@ pub use crate::{
     },
     entry,
     high::{
-        concommands::CCommandResult,
-        convars::{ConVarRegister, ConVarStruct},
-        engine::{EngineData, EngineGlobal, EngineToken},
+        self,
+        engine::{
+            concommands::CCommandResult,
+            convars::{ConVarRegister, ConVarStruct},
+            EngineData, EngineGlobal, EngineToken,
+        },
         northstar::PluginInfo,
         squirrel::{register_sq_functions, CSquirrelVMHandle},
         vector::Vector3,
     },
     mid::{
+        self,
         engine::{DLLPointer, WhichDll},
         reloading,
         squirrel::SQFUNCTIONS,

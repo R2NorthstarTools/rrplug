@@ -1,10 +1,12 @@
 //! engine related stuff with minimal abstractions
+use once_cell::sync::OnceCell;
 use std::ffi::c_void;
 
-use once_cell::sync::OnceCell;
-
-use super::{concommands::RegisterConCommands, convars::CvarGlobals};
+use self::{concommands::RegisterConCommands, convars::CvarGlobals};
 use crate::{bindings::cvar::RawCVar, high::engine::EngineData};
+
+pub mod concommands;
+pub mod convars;
 
 /// used to create to ConVars and ConComands
 ///

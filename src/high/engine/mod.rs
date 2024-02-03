@@ -3,8 +3,9 @@
 use parking_lot::Mutex;
 use std::{cell::UnsafeCell, marker::PhantomData};
 
-#[cfg(doc)]
-use crate::high::convars::ConVarStruct;
+pub mod concommands;
+pub mod convars;
+
 use crate::{
     bindings::cvar::{
         command::{CCommand, ConCommand},
@@ -12,11 +13,13 @@ use crate::{
         RawCVar,
     },
     errors::RegisterError,
-    mid::{
+    mid::engine::{
         concommands::{RegisterConCommands, REGISTER_CONCOMNMADS},
         convars::{CvarGlobals, CVAR_GLOBALS},
     },
 };
+#[cfg(doc)]
+use convars::ConVarStruct;
 
 use super::UnsafeHandle;
 
@@ -168,7 +171,7 @@ impl EngineData {
         flags: i32,
         token: EngineToken,
     ) -> Result<(), RegisterError> {
-        use super::convars::{ConVarRegister, ConVarStruct};
+        use self::convars::{ConVarRegister, ConVarStruct};
 
         ConVarStruct::try_new(
             &ConVarRegister::new(name, default_value, flags, help_string),

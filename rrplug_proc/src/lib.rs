@@ -243,7 +243,7 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let inner_call = if input.iter().count() != 0 {
         quote! {
-            let ccommand = rrplug::high::concommands::CCommandResult::new(ccommand);
+            let ccommand = rrplug::high::engine::concommands::CCommandResult::new(ccommand);
 
             _ = inner_function(ccommand);
         }
@@ -338,11 +338,11 @@ pub fn completion(_attr: TokenStream, item: TokenStream) -> TokenStream {
             partial: *const std::ffi::c_char,
             commands: *mut [std::ffi::c_char;rrplug::bindings::cvar::convar::COMMAND_COMPLETION_ITEM_LENGTH as usize],
         ) -> i32 {
-            let current = rrplug::high::concommands::CurrentCommand::new(partial).unwrap();
-            let mut suggestions = rrplug::high::concommands::CommandCompletion::from(commands);
+            let current = rrplug::high::engine::concommands::CurrentCommand::new(partial).unwrap();
+            let mut suggestions = rrplug::high::engine::concommands::CommandCompletion::from(commands);
 
 
-            fn inner_function ( #ident1 : rrplug::high::concommands::CurrentCommand, #ident2: &mut rrplug::high::concommands::CommandCompletion ) #output {
+            fn inner_function ( #ident1 : rrplug::high::engine::concommands::CurrentCommand, #ident2: &mut rrplug::high::engine::concommands::CommandCompletion ) #output {
                 let engine_token = unsafe { rrplug::high::engine::EngineToken::new_unchecked() };
                 #(#stmts)*
             }

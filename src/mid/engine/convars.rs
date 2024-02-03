@@ -2,18 +2,17 @@
 
 use std::ffi::c_void;
 
-use crate::errors::CVarQueryError;
+use super::get_engine_data;
 use crate::{
     bindings::cvar::{
         command::ConCommandBase,
         convar::{ConVar, ConVarMallocType, ConVarRegisterType},
         RawCVar,
     },
+    errors::CVarQueryError,
+    mid::utils::try_cstring,
     offset_functions,
 };
-
-use super::engine::get_engine_data;
-use super::utils::try_cstring;
 
 offset_functions! {
     CVAR_GLOBALS + CvarGlobals for WhichDll::Engine => {
@@ -29,7 +28,7 @@ offset_functions! {
 /// # Example
 /// ```no_run
 /// # use rrplug::mid::engine::get_engine_data;
-/// # use rrplug::mid::convars::find_convar_with_cvar;
+/// # use rrplug::mid::engine::convars::find_convar_with_cvar;
 /// # fn sub() -> Option<()> {
 /// let convar = find_convar_with_cvar("spewlog_enable", &get_engine_data()?.get_cvar()).ok()?;
 /// # Some(())
@@ -51,7 +50,7 @@ pub fn find_convar_with_cvar(
 ///
 /// # Example
 /// ```no_run
-/// # use rrplug::mid::convars::find_convar;
+/// # use rrplug::mid::engine::convars::find_convar;
 /// # fn sub() -> Option<()> {
 /// let convar = find_convar("spewlog_enable").ok()?;
 /// # Some(())

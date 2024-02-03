@@ -13,10 +13,11 @@ use crate::{
         RawCVar,
     },
     errors::{CVarQueryError, RegisterError},
+    mid::{source_alloc::SOURCE_ALLOC, utils::try_cstring},
     offset_functions,
 };
 
-use super::{engine::get_engine_data, source_alloc::SOURCE_ALLOC, utils::try_cstring};
+use super::get_engine_data;
 
 offset_functions! {
     REGISTER_CONCOMNMADS + RegisterConCommands for WhichDll::Engine => {
@@ -107,7 +108,7 @@ pub unsafe fn add_completion_callback(
 /// # Example
 /// ```no_run
 /// # use rrplug::mid::engine::get_engine_data;
-/// # use rrplug::mid::concommands::find_concommand_with_cvar;
+/// # use rrplug::mid::engine::concommands::find_concommand_with_cvar;
 /// # fn sub() -> Option<()> {
 /// let concommand = find_concommand_with_cvar("force_newgame", &get_engine_data()?.get_cvar()).ok()?;
 /// # Some(())
@@ -129,7 +130,7 @@ pub fn find_concommand_with_cvar(
 ///
 /// # Example
 /// ```no_run
-/// # use rrplug::mid::concommands::find_concommand;
+/// # use rrplug::mid::engine::concommands::find_concommand;
 /// # fn sub() -> Option<()> {
 /// let concommand = find_concommand("force_newgame").ok()?;
 /// # Some(())
@@ -149,7 +150,7 @@ pub fn find_concommand(name: &str) -> Result<&'static mut ConCommand, CVarQueryE
 /// # Example
 /// ```no_run
 /// # use rrplug::mid::engine::get_engine_data;
-/// # use rrplug::mid::concommands::find_concommand_base_with_cvar;
+/// # use rrplug::mid::engine::concommands::find_concommand_base_with_cvar;
 /// # fn sub() -> Option<()> {
 /// let base = find_concommand_base_with_cvar("spewlog_enable", &get_engine_data()?.get_cvar()).ok()?;
 /// # Some(())
@@ -171,7 +172,7 @@ pub fn find_concommand_base_with_cvar(
 ///
 /// # Example
 /// ```no_run
-/// # use rrplug::mid::concommands::find_concommand_base;
+/// # use rrplug::mid::engine::concommands::find_concommand_base;
 /// # fn sub() -> Option<()> {
 /// let base = find_concommand_base("spewlog_enable").ok()?;
 /// # Some(())

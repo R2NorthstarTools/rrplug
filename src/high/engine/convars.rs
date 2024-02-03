@@ -64,7 +64,7 @@ use std::{
     ptr::addr_of_mut,
 };
 
-use super::engine::EngineData;
+use super::EngineData;
 use crate::{
     bindings::cvar::convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
     errors::{CStringPtrError, RegisterError},
