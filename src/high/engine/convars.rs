@@ -65,9 +65,11 @@ use std::{
 };
 
 use super::EngineData;
+#[cfg(doc)]
+use crate::bindings::cvar::RawCVar;
 use crate::{
     bindings::cvar::convar::{ConVar, FnChangeCallback_t, FCVAR_NEVER_AS_STRING},
-    errors::{CStringPtrError, RegisterError},
+    errors::{CStringPtrError, CVarQueryError, RegisterError},
     mid::{
         engine::{get_engine_data, ENGINE_DATA},
         source_alloc::SOURCE_ALLOC,
@@ -289,16 +291,23 @@ impl ConVarStruct {
         })
     }
 
-    pub fn find_convar_by_name(name: &str, _: EngineToken) -> Option<Self> {
-        let name = try_cstring(name).ok()?;
+    /// creates a [`ConVarStruct`] from the convar name by searching for it with the [`RawCVar`]
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the cvar doesn't exist
+    pub fn find_convar_by_name(name: &str, _: EngineToken) -> Result<Self, CVarQueryError> {
+        let name = try_cstring(name)?;
 
-        Some(Self {
+        Ok(Self {
             inner: unsafe {
                 ENGINE_DATA
-                    .get()?
+                    .get()
+                    .ok_or(CVarQueryError::NoCVarInterface)?
                     .cvar
                     .find_convar(name.as_ptr())
-                    .as_mut()?
+                    .as_mut()
+                    .ok_or(CVarQueryError::NotFound)?
             },
         })
     }
@@ -338,7 +347,7 @@ impl ConVarStruct {
         }
     }
 
-    pub fn get_value_c_str(&self) -> Option<&CStr> {
+    fn get_value_c_str(&self) -> Option<&CStr> {
         unsafe {
             let value = &self.inner.m_Value;
 

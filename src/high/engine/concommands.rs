@@ -54,13 +54,18 @@ pub struct CCommandResult {
     command: String,
 }
 
+/// used to track the completion suggestions and then to also output the amount
 pub struct CommandCompletion<'a> {
     suggestions: &'a mut [[i8; COMMAND_COMPLETION_ITEM_LENGTH as usize]],
     suggestions_left: u32,
 }
 
+/// holds imformation about the current completion request
 pub struct CurrentCommand<'a> {
+    /// the concommand that is being completed
     pub cmd: &'a str,
+
+    /// the arguments passed to the concommand
     pub partial: &'a str,
 }
 
@@ -123,29 +128,35 @@ impl<'a> From<*mut [c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize]> for Comman
     }
 }
 impl CommandCompletion<'_> {
+    /// tries to add a new completion string
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if all completion slots are exhausted
     pub fn push(&mut self, new: &str) -> Result<(), CompletionError> {
         if self.suggestions_left == 0 {
             return Err(CompletionError::NoCompletionSlotsLeft);
         }
 
-        unsafe {
-            set_c_char_array(
-                &mut self.suggestions
-                    [(COMMAND_COMPLETION_MAXITEMS - self.suggestions_left) as usize],
-                new,
-            )
-        };
+        set_c_char_array(
+            &mut self.suggestions[(COMMAND_COMPLETION_MAXITEMS - self.suggestions_left) as usize],
+            new,
+        );
         self.suggestions_left -= 1;
 
         Ok(())
     }
 
+    /// Returns the commands used of this [`CommandCompletion`].
+    ///
+    /// is called by the macro completion so you don't need to care about this.
     pub const fn commands_used(&self) -> i32 {
         (COMMAND_COMPLETION_MAXITEMS - self.suggestions_left) as i32
     }
 }
 
 impl CurrentCommand<'_> {
+    /// creates a new CurrenCommand from the partial string spliting it into command and args
     pub fn new(partial: *const c_char) -> Option<Self> {
         let partial = unsafe { CStr::from_ptr(partial).to_str() }.ok()?;
         let (name, cmd) = partial.split_once(' ').unwrap_or((partial, ""));

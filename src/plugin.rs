@@ -20,6 +20,7 @@ use crate::{
 ///
 /// it is unsafe to run any titanfall engine functions on it
 pub trait Plugin: Any + Sync {
+    /// info about the plugin
     const PLUGIN_INFO: PluginInfo;
 
     /// init function
@@ -53,7 +54,8 @@ pub trait Plugin: Any + Sync {
     /// using this may be a bad idea since rrplug may not be done initializing everything.
     fn on_module_load() {}
 
-    fn plugins_loaded(&self) {}
+    /// called when all plugins are loaded so this a good place to get interfaces from them
+    fn plugins_loaded(&self, _engine_token: EngineToken) {} // probably not engine thread but the engine thread doesn't even exist at his point XD
 
     /// called on each engine frame (runs on the titanfall 2 thread ofc lol)
     fn runframe(&self, _engine_token: EngineToken) {}

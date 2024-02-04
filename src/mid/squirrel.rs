@@ -39,10 +39,13 @@ pub static SQFUNCTIONS: SqFunctions = SqFunctions {
     server: OnceCell::new(),
 };
 
+/// the server sqvm
 pub static SQVM_SERVER: EngineGlobal<RefCell<Option<*mut HSquirrelVM>>> =
     EngineGlobal::new(RefCell::new(None));
+/// the ui sqvm
 pub static SQVM_UI: EngineGlobal<RefCell<Option<*mut HSquirrelVM>>> =
     EngineGlobal::new(RefCell::new(None));
+/// the client sqvm
 pub static SQVM_CLIENT: EngineGlobal<RefCell<Option<*mut HSquirrelVM>>> =
     EngineGlobal::new(RefCell::new(None));
 
@@ -79,9 +82,12 @@ impl SqFunctions {
         None
     }
 
+    /// returns [`SquirrelFunctions `] that match the squirrel vm context
     pub fn from_sqvm(&'static self, sqvm: *mut HSquirrelVM) -> &'static SquirrelFunctions {
         self.from_cssqvm(unsafe { (*(*sqvm).sharedState).cSquirrelVM })
     }
+
+    /// returns [`SquirrelFunctions `] that match the squirrel vm context
     pub fn from_cssqvm(&'static self, sqvm: *mut CSquirrelVM) -> &'static SquirrelFunctions {
         const SERVER: i32 = ScriptContext::SERVER as i32;
         const CLIENT: i32 = ScriptContext::CLIENT as i32;
@@ -129,15 +135,20 @@ pub struct SQFuncInfo {
 }
 
 bitflags::bitflags! {
+    #[doc = "the contexts for which the squirrel function would be registered"]
     #[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Ord, Eq)]
     pub struct SQFunctionContext: u32 {
+        #[doc = "server context"]
         const SERVER = 0b001;
+        #[doc = "client context"]
         const CLIENT = 0b010;
+        #[doc = "ui context"]
         const UI = 0b100;
     }
 }
 
 impl SQFunctionContext {
+    /// returns if [`SQFunctionContext`] covers a [`ScriptContext`]
     pub const fn contains_context(&self, context: ScriptContext) -> bool {
         match context {
             ScriptContext::SERVER => self.contains(Self::SERVER),

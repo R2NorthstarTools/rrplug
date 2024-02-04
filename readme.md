@@ -22,6 +22,7 @@ a git [template](https://github.com/catornot/rrplug-template) also exists but it
 rrplug had a major rewrite for each plugins version so versions that a `x` plugins version are `x.\*.\*`
 | rrplug  | plugins |
 | :-----: | :-----: |
+| `master`|  `v4`   |
 | `3.*.*` |  `v3`   |
 | `2.*.*` |  `v2`   |
 | `0.1.*` |  `v1`   |

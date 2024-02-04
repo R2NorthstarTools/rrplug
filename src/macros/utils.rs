@@ -144,6 +144,7 @@ macro_rules! impl_vmethods {
 #[macro_export]
 macro_rules! offset_functions {
     ( $static_name:ident + $struct_name:ident for $dll:expr => { $($name:ident = $t:ty where offset($addr:literal);)* } ) => {
+        #[doc = "offset_functions or smth idk this auto generated btw so no real docs here lmao"]
         pub static $static_name: $crate::exports::OnceCell<$struct_name> = $crate::exports::OnceCell::new();
 
         #[doc(hidden)]

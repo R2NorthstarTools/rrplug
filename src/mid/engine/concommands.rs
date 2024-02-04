@@ -92,7 +92,8 @@ impl RegisterConCommands {
     }
 }
 
-pub unsafe fn add_completion_callback(
+/// adds a completion function to an existing concommand
+pub fn add_completion_callback(
     command: &mut ConCommand,
     completion_callback: unsafe extern "C" fn(
         arg1: *const ::std::os::raw::c_char,

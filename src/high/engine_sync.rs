@@ -16,7 +16,6 @@ use crate::{
         squirrel::{SQFUNCTIONS, SQVM_CLIENT, SQVM_SERVER, SQVM_UI},
         utils::to_cstring,
     },
-    to_c_string,
 };
 
 use super::engine::EngineToken;

@@ -35,6 +35,7 @@ pub struct UnsafeHandle<T> {
 }
 
 impl<T> UnsafeHandle<T> {
+    #[inline]
     pub(crate) const fn internal_new(value: T) -> Self {
         Self { inner: value }
     }
@@ -42,21 +43,25 @@ impl<T> UnsafeHandle<T> {
     /// creates a new [`UnsafeHandle`]
     /// # Safety
     /// the handle should be used corretly as to not cause race conditions
+    #[inline]
     pub const unsafe fn new(value: T) -> Self {
         Self { inner: value }
     }
 
     /// returns a ref to the underlying value
+    #[inline]
     pub const fn get(&self) -> &T {
         &self.inner
     }
 
     /// returns a mut ref to the underlying value
+    #[inline]
     pub fn get_mut(&mut self) -> &mut T {
         &mut self.inner
     }
 
     /// consumes the [`UnsafeHandle`] and returns the underlying value
+    #[inline]
     pub fn take(self) -> T {
         self.inner
     }
@@ -64,6 +69,7 @@ impl<T> UnsafeHandle<T> {
 
 impl<T: Clone + Copy> UnsafeHandle<T> {
     /// copies the underlying value if it has [`Copy`]
+    #[inline]
     pub const fn copy(&self) -> T {
         self.inner
     }

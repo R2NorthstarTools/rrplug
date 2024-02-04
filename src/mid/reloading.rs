@@ -1,3 +1,6 @@
+//! rrplug's prototype of a plugin reloading system
+
+/// the reponse to a unload event
 pub struct ReloadResponse {
     should_reload: bool,
 }

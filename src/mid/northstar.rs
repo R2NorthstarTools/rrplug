@@ -10,8 +10,14 @@ use crate::{
     interfaces::external::SourceInterface,
 };
 
+/// plugin sys related stuff
+///
+/// more at [`NorthstarData`]
 pub static NORTHSTAR_DATA: OnceCell<NorthstarData> = OnceCell::new();
 
+/// plugin sys related stuff
+///
+/// has the handle for logging and the "NSSys001" interface
 pub struct NorthstarData {
     pub(crate) handle: HMODULE,
     pub(crate) sys: UnsafeHandle<&'static NorthstarSys>,
@@ -26,10 +32,13 @@ impl std::fmt::Debug for NorthstarData {
 }
 
 impl NorthstarData {
+    /// returns the "NSSys001" interface
     pub const fn sys(&self) -> &'static NorthstarSys {
         self.sys.copy()
     }
 
+    /// Returns the handle for logging system (useless).
+    /// just here if you really need it
     pub const fn handle(&self) -> HMODULE {
         self.handle
     }

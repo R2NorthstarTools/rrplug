@@ -1,3 +1,5 @@
+//! Contains logic for creating and managing interfaces
+
 pub mod external;
 pub mod interface;
 pub mod manager;

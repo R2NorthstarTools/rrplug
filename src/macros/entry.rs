@@ -113,7 +113,9 @@ macro_rules! entry {
                     }
                 }
                 fn Finalize(&self) {
-                    PLUGIN.wait().plugins_loaded()
+                    PLUGIN
+                        .wait()
+                        .plugins_loaded(unsafe { high::engine::EngineToken::new_unchecked() })
                 }
                 fn Unload(&self) -> bool {
                     PLUGIN.wait().on_reload_request().should_reload()

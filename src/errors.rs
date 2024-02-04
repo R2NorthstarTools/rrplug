@@ -29,6 +29,7 @@ impl RegisterError {
     }
 }
 
+/// Errors that may happen when querying a cvar
 #[derive(Error, Debug)]
 pub enum CVarQueryError {
     /// invalid cstring
@@ -39,6 +40,7 @@ pub enum CVarQueryError {
     #[error("the requested cvar doesn't exist")]
     NotFound,
 
+    /// happens if the cvar interface isn't init
     #[error("the cvar interface doesn't exists yet?")]
     NoCVarInterface,
 }
@@ -116,13 +118,41 @@ impl CStringPtrError {
     }
 }
 
+/// errros that can happen when using completion feature of concommands
 #[derive(Error, Debug)]
 pub enum CompletionError {
+    /// happens when completion slots are exhausted
+    ///
+    /// this happens because completion is just a 64 * 128 char buffer split into 64 chunks of 128 bytes
     #[error("no more completion slots remain")]
     NoCompletionSlotsLeft,
 }
 
 impl CompletionError {
+    /// logs the error with the builtin logger
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}
+
+/// errors that happen when acquiring external interfaces from a pointer or dll name
+#[derive(Error, Debug)]
+pub enum InterfaceGetterError<'a> {
+    /// the name of the dll or interface is not a valid cstring
+    #[error(transparent)]
+    InvalidFunctionCString(#[from] NulError),
+
+    /// an error from the win api yay
+    #[error(transparent)]
+    WinApiError(#[from] windows::core::Error),
+
+    /// happens when `CreateInterface` returns a null pointer aka the interface doesn't exists
+    #[error("{0} wasn't found in the module; check the name or dll name")]
+    InterfaceNotFound(&'a str),
+}
+
+// TODO: make a macro for this
+impl InterfaceGetterError<'_> {
     /// logs the error with the builtin logger
     pub fn log(&self) {
         log::error!("{}", self)

@@ -1,3 +1,5 @@
+//! the interface registry is here pog!
+
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 use std::{
@@ -32,6 +34,15 @@ unsafe extern "C" fn create_interface(
         })
 }
 
+// TODO: add examples here or in some other place
+
+/// registers a interface and allows for it's fetching from the CreateInterface function which is exposed by rrplug
+///
+/// # Safety
+///
+/// marked as unsafe for now since I don't know if the current Interface api is invariant enough
+///
+/// interfaces must be sync and send have to deal with the Interface struct instead of there struct which all handled by the [`crate::as_interface`] macro
 pub unsafe fn register_interface<T: Send + Sync + 'static + AsInterface>(
     name: &'static str,
     interface: Interface<T>,
@@ -42,7 +53,7 @@ pub unsafe fn register_interface<T: Send + Sync + 'static + AsInterface>(
     );
 }
 
-// TODO: implement this
+// TODO: implement this; I don't it's possible thought without more type defs or maybe the as_interface trait and macro should be expand to allow this
 // pub unsafe fn get_local(
 
 // )

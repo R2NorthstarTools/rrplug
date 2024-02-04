@@ -52,28 +52,35 @@ impl EngineToken {
     }
 }
 
-/// struct that guarantees that a value will only be accessed on the engine thread using [`EngineToken `]
+/// struct that guarantees that a value will only be accessed on the engine thread using [`EngineToken`]
 pub struct EngineGlobal<T>(UnsafeHandle<T>);
 
 impl<T> EngineGlobal<T> {
+    /// Creates a new [`EngineGlobal<T>`].
     pub const fn new(data: T) -> Self {
         Self(UnsafeHandle { inner: data })
     }
 
+    /// get a reference to the internal value from only the engine thread because of the [`EngineToken`] requirement
     pub const fn get(&self, _: EngineToken) -> &T {
         self.0.get()
     }
 
+    /// get a mutable reference
+    ///
+    /// it's safe since you need an exclusive acces to [`EngineGlobal`]
     pub fn get_mut(&mut self) -> &mut T {
         self.0.get_mut()
     }
 
+    /// returns a ownership of the value and destroys the [`EngineGlobal`]
     pub fn take(self) -> T {
         self.0.take()
     }
 }
 
 impl<T: Copy> EngineGlobal<T> {
+    /// copies the internal value if it has [`Copy`]
     pub const fn copy(&self, _: EngineToken) -> T {
         self.0.copy()
     }
@@ -136,6 +143,12 @@ impl EngineData {
             .mid_register_concommand(name, callback, help_string.as_ref(), flags)
     }
 
+    /// registers a command with completion
+    ///
+    /// returns a pointer to [`ConCommand`] which is unsafe to access and has a static lifetime
+    ///
+    /// # Example
+    /// TODO
     pub fn register_concommand_with_completion(
         &self,
         name: impl AsRef<str>,

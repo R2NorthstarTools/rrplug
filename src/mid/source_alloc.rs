@@ -1,3 +1,5 @@
+//! exposed api for the allocator used by titanfall 2
+
 use std::{
     alloc::GlobalAlloc,
     ffi::{c_char, c_void},
@@ -13,8 +15,12 @@ use crate::{create_external_interface, high::UnsafeHandle};
 
 type CreateGlobalMemAlloc = extern "C" fn() -> *const IMemAlloc;
 
+/// the allocator
+///
+/// will only be init after `engine.dll` laods
 pub static SOURCE_ALLOC: SourceAlloc = SourceAlloc(OnceCell::new());
 
+/// the allocator type
 pub struct SourceAlloc(OnceCell<UnsafeHandle<&'static IMemAlloc>>);
 
 impl SourceAlloc {

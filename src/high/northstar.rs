@@ -2,6 +2,7 @@
 
 use crate::bindings::plugin_abi::PluginContext;
 
+/// information about the plugin that the plugins system requests
 #[derive(Debug)]
 pub struct PluginInfo {
     name: &'static str,
@@ -11,6 +12,14 @@ pub struct PluginInfo {
 }
 
 impl PluginInfo {
+    /// Creates a new [`PluginInfo`].
+    ///
+    /// # Panics
+    ///
+    /// Panics if the following conditions are not met
+    /// - the strings have to be null terminated
+    /// - strings cannot be empty
+    /// - log name has to be 9 chars in lenght (not counting the null terminator)
     pub const fn new(
         name: &'static str,
         log_name: &'static str,
@@ -44,15 +53,19 @@ impl PluginInfo {
         }
     }
 
+    /// Returns a reference to the get name of the plugin.
     pub const fn get_name(&self) -> &'static str {
         self.name
     }
+    /// Returns a reference to the get log name of the plugin.
     pub const fn get_log_name(&self) -> &'static str {
         self.log_name
     }
+    /// Returns a reference to the get dependency name of the plugin.
     pub const fn get_dependency_name(&self) -> &'static str {
         self.dependency_name
     }
+    /// Returns the get context of the plugin.
     pub const fn get_context(&self) -> PluginContext {
         self.context
     }
