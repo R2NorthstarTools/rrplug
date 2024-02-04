@@ -12,6 +12,8 @@ pub mod engine_sync;
 #[doc(hidden)]
 #[cfg(not(feature = "async_engine"))]
 pub mod engine_sync {
+    //! enable engine sync feature if you want to use it
+
     #[doc(hidden)]
     #[inline(always)]
     pub const fn init_async_routine() {}

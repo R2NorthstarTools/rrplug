@@ -22,7 +22,8 @@ bitflags = "2.4.1"
 
 [package.metadata.docs.rs]
 default-target = "x86_64-pc-windows-msvc"
-targets = ["x86_64-pc-windows-msvc"]
+targets = ["x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"] # hopefully docs.rs will still work
 
 [features]
+# default = ["async_engine"]
 async_engine = []

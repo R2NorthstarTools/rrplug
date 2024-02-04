@@ -1,3 +1,7 @@
+//! contains stuff for sending jobs to the engine thread asynchronously
+//!
+//! requries the `engine_sync` feature
+
 use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
 use std::{
@@ -23,18 +27,25 @@ use super::engine::EngineToken;
 static ENGINE_MESSAGE_SEND: OnceCell<Sender<AsyncEngineMessage>> = OnceCell::new();
 static ENGINE_MESSAGE_RECV: OnceCell<Mutex<Receiver<AsyncEngineMessage>>> = OnceCell::new();
 
+/// the content that is send to the engine thread to be ran on the next runframe pass.
 pub enum AsyncEngineMessage {
+    /// execute a global squirrel function
     ExecuteSquirrel {
+        /// the context that it is ran on
         context: ScriptContext,
+        /// the function's name
         function_name: String,
+        /// the arguments that will passed to it via the closure (use `AsyncEngineMessage::run_squirrel_func`)
         args: Box<
             dyn FnOnce(*mut HSquirrelVM, &'static SquirrelFunctions) -> i32 + 'static + Send + Sync,
         >,
     },
+    /// contains a closure that will be executed once on the next engine frame
     ExecuteFunction(Box<dyn FnOnce(EngineToken) + 'static + Send + Sync>),
 }
 
 impl AsyncEngineMessage {
+    /// contructs a packet to run a global squirrel function and args to be pushed
     #[inline]
     pub fn run_squirrel_func(
         name: impl Into<String>,
@@ -48,6 +59,7 @@ impl AsyncEngineMessage {
         }
     }
 
+    /// contstructs a execute packet from a closure
     #[inline]
     pub fn run_func(func: impl FnOnce(EngineToken) + 'static + Send + Sync) -> Self {
         Self::ExecuteFunction(Box::new(func))
@@ -135,7 +147,12 @@ pub unsafe fn run_async_routine() {
     }
 }
 
+// TODO: move this to the squirrel_traits.rs module and rewrite squirrel functions to use a more static aproach with this
+// so the trait will handle pushing a whole function signuture into the vm via a struct that requires it's generic to implement this trait :)
+
+/// closure that simplies pushing groups of items to the squirrel vm; asynchronously or immediately
 pub trait IntoSquirrelArgs {
+    /// converts a implemenator of this trait into a closure that pushes it to the squirrel stack when ran
     fn into_function(
         self,
     ) -> Box<dyn FnOnce(*mut HSquirrelVM, &'static SquirrelFunctions) -> i32 + 'static + Send + Sync>;
@@ -176,5 +193,6 @@ into_squirrel_args_impl! {
     (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6, T8: 7, T9: 8, T10: 9);
 }
 
+// TODO: test it
 #[test]
-fn test_async_engine() {}
+const fn test_async_engine() {}
