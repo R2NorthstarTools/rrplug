@@ -22,8 +22,8 @@ use crate::{
 ///
 /// # Example
 /// ```
-/// # use super::*;
-/// # use self::*;
+/// # use rrplug::create_external_interface;
+/// # use rrplug::interfaces::external::*;
 /// create_external_interface! {
 ///     pub ExternalInterface + module_to_contain_it => {
 ///         pub fn smth() -> ();
@@ -31,7 +31,7 @@ use crate::{
 ///     }
 /// }
 ///
-/// let interface = ExternalInterface::from_dll_name("some_dll.dll", "ExternalInterface");
+/// let interface = unsafe { ExternalInterface::from_dll_name("some_dll.dll", "ExternalInterface") };
 /// ```
 #[macro_export]
 macro_rules! create_external_interface {
