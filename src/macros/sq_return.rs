@@ -2,7 +2,10 @@
 
 #[cfg(doc)]
 use {
-    crate::{bindings::squirreldatatypes::HSquirrelVM, high::vector::Vector3},
+    crate::{
+        bindings::{squirreldatatypes::HSquirrelVM, squirrelfunctions::SquirrelFunctions},
+        high::vector::Vector3,
+    },
     std::ffi::{CStr, CString},
 };
 
@@ -45,7 +48,7 @@ macro_rules! to_c_string {
 /// sq_return abstracts away the return procces of a sq functionv.
 ///
 /// ## expected input
-/// value: [`String`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`String`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctions`]
 #[macro_export]
 macro_rules! sq_return_string {
     ($value:expr, $sqvm:expr, $sq_functions:expr) => {
@@ -58,7 +61,7 @@ macro_rules! sq_return_string {
 /// sq_return abstracts away the return procces of a sq function.
 ///
 /// ## expected input
-/// value: [`bool`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`bool`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctions`]
 #[macro_export]
 macro_rules! sq_return_bool {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
@@ -71,7 +74,7 @@ macro_rules! sq_return_bool {
 /// sq_return abstracts away the return procces of a sq function.
 ///
 /// ## expected input
-/// value: [`Into<i32>`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`Into<i32>`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctions`]
 #[macro_export]
 macro_rules! sq_return_int {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
@@ -84,7 +87,7 @@ macro_rules! sq_return_int {
 /// sq_return abstracts away the return procces of a sq function.
 ///
 /// ## expected input
-/// value: [`Into<f32>`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`Into<f32>`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctions`]
 #[macro_export]
 macro_rules! sq_return_float {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
@@ -97,7 +100,7 @@ macro_rules! sq_return_float {
 /// sq_return abstracts away the return procces of a sq function.
 ///
 /// ## expected input
-/// value: [`Vector3`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`Vector3`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctions`]
 #[macro_export]
 macro_rules! sq_return_vector {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {
@@ -130,7 +133,7 @@ macro_rules! sq_return_notnull {
 /// doesn't work for some reason
 ///
 /// ## expected input
-/// value: [`String`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctionsUnwraped`]
+/// value: [`String`], sqvm: [`HSquirrelVM`], sq_functions: [`SquirrelFunctions`]
 #[macro_export]
 macro_rules! sq_raise_error {
     ($value:expr, $sqvm:expr, $sq_functions: expr) => {

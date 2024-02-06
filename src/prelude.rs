@@ -19,7 +19,7 @@ pub use crate::{
         squirrel::{register_sq_functions, CSquirrelVMHandle},
         vector::Vector3,
     },
-    interfaces::{external::SourceInterface, interface::AsInterface},
+    interfaces::{external::SourceInterface, interface::AsInterface, manager::register_interface},
     mid::{
         self,
         engine::{DLLPointer, WhichDll},

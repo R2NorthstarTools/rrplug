@@ -34,9 +34,32 @@ unsafe extern "C" fn create_interface(
         })
 }
 
-// TODO: add examples here or in some other place
-
 /// registers a interface and allows for it's fetching from the CreateInterface function which is exposed by rrplug
+///
+/// # Example
+/// ```
+/// # use crate::rrplug;
+/// # use rrplug_proc::as_interface;
+/// use rrplug::prelude::*;
+///
+/// #[repr(C)]
+/// struct Exposedinterface {
+///     what_is_2p2: i32,
+/// }
+///
+/// #[as_interface]
+/// impl Exposedinterface {
+///     fn new() -> Self {
+///         Self { what_is_2p2: 2+2 }
+///     }
+///
+///     pub const fn twoplustwo(&self) -> i32 {
+///         self.what_is_2p2
+///     }
+/// }
+///
+/// unsafe{ register_interface("Exposedinterface001", Exposedinterface::new()) }
+/// ```
 ///
 /// # Safety
 ///

@@ -269,6 +269,13 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
+/// macro that transforms a function into a that can be used for completion by the engine while also adding a few abstraction layers
+///
+/// uses rrplug's `CommandCompletion` and `CurrentCommand` to abstract unsafer interactions with the completion buffer
+///
+/// the target function has to simply accept `CommandCompletion` and `CurrentCommand` as agurements for the macro to know where to pass them
+///
+/// refer to rrplug's `CommandCompletion` and `register_concommand_with_completion` for more info and examples
 #[proc_macro_attribute]
 pub fn completion(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
@@ -412,6 +419,13 @@ pub fn convar(_attr: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
+/// creates a valid source interface layout from the provided impl block
+///
+/// implements `AsInterface` for the sturct and transforms the functions from the impl block into extern "C" to put them into a vtable
+///
+/// the vtable won't contain the constructor :p
+///
+/// more info at `register_interface`
 #[proc_macro_attribute]
 pub fn as_interface(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemImpl);

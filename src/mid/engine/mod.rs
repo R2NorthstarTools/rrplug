@@ -10,7 +10,7 @@ pub mod convars;
 
 /// used to create to ConVars and ConComands
 ///
-/// also allows access to [`RawCVar`] if you need it but beter options are available in [`crate::high::convars`]/[`crate::mid::convars`] and [`crate::mid::concommands`]
+/// also allows access to [`RawCVar`] if you need it but beter options are available in [`crate::high::engine::convars`]/[`crate::mid::engine::convars`] and [`crate::mid::engine::concommands`]
 pub static ENGINE_DATA: OnceCell<EngineData> = OnceCell::new();
 
 impl EngineData {
@@ -18,14 +18,14 @@ impl EngineData {
 
     /// returns the functions and statics needed to register ConVars
     ///
-    /// if you need to use it for some reason you can refer to rrplug code in [`crate::high::convars`]
+    /// if you need to use it for some reason you can refer to rrplug code in [`crate::high::engine::convars`]
     pub const fn get_convar_ptrs(&self) -> &CvarGlobals {
         self.convar
     }
 
     /// returns the function to register concommands
     ///
-    /// if you need to use it for some reason you can refer to rrplug code in [`crate::mid::concommands`]
+    /// if you need to use it for some reason you can refer to rrplug code in [`concommands`]
     pub const fn get_concommand_func(&self) -> &RegisterConCommands {
         self.concommands
     }
