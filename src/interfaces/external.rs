@@ -110,10 +110,7 @@ pub trait SourceInterface<Rtrn = Self> {
         unsafe {
             let create_interface = std::mem::transmute::<_, CreateInterface>(
                 GetProcAddress(dll_ptr, PCSTR("CreateInterface\0".as_ptr())).ok_or(
-                    windows::core::Error::new(
-                        windows::core::HRESULT(0x0000271E),
-                        "A required pointer is null.".into(),
-                    ),
+                    InterfaceGetterError::NullCreateInterface(dll_ptr.0 as usize),
                 )?,
             );
 
@@ -143,10 +140,7 @@ pub trait SourceInterface<Rtrn = Self> {
                     GetModuleHandleA(PCSTR(dll_name.as_ptr() as *const u8))?,
                     PCSTR("CreateInterface\0".as_ptr()),
                 )
-                .ok_or(windows::core::Error::new(
-                    windows::core::HRESULT(0x0000271E),
-                    "A required pointer is null.".into(),
-                ))?,
+                .ok_or(InterfaceGetterError::NullCreateInterface(0x0))?,
             );
 
             let cstring_interface_name = try_cstring(interface_name)?;

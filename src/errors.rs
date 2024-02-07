@@ -142,6 +142,10 @@ pub enum InterfaceGetterError<'a> {
     #[error(transparent)]
     InvalidFunctionCString(#[from] NulError),
 
+    /// when the dll doesn't have a create iterface
+    #[error("dll {0} doesn't have a create interface function")]
+    NullCreateInterface(usize),
+
     /// an error from the win api yay
     #[error(transparent)]
     WinApiError(#[from] windows::core::Error),
