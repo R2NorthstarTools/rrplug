@@ -86,7 +86,7 @@ offset_functions! {
         sq_getfloat = sq_getfloatType where offset(0x6100);
         sq_getbool = sq_getboolType where offset(0x6130);
         sq_getasset = sq_getassetType where offset(0x6010);
-        sq_getuserdata = sq_getuserdataType where offset(0x6110);
+        sq_getuserdata = sq_getuserdataType where offset(0x63D0);
         sq_getvector = sq_getvectorType where offset(0x6140);
         sq_get = sq_getType where offset(0x7C30);
 
