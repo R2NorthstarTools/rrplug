@@ -17,11 +17,15 @@ use crate::{
         squirrelfunctions::SquirrelFunctions,
     },
     call_sq_object_function,
-    mid::squirrel::{
-        get_sq_array, get_sq_bool, get_sq_float, get_sq_int, get_sq_object, get_sq_string,
-        get_sq_vector, push_sq_array, push_sq_bool, push_sq_float, push_sq_int, push_sq_object,
-        push_sq_string, push_sq_vector,
+    mid::{
+        server::cplayer::CPLAYER_VTABLE,
+        squirrel::{
+            get_sq_array, get_sq_bool, get_sq_float, get_sq_int, get_sq_object, get_sq_string,
+            get_sq_vector, push_sq_array, push_sq_bool, push_sq_float, push_sq_int, push_sq_object,
+            push_sq_string, push_sq_vector, sqvm_to_context,
+        },
     },
+    prelude::ScriptContext,
 };
 
 // Push Trait
@@ -218,13 +222,20 @@ where
     }
 }
 
-impl GetFromSquirrelVm for &mut CPlayer {
+impl GetFromSquirrelVm for Option<&mut CPlayer> {
     fn get_from_sqvm(
         sqvm: *mut HSquirrelVM,
         sqfunctions: &SquirrelFunctions,
         stack_pos: i32,
     ) -> Self {
         unsafe {
+            #[cfg(debug_assertions)]
+            assert_eq!(
+                sqvm_to_context(sqvm),
+                ScriptContext::SERVER,
+                "CPlayer only exists on server vm use C_Player for CLIENT and UI"
+            );
+
             let sqvm = sqvm.as_mut().expect("the sqvm was invalid");
             let cs_sqvm = sqvm
                 .sharedState
@@ -235,13 +246,25 @@ impl GetFromSquirrelVm for &mut CPlayer {
             let mut obj = MaybeUninit::<SQObject>::uninit();
             (sqfunctions.sq_getobject)(sqvm, stack_pos, obj.as_mut_ptr());
 
-            (sqfunctions.sq_getentityfrominstance)(
+            let ent = (sqfunctions.sq_getentityfrominstance)(
                 cs_sqvm,
                 obj.as_mut_ptr(),
                 (sqfunctions.sq_get_entity_constant_cbase_entity)(),
             )
-            .as_mut()
-            .expect("entity was supposed to be valid")
+            .cast::<CPlayer>()
+            .as_mut()?;
+
+            if ent.vtable.copy_inner()
+                != CPLAYER_VTABLE
+                    .get()
+                    .expect("CPlayer vtable is missing wtf?")
+                    .vtable
+                    .cast::<usize>()
+            {
+                return None;
+            }
+
+            Some(ent)
         }
     }
 }
@@ -401,7 +424,7 @@ sqvm_name! {
     f32 = "float";
     bool = "bool";
     Vector3 = "vector";
-    &mut CPlayer = "entity";
+    Option<&mut CPlayer> = "entity";
     SQHandle<SQClosure> = "var";
     () = "void";
 }

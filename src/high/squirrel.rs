@@ -169,6 +169,20 @@ impl SQHandle<SQClosure> {
 /// Adds a sqfunction to the registration list
 ///
 /// The sqfunction will be registered when its vm is loaded
+///
+/// # Example
+/// ```
+/// # use rrplug::prelude::*;
+/// # use rrplug::high::squirrel::call_sq_function;
+/// # use rrplug::bindings::class_types::cplayer::CPlayer;
+/// #[rrplug::sqfunction(VM="Server")]
+/// fn simple_example(name: String, player: Option<&mut CPlayer>) -> Result<(),String> {
+///     let _player = player.ok_or("Not a Player!".to_string())?;
+///
+///     log::info!("the name is {name}");
+///     Ok(())
+/// }
+/// ```
 pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
     FUNCTION_SQ_REGISTER.lock().push(get_info_func());
 }
@@ -193,7 +207,6 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 /// # use rrplug::prelude::*;
 /// # use rrplug::high::squirrel::call_sq_function;
 /// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
-///  
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn test_call_sq_object_function() -> Result<(),String> {
 ///     call_sq_function(sqvm, sq_functions, "someFunction").map_err(|err| err.to_string())?;
@@ -244,7 +257,6 @@ pub fn call_sq_function(
 /// # use rrplug::prelude::*;
 /// # use rrplug::high::squirrel::call_sq_object_function;
 /// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
-///  
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn call_sqvm_function(mut func: SQHandle<SQClosure>) -> Result<(),String>{
 ///     call_sq_object_function(sqvm, sq_functions, func).map_err(|err| err.to_string())?;
@@ -290,14 +302,12 @@ fn _call_sq_object_function(
 /// ```
 /// # use rrplug::prelude::*;
 /// # use rrplug::high::squirrel::compile_string;
-///  
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn compile_string_test() -> Result<(),String> {
 ///     compile_string(sqvm, sq_functions, true, "print(\"helloworld\")").map_err(|err| err.to_string())?;
 ///
 ///     Ok(())
 /// }
-///
 /// ```
 pub fn compile_string(
     sqvm: *mut HSquirrelVM,

@@ -237,6 +237,10 @@ macro_rules! entry {
                             &dll_ptr,
                             &mid::engine::concommands::REGISTER_CONCOMNMADS,
                         );
+                        mid::server::cplayer::CPlayerVtable::try_init(
+                            &dll_ptr,
+                            &mid::server::cplayer::CPLAYER_VTABLE,
+                        );
                     }
                     mid::squirrel::SQFUNCTIONS.fetch_functions(&dll_ptr);
 

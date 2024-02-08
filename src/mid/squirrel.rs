@@ -158,6 +158,16 @@ impl SQFunctionContext {
     }
 }
 
+/// returns the context of the sqvm
+///
+/// # Safety
+/// assumes the sqvm is valid and does a bunch of derefs
+#[inline]
+pub unsafe fn sqvm_to_context(sqvm: *mut HSquirrelVM) -> ScriptContext {
+    ScriptContext::try_from(unsafe { (*(*(*sqvm).sharedState).cSquirrelVM).vmContext })
+        .expect("sqvm should have a valid vmcontext")
+}
+
 /// pushes a `Vec<T>` to the sqvm
 #[inline]
 pub fn push_sq_array<T>(sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions, arguments: Vec<T>)
