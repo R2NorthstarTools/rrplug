@@ -15,14 +15,13 @@ use crate::{
         squirreldatatypes::{HSquirrelVM, SQObject},
         squirrelfunctions::SquirrelFunctions,
     },
-    high::squirrel_traits::PushToSquirrelVm,
     mid::{
         squirrel::{SQFUNCTIONS, SQVM_CLIENT, SQVM_SERVER, SQVM_UI},
         utils::to_cstring,
     },
 };
 
-use super::engine::EngineToken;
+use super::{engine::EngineToken, squirrel_traits::IntoSquirrelArgs};
 
 static ENGINE_MESSAGE_SEND: OnceCell<Sender<AsyncEngineMessage>> = OnceCell::new();
 static ENGINE_MESSAGE_RECV: OnceCell<Mutex<Receiver<AsyncEngineMessage>>> = OnceCell::new();
@@ -50,7 +49,7 @@ impl AsyncEngineMessage {
     pub fn run_squirrel_func(
         name: impl Into<String>,
         context: ScriptContext,
-        args: impl IntoSquirrelArgs,
+        args: impl IntoSquirrelArgs + 'static,
     ) -> Self {
         Self::ExecuteSquirrel {
             function_name: name.into(),
@@ -98,7 +97,6 @@ pub unsafe fn run_async_routine() {
                 function_name,
                 args,
             } => {
-                // TODO: when done with sqvm global add it here
                 let (sqvm, sqfunctions) = match context {
                     ScriptContext::SERVER => {
                         (SQVM_SERVER.get(token).borrow(), SQFUNCTIONS.server.wait())
@@ -126,7 +124,7 @@ pub unsafe fn run_async_routine() {
                 };
 
                 if result != 0 {
-                    log::warn!("async squirrel function failed to executel; it may not be global");
+                    log::warn!("async squirrel function failed to execute; it may not be global");
                 } else {
                     unsafe {
                         let amount = args(sqvm, sqfunctions);
@@ -147,52 +145,23 @@ pub unsafe fn run_async_routine() {
     }
 }
 
-// TODO: move this to the squirrel_traits.rs module and rewrite squirrel functions to use a more static aproach with this
-// so the trait will handle pushing a whole function signuture into the vm via a struct that requires it's generic to implement this trait :)
-
-/// closure that simplies pushing groups of items to the squirrel vm; asynchronously or immediately
-pub trait IntoSquirrelArgs {
-    /// converts a implemenator of this trait into a closure that pushes it to the squirrel stack when ran
-    fn into_function(
-        self,
-    ) -> Box<dyn FnOnce(*mut HSquirrelVM, &'static SquirrelFunctions) -> i32 + 'static + Send + Sync>;
-}
-
-// TODO: format this
-// TODO: check for correctness
-macro_rules! into_squirrel_args_impl{
-    ( $( ($($ty_name: ident : $tuple_index:tt),*) );*; ) => { $(
-        impl<$($ty_name: PushToSquirrelVm + 'static + Send + Sync,)*> IntoSquirrelArgs for ($($ty_name,)*) {
-            fn into_function(
-                self
-    ) -> Box<dyn FnOnce(*mut HSquirrelVM, &'static SquirrelFunctions) -> i32 + 'static + Send + Sync> {
-                Box::new(move |sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions| { _ =
-                    $(
-                        self.$tuple_index.push_to_sqvm(sqvm, sqfunctions);
-                    )*
-
-                    $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($ty_name)),*]) as i32
-                })
-            }
-        }
-    )* }
-}
-
-// TODO: add single parameter
-
-into_squirrel_args_impl! {
-    (T1: 0);
-    (T1: 0, T2: 1);
-    (T1: 0, T2: 1, T3: 2);
-    (T1: 0, T2: 1, T3: 2, T4: 3);
-    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4);
-    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5);
-    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6);
-    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6, T8: 7);
-    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6, T8: 7, T9: 8);
-    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6, T8: 7, T9: 8, T10: 9);
-}
-
-// TODO: test it
+// maybe the test should better than this
 #[test]
-const fn test_async_engine() {}
+fn test_async_engine() {
+    init_async_routine();
+
+    async_execute(AsyncEngineMessage::run_squirrel_func(
+        "test",
+        ScriptContext::SERVER,
+        "test",
+    ))
+    .unwrap();
+    async_execute(AsyncEngineMessage::run_func(|_| ())).unwrap();
+
+    assert_eq!(
+        &(0..10)
+            .filter_map(|_| ENGINE_MESSAGE_RECV.wait().lock().try_recv().ok())
+            .count(),
+        &2
+    );
+}

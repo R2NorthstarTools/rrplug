@@ -5,7 +5,10 @@
 pub use rrplug_proc::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName};
 use std::mem::MaybeUninit;
 
-use super::{squirrel::SQHandle, vector::Vector3};
+use super::{
+    squirrel::{SQHandle, SquirrelFn},
+    vector::Vector3,
+};
 use crate::{
     bindings::{
         class_types::cplayer::CPlayer,
@@ -16,7 +19,6 @@ use crate::{
         },
         squirrelfunctions::SquirrelFunctions,
     },
-    call_sq_object_function,
     mid::{
         server::cplayer::CPLAYER_VTABLE,
         squirrel::{
@@ -58,6 +60,7 @@ pub trait PushToSquirrelVm {
 
 push_to_sqvm! {
     push_sq_string::<String>;
+    push_sq_string::<&str>;
     push_sq_int::<i32>;
     push_sq_float::<f32>;
     push_sq_bool::<bool>;
@@ -77,8 +80,9 @@ where
 impl PushToSquirrelVm for () {
     const DEFAULT_RESULT: SQRESULT = SQRESULT::SQRESULT_NULL;
 
-    fn push_to_sqvm(self, _: *mut HSquirrelVM, _: &SquirrelFunctions) {
-        // TODO: in the future this should have pushnull maybe?
+    #[inline]
+    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) {
+        unsafe { (sqfunctions.sq_pushnull)(sqvm) };
     }
 }
 
@@ -104,7 +108,10 @@ impl<T: PushToSquirrelVm> ReturnToVm for Option<T> {
                 rtrn.push_to_sqvm(sqvm, sqfunctions);
                 T::DEFAULT_RESULT
             }
-            None => SQRESULT::SQRESULT_NULL,
+            None => {
+                unsafe { (sqfunctions.sq_pushnull)(sqvm) };
+                SQRESULT::SQRESULT_NULL
+            }
         }
     }
 }
@@ -134,6 +141,63 @@ impl<T: PushToSquirrelVm> ReturnToVm for T {
         self.push_to_sqvm(sqvm, sqfunctions);
         T::DEFAULT_RESULT
     }
+}
+
+// IntoSquirrelArgs Trait
+
+/// closure that simplies pushing groups of items to the squirrel vm; asynchronously or immediately
+pub trait IntoSquirrelArgs: Sync + Send {
+    /// converts a implemenator of this trait into a closure that pushes it to the squirrel stack when ran
+    fn into_function(
+        self,
+    ) -> Box<dyn FnOnce(*mut HSquirrelVM, &'static SquirrelFunctions) -> i32 + 'static + Send + Sync>
+    where
+        Self: Sized + Send + Sync + 'static,
+    {
+        Box::new(
+            move |sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions| {
+                self.into_push(sqvm, sqfunctions)
+            },
+        )
+    }
+
+    /// pushes the args to the sqvm and returns the amount pushed
+    fn into_push(self, sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions) -> i32;
+}
+
+impl<T: PushToSquirrelVm + Send + Sync + 'static> IntoSquirrelArgs for T {
+    fn into_push(self, sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions) -> i32 {
+        self.push_to_sqvm(sqvm, sqfunctions);
+        1
+    }
+}
+
+// TODO: format this
+// TODO: check for correctness
+macro_rules! into_squirrel_args_impl{
+    ( $( ($($ty_name: ident : $tuple_index:tt),*) );*; ) => { $(
+        impl<$($ty_name: PushToSquirrelVm + 'static + Send + Sync,)*> IntoSquirrelArgs for ($($ty_name,)*) {
+            fn into_push(self, sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions) -> i32 {
+                $(
+                    self.$tuple_index.push_to_sqvm(sqvm, sqfunctions);
+                )*
+                $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($ty_name)),*]) as i32
+            }
+        }
+    )* }
+}
+
+into_squirrel_args_impl! {
+    (T1: 0);
+    (T1: 0, T2: 1);
+    (T1: 0, T2: 1, T3: 2);
+    (T1: 0, T2: 1, T3: 2, T4: 3);
+    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4);
+    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5);
+    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6);
+    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6, T8: 7);
+    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6, T8: 7, T9: 8);
+    (T1: 0, T2: 1, T3: 2, T4: 3, T5: 4, T6: 5, T7: 6, T8: 7, T9: 8, T10: 9);
 }
 
 // Get Trait
@@ -194,19 +258,6 @@ get_from_sqvm! {
     get_sq_bool::<bool>;
     get_sq_vector::<Vector3>;
     get_sq_object::<MaybeUninit<SQObject>>;
-}
-
-get_from_sqvm! {
-    (T1: v2);
-    (T1: v1, T2: v2);
-    (T1: v1, T2: v2, T3: v3);
-    (T1: v1, T2: v2, T3: v3, T4: v4);
-    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5);
-    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6);
-    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7);
-    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8);
-    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9);
-    (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9, T10: v10);
 }
 
 impl<T> GetFromSquirrelVm for Vec<T>
@@ -283,8 +334,22 @@ impl GetFromSquirrelVm for SQHandle<SQClosure> {
     }
 }
 
-// exists for dynamic returns of some functions
+impl<T: IntoSquirrelArgs> GetFromSquirrelVm for SquirrelFn<T> {
+    #[inline]
+    fn get_from_sqvm(
+        sqvm: *mut HSquirrelVM,
+        sqfunctions: &'static SquirrelFunctions,
+        stack_pos: i32,
+    ) -> Self {
+        SquirrelFn {
+            func: GetFromSquirrelVm::get_from_sqvm(sqvm, sqfunctions, stack_pos),
+            phantom: std::marker::PhantomData,
+        }
+    }
+}
+
 impl GetFromSquirrelVm for () {
+    /// exists for dynamic returns of some functions
     fn get_from_sqvm(_: *mut HSquirrelVM, _: &SquirrelFunctions, _: i32) -> Self {}
 }
 
@@ -346,6 +411,17 @@ impl GetFromSQObject for Vector3 {
     }
 }
 
+impl<T: IntoSquirrelArgs> GetFromSQObject for SquirrelFn<T> {
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        SquirrelFn {
+            func: SQHandle::new(obj.to_owned())
+                .expect("the squirrel object wasn't a function lol L"),
+            phantom: std::marker::PhantomData,
+        }
+    }
+}
+
 impl<T> GetFromSQObject for Vec<T>
 where
     T: GetFromSQObject,
@@ -373,19 +449,17 @@ where
 macro_rules! sqvm_name {
     ($( ($($ty_name:ident : $var_name:ident),*) );*;)  => {
         $(
-            impl<$($ty_name: SQVMName,)*> SQVMName for Box<dyn Fn($($ty_name,)*)> {
+            impl<$($ty_name: SQVMName,)*> SQVMName for ($($ty_name,)*) {
                 fn get_sqvm_name() -> String {
-                    let mut name = "void functionref(".to_string();
+                    let mut name = String::new();
 
                     $(
-                        if name != "void functionref(" { // bad solution but this will run only once for each use
+                        if !name.is_empty() { // bad solution but this will run only once for each use
                             name.push(',');
                             name.push(' ');
                         }
                         name.push_str(&$ty_name::get_sqvm_name());
                     )*
-
-                    name.push(')');
 
                     name
                 }
@@ -420,6 +494,7 @@ pub trait SQVMName {
 
 sqvm_name! {
     String = "string";
+    &str = "string";
     i32 = "int";
     f32 = "float";
     bool = "bool";
@@ -440,6 +515,12 @@ sqvm_name! {
     (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8);
     (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9);
     (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9, T10: v10);
+}
+
+impl<T: SQVMName + IntoSquirrelArgs> SQVMName for SquirrelFn<T> {
+    fn get_sqvm_name() -> String {
+        format!("void functionref({})", T::get_sqvm_name())
+    }
 }
 
 impl<T: SQVMName> SQVMName for Vec<T> {

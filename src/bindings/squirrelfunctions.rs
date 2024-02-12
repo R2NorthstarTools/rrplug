@@ -25,6 +25,7 @@ offset_functions! {
         sq_pushasset = sq_pushassetType where offset(0x3560);
         sq_pushvector = sq_pushvectorType where offset(0x3780);
         sq_pushobject = sq_pushobjectType where offset(0x83A0);
+        sq_pushnull = sq_pushnullType where offset(0x33d0);
 
         sq_raiseerror = sq_raiseerrorType where offset(0x8440);
 
@@ -78,6 +79,7 @@ offset_functions! {
         sq_pushasset = sq_pushassetType where offset(0x3560);
         sq_pushvector = sq_pushvectorType where offset(0x3780);
         sq_pushobject = sq_pushobjectType where offset(0x83D0);
+        sq_pushnull = sq_pushnullType where offset(0x33d0);
 
         sq_raiseerror = sq_raiseerrorType where offset(0x8470);
 
@@ -128,6 +130,7 @@ pub struct SquirrelFunctions {
     pub sq_pushasset: sq_pushassetType,
     pub sq_pushvector: sq_pushvectorType,
     pub sq_pushobject: sq_pushobjectType,
+    pub sq_pushnull: sq_pushnullType,
     pub sq_getstring: sq_getstringType,
     pub sq_getinteger: sq_getintegerType,
     pub sq_getfloat: sq_getfloatType,
@@ -169,6 +172,7 @@ impl From<&ClientSQFunctions> for SquirrelFunctions {
             sq_pushasset: val.sq_pushasset,
             sq_pushvector: val.sq_pushvector,
             sq_pushobject: val.sq_pushobject,
+            sq_pushnull: val.sq_pushnull,
             sq_getstring: val.sq_getstring,
             sq_getinteger: val.sq_getinteger,
             sq_getfloat: val.sq_getfloat,
@@ -212,6 +216,7 @@ impl From<&ServerSQFunctions> for SquirrelFunctions {
             sq_pushasset: val.sq_pushasset,
             sq_pushvector: val.sq_pushvector,
             sq_pushobject: val.sq_pushobject,
+            sq_pushnull: val.sq_pushnull,
             sq_getstring: val.sq_getstring,
             sq_getinteger: val.sq_getinteger,
             sq_getfloat: val.sq_getfloat,

@@ -16,7 +16,7 @@ pub use crate::{
             EngineData, EngineGlobal, EngineToken,
         },
         northstar::PluginInfo,
-        squirrel::{register_sq_functions, CSquirrelVMHandle},
+        squirrel::{register_sq_functions, CSquirrelVMHandle, SquirrelFn},
         vector::Vector3,
     },
     interfaces::{external::SourceInterface, interface::AsInterface, manager::register_interface},

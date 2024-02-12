@@ -334,6 +334,7 @@ pub type sq_pushassetType =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, str_: *const SQChar, iLength: SQInteger);
 pub type sq_pushvectorType = unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *const SQFloat);
 pub type sq_pushobjectType = unsafe extern "C" fn(sqvm: *mut HSquirrelVM, pVec: *mut SQObject);
+pub type sq_pushnullType = unsafe extern "C" fn(sqvm: *mut HSquirrelVM);
 pub type sq_getstringType =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger) -> *const SQChar;
 pub type sq_getintegerType =

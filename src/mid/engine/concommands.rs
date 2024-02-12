@@ -55,7 +55,7 @@ impl RegisterConCommands {
         };
 
         let command = unsafe { SOURCE_ALLOC.alloc(std::alloc::Layout::new::<ConCommand>()) }
-            as *mut ConCommand; // TODO: this is not good since if the source allocator decides to drop this concommand bad things will happen
+            as *mut ConCommand;
 
         unsafe {
             self.reg_func.ok_or(RegisterError::NoneFunction)?(

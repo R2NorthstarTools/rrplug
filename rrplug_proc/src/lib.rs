@@ -58,7 +58,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     } = input;
 
     let stmts = block.stmts;
-    let mut sub_stms = Vec::new();
+    let mut sub_stms: Vec<Stmt> = Vec::new();
     let ident = &sig.ident;
     let input = &sig.inputs;
     let input_vec: Vec<FnArg> = input.iter().filter_map(|arg| filter_args(arg)).collect();
@@ -121,7 +121,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
     sq_gets_stmts.reverse();
     for s in sq_gets_stmts {
-        sub_stms.insert(0, s);
+        sub_stms.insert(0, parse(quote! {#[allow(unused_mut)] #s}.into()).unwrap());
     }
 
     let mut script_vm: Punctuated<TypePath, Token![|]> = Punctuated::new();

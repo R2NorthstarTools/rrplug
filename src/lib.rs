@@ -83,9 +83,11 @@ mod test {
         test1: String,
         test2: i32,
         test3: TestEnum,
-        test4: Box<dyn Fn(String)>,
+        mut test4: SquirrelFn<String>,
     ) -> Result<Vec<TestStruct>, String> {
-        test4(test1.clone());
+        test4
+            .call(sqvm, sq_functions, test1.clone())
+            .map_err(|err| err.to_string())?;
 
         Ok(vec![TestStruct {
             a: test1,

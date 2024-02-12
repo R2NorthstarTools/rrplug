@@ -5,7 +5,10 @@
 use parking_lot::Mutex;
 use std::marker::PhantomData;
 
-use super::{squirrel_traits::IsSQObject, UnsafeHandle};
+use super::{
+    squirrel_traits::{IntoSquirrelArgs, IsSQObject},
+    UnsafeHandle,
+};
 use crate::{
     bindings::{
         squirrelclasstypes::{CompileBufferState, SQRESULT},
@@ -166,6 +169,54 @@ impl SQHandle<SQClosure> {
     }
 }
 
+/// provides invariance for calling squirrel functions with little overhead
+pub struct SquirrelFn<T: IntoSquirrelArgs> {
+    pub(crate) func: SQHandle<SQClosure>,
+    pub(crate) phantom: PhantomData<*mut T>,
+}
+
+impl<T: IntoSquirrelArgs> SquirrelFn<T> {
+    /// calls the underlying squirrel function on the provided sqvm
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the fails to execute for some reason which is unlikely since it would be type checked
+    pub fn run(
+        &mut self,
+        sqvm: *mut HSquirrelVM,
+        sqfunctions: &'static SquirrelFunctions,
+        args: T,
+    ) -> Result<(), CallError> {
+        unsafe {
+            let amount = args.into_push(sqvm, sqfunctions);
+
+            (sqfunctions.sq_pushobject)(sqvm, self.func.as_callable());
+            (sqfunctions.sq_pushroottable)(sqvm);
+
+            if (sqfunctions.sq_call)(sqvm, amount, true as u32, true as u32)
+                == SQRESULT::SQRESULT_ERROR
+            {
+                return Err(CallError::FunctionFailedToExecute);
+            }
+        }
+        Ok(())
+    }
+
+    /// calls the underlying squirrel function on the provided sqvm
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error if the fails to execute for some reason which is unlikely since it would be type checked
+    pub fn call(
+        &mut self,
+        sqvm: *mut HSquirrelVM,
+        sqfunctions: &'static SquirrelFunctions,
+        args: T,
+    ) -> Result<(), CallError> {
+        self.run(sqvm, sqfunctions, args)
+    }
+}
+
 /// Adds a sqfunction to the registration list
 ///
 /// The sqfunction will be registered when its vm is loaded
@@ -186,6 +237,8 @@ impl SQHandle<SQClosure> {
 pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
     FUNCTION_SQ_REGISTER.lock().push(get_info_func());
 }
+
+// TODO: use IntoSquirrelArgs here
 
 /// calls any function defined on the sqvm
 ///
