@@ -220,7 +220,7 @@ impl ConVarStruct {
     ) -> Result<Self, RegisterError> {
         let convar_classes = engine_data.convar;
         let convar = unsafe {
-            let convar = SOURCE_ALLOC.alloc(Layout::new::<ConVar>()) as *mut ConVar;
+            let convar = SOURCE_ALLOC.alloc_zeroed(Layout::new::<ConVar>()) as *mut ConVar;
 
             addr_of_mut!((*convar).m_ConCommandBase.m_pConCommandBaseVTable)
                 .write(convar_classes.convar_vtable);
