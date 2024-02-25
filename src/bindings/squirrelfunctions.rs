@@ -101,7 +101,7 @@ offset_functions! {
         sq_get_entity_constant_cbase_entity = sq_GetEntityConstantType where offset(0x3E49B0);
         sq_getentityfrominstance = sq_getentityfrominstanceType where offset(0x114F0);
 
-        sq_getfunction = sq_getfunctionType where offset(0x572FB0);
+        sq_getfunction = sq_getfunctionType where offset(0x06cb0);
         sq_stackinfos = sq_stackinfosType where offset(0x35970);
 
         sq_pushnewstructinstance = sq_pushnewstructinstanceType where offset(0x5400);
