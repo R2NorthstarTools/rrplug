@@ -7,6 +7,7 @@ offset_struct! {
     pub struct CPlayer {
         vtable: *const usize where offset(0x0),
         player_index: u32 where offset(0x58),
+        cplayer_state_fixangle: i32 where offset(0x1bc0),
         angles: Vector3 where offset(0x1bf8),
         grapple_active: bool where offset(0x23E8),
         platform_user_id: u32 where offset(0x1D08),

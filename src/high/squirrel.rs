@@ -6,7 +6,7 @@ use parking_lot::Mutex;
 use std::marker::PhantomData;
 
 use super::{
-    squirrel_traits::{IntoSquirrelArgs, IsSQObject},
+    squirrel_traits::{GetFromSquirrelVm, IntoSquirrelArgs, IsSQObject},
     UnsafeHandle,
 };
 use crate::{
@@ -246,19 +246,15 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 ///
 /// this only allows calls without args use the marco [`crate::call_sq_function`] instead if you want args
 ///
-/// # Panic
+/// # Crashes
 ///
-/// this function can panic if the return value is not [`()`] while begin called outside of a sqvm context
-///
-/// examples of "outside of a sqvm context"
-/// - runframe
-/// - callbacks for concommands and convars
+/// If the return value is incorrect the current api may segfault
 ///
 /// # Example
 ///
 /// ```
 /// # use rrplug::prelude::*;
-/// # use rrplug::high::squirrel::call_sq_function;
+/// # use rrplug::high::squirrel::call_sq_funccplayer_state_fixangletion;
 /// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn test_call_sq_object_function() -> Result<(),String> {
@@ -267,9 +263,9 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 ///     Ok(())
 /// }
 /// ```
-pub fn call_sq_function(
+pub fn call_sq_function<R: GetFromSquirrelVm>(
     sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctions,
+    sqfunctions: &'static SquirrelFunctions,
     function_name: impl AsRef<str>,
 ) -> Result<(), CallError> {
     let mut obj = std::mem::MaybeUninit::<SQObject>::zeroed();
@@ -290,19 +286,17 @@ pub fn call_sq_function(
     }
 }
 
+// TODO: warn about wrong return values
+
 /// calls any function defined on the sqvm from its [`SQObject`]
 ///
 /// this should only be called on the tf2 thread aka when concommands, convars, sqfunctions, runframe
 ///
 /// this only allows calls without args use the marco [`crate::call_sq_object_function`] instead if you want args
 ///
-/// # Panic
+/// # Crashes
 ///
-/// this function can panic if the return value is not [`()`] while begin called outside of a sqvm context
-///
-/// examples of "outside of a sqvm context"
-/// - runframe
-/// - callbacks for concommands and convars
+/// If the return value is incorrect the current api may segfault
 ///
 /// # Example
 ///
@@ -317,38 +311,36 @@ pub fn call_sq_function(
 ///     Ok(())
 /// }
 /// ```
-pub fn call_sq_object_function(
+pub fn call_sq_object_function<R: GetFromSquirrelVm>(
     sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctions,
+    sqfunctions: &'static SquirrelFunctions,
     mut obj: SQHandle<SQClosure>,
-) -> Result<(), CallError> {
+) -> Result<R, CallError> {
     _call_sq_object_function(sqvm, sqfunctions, obj.as_callable())
 }
 
 #[inline]
-fn _call_sq_object_function(
+fn _call_sq_object_function<R: GetFromSquirrelVm>(
     sqvm: *mut HSquirrelVM,
-    sqfunctions: &SquirrelFunctions,
+    sqfunctions: &'static SquirrelFunctions,
     ptr: *mut SQObject,
-) -> Result<(), CallError> {
+) -> Result<R, CallError> {
     unsafe {
+        let sqvm = &mut *sqvm;
         (sqfunctions.sq_pushobject)(sqvm, ptr);
         (sqfunctions.sq_pushroottable)(sqvm);
 
         if (sqfunctions.sq_call)(sqvm, 1, true as u32, true as u32) == SQRESULT::SQRESULT_ERROR {
             Err(CallError::FunctionFailedToExecute)
         } else {
-            // Ok(R::get_from_sqvm(
-            //     sqvm,
-            //     sqfunctions,
-            //     (*sqvm)._stackbase,
-            // )) // literally imposible to get null sqvm or it would have crashed before
-            Ok(())
+            Ok(R::get_from_sqvm(sqvm, sqfunctions, sqvm._top))
         }
     }
 }
 
 /// compiles a string and runs it on the provided sqvm
+///
+/// this may receive a return value in the feature idk
 ///
 /// ## Example
 ///

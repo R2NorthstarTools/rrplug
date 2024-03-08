@@ -38,7 +38,7 @@ macro_rules! create_external_interface {
 
         #[doc(hidden)]
         $struct_vis mod $mod_name {
-            #![allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
+            #![allow(non_snake_case, non_camel_case_types, non_upper_case_globals, clippy::too_many_arguments)]
 
             #[repr(C)]
             pub struct $interface_name {
@@ -64,7 +64,7 @@ macro_rules! create_external_interface {
         #[doc = "# Safety"]
         #[doc = "idk"]
         #[deny(unsafe_op_in_unsafe_fn)]
-        #[allow(non_snake_case, non_camel_case_types, non_upper_case_globals, dead_code)]
+        #[allow(non_snake_case, non_camel_case_types, non_upper_case_globals, dead_code, clippy::too_many_arguments)]
         impl $interface_name {
             $(
                 #[doc = "auto generated docs; idk how to make macros capture docs so no docs :("]
