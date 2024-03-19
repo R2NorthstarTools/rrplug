@@ -369,6 +369,13 @@ pub trait GetFromSQObject {
     fn get_from_sqobject(obj: &SQObject) -> Self;
 }
 
+impl GetFromSQObject for () {
+    #[inline]
+    fn get_from_sqobject(_: &SQObject) -> Self {
+        ()
+    }
+}
+
 impl GetFromSQObject for String {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {

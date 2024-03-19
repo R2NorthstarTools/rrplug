@@ -6,7 +6,7 @@ use parking_lot::Mutex;
 use std::marker::PhantomData;
 
 use super::{
-    squirrel_traits::{GetFromSquirrelVm, IntoSquirrelArgs, IsSQObject},
+    squirrel_traits::{GetFromSQObject, IntoSquirrelArgs, IsSQObject},
     UnsafeHandle,
 };
 use crate::{
@@ -263,7 +263,7 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 ///     Ok(())
 /// }
 /// ```
-pub fn call_sq_function<R: GetFromSquirrelVm>(
+pub fn call_sq_function<R: GetFromSQObject>(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &'static SquirrelFunctions,
     function_name: impl AsRef<str>,
@@ -309,7 +309,7 @@ pub fn call_sq_function<R: GetFromSquirrelVm>(
 ///     Ok(())
 /// }
 /// ```
-pub fn call_sq_object_function<R: GetFromSquirrelVm>(
+pub fn call_sq_object_function<R: GetFromSQObject>(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &'static SquirrelFunctions,
     mut obj: SQHandle<SQClosure>,
@@ -318,7 +318,7 @@ pub fn call_sq_object_function<R: GetFromSquirrelVm>(
 }
 
 #[inline]
-fn _call_sq_object_function<R: GetFromSquirrelVm>(
+fn _call_sq_object_function<R: GetFromSQObject>(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &'static SquirrelFunctions,
     ptr: *mut SQObject,
@@ -331,7 +331,12 @@ fn _call_sq_object_function<R: GetFromSquirrelVm>(
         if (sqfunctions.sq_call)(sqvm, 1, true as u32, true as u32) == SQRESULT::SQRESULT_ERROR {
             Err(CallError::FunctionFailedToExecute)
         } else {
-            Ok(R::get_from_sqvm(sqvm, sqfunctions, sqvm._top))
+            Ok(R::get_from_sqobject(
+                sqvm._stack
+                    .add(sqvm._top as usize - 1)
+                    .as_ref()
+                    .ok_or(CallError::FunctionFailedToExecute)?,
+            ))
         }
     }
 }

@@ -127,12 +127,12 @@ pub unsafe fn run_async_routine() {
                     log::warn!("async squirrel function failed to execute; it may not be global");
                 } else {
                     unsafe {
-                        let amount = args(sqvm, sqfunctions);
-
                         (sqfunctions.sq_pushobject)(sqvm, function_obj.as_mut_ptr());
                         (sqfunctions.sq_pushroottable)(sqvm);
 
-                        if (sqfunctions.sq_call)(sqvm, amount, true as u32, true as u32)
+                        let amount = args(sqvm, sqfunctions);
+
+                        if (sqfunctions.sq_call)(sqvm, amount + 1, true as u32, true as u32)
                             == SQRESULT::SQRESULT_ERROR
                         {
                             log::warn!("async squirrel function failed to execute!")
