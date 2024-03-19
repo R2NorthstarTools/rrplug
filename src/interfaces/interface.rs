@@ -6,7 +6,7 @@ use std::{ffi::c_void, marker::PhantomData, ptr::NonNull};
 #[repr(C)]
 pub struct Interface<T: Sync + Send> {
     vtable: NonNull<*const c_void>,
-    data: T,
+    pub(crate) data: T,
     marker: PhantomData<*mut T>, // should make it not sync
 }
 

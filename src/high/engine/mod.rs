@@ -32,13 +32,6 @@ pub static CALLED_DLLS: Mutex<Vec<String>> = Mutex::new(Vec::new());
 pub struct EngineToken(PhantomData<*mut UnsafeCell<()>>);
 
 impl EngineToken {
-    /// this is a super expensive operation that checks if this is the engine thread
-    #[doc(hidden)]
-    pub fn try_new() -> Option<Self> {
-        // TODO: finish this
-        todo!()
-    }
-
     /// allows you to call engine restricted functions without checking if it's the right thread
     ///
     /// # Safety

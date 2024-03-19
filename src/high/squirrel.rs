@@ -254,11 +254,11 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 ///
 /// ```
 /// # use rrplug::prelude::*;
-/// # use rrplug::high::squirrel::call_sq_funccplayer_state_fixangletion;
+/// # use rrplug::high::squirrel::call_sq_function;
 /// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn test_call_sq_object_function() -> Result<(),String> {
-///     call_sq_function(sqvm, sq_functions, "someFunction").map_err(|err| err.to_string())?;
+///     call_sq_function::<()>(sqvm, sq_functions, "someFunction").map_err(|err| err.to_string())?;
 ///
 ///     Ok(())
 /// }
@@ -267,7 +267,7 @@ pub fn call_sq_function<R: GetFromSquirrelVm>(
     sqvm: *mut HSquirrelVM,
     sqfunctions: &'static SquirrelFunctions,
     function_name: impl AsRef<str>,
-) -> Result<(), CallError> {
+) -> Result<R, CallError> {
     let mut obj = std::mem::MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
 
@@ -285,8 +285,6 @@ pub fn call_sq_function<R: GetFromSquirrelVm>(
         _call_sq_object_function(sqvm, sqfunctions, ptr)
     }
 }
-
-// TODO: warn about wrong return values
 
 /// calls any function defined on the sqvm from its [`SQObject`]
 ///
@@ -306,7 +304,7 @@ pub fn call_sq_function<R: GetFromSquirrelVm>(
 /// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn call_sqvm_function(mut func: SQHandle<SQClosure>) -> Result<(),String>{
-///     call_sq_object_function(sqvm, sq_functions, func).map_err(|err| err.to_string())?;
+///     call_sq_object_function::<()>(sqvm, sq_functions, func).map_err(|err| err.to_string())?;
 ///
 ///     Ok(())
 /// }

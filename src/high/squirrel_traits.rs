@@ -27,7 +27,7 @@ use crate::{
             push_sq_string, push_sq_vector, sqvm_to_context,
         },
     },
-    prelude::ScriptContext,
+    prelude::*,
 };
 
 // Push Trait
@@ -280,8 +280,7 @@ impl GetFromSquirrelVm for Option<&mut CPlayer> {
         stack_pos: i32,
     ) -> Self {
         unsafe {
-            #[cfg(debug_assertions)]
-            assert_eq!(
+            debug_assert_eq!(
                 sqvm_to_context(sqvm),
                 ScriptContext::SERVER,
                 "CPlayer only exists on server vm use C_Player for CLIENT and UI"

@@ -3,7 +3,10 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // cluless
 #![allow(clippy::from_over_into)]
 
-use std::ops::{Add, Div, Mul, Sub};
+use std::{
+    fmt::Display,
+    ops::{Add, Div, Mul, Sub},
+};
 
 use crate::bindings::squirreldatatypes::{SQObject, SQVector};
 
@@ -45,6 +48,12 @@ impl Vector3 {
     #[inline]
     pub const fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
+    }
+}
+
+impl Display for Vector3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("< {}, {}, {} >", self.x, self.y, self.z))
     }
 }
 

@@ -58,7 +58,7 @@ unsafe extern "C" fn create_interface(
 ///     }
 /// }
 ///
-/// unsafe{ register_interface("Exposedinterface001", Exposedinterface::new()) }
+/// _ = unsafe{ register_interface("Exposedinterface001", Exposedinterface::new()) };
 /// ```
 ///
 /// # Safety
@@ -69,14 +69,12 @@ unsafe extern "C" fn create_interface(
 pub unsafe fn register_interface<T: Send + Sync + 'static + AsInterface>(
     name: &'static str,
     interface: Interface<T>,
-) {
+) -> &'static T {
+    let interface = Box::leak(Box::new(interface));
     REGISTERED_INTERFACES.lock().insert(
         name,
-        UnsafeHandle::internal_new(Box::leak(Box::new(interface)) as *const _ as *const c_void),
+        UnsafeHandle::internal_new(interface as *const _ as *const c_void),
     );
+
+    &interface.data
 }
-
-// TODO: implement this; I don't it's possible thought without more type defs or maybe the as_interface trait and macro should be expand to allow this
-// pub unsafe fn get_local(
-
-// )
