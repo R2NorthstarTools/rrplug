@@ -3,7 +3,7 @@
 //! squirrel vm related function and statics
 
 use parking_lot::Mutex;
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ptr::NonNull};
 
 use super::{
     squirrel_traits::{GetFromSQObject, IntoSquirrelArgs, IsSQObject},
@@ -31,7 +31,7 @@ pub static FUNCTION_SQ_REGISTER: Mutex<Vec<SQFuncInfo>> = Mutex::new(Vec::new())
 /// also has the current vm type
 #[derive(Debug)]
 pub struct CSquirrelVMHandle {
-    handle: *mut CSquirrelVM,
+    handle: NonNull<CSquirrelVM>,
     vm_type: ScriptContext,
 }
 
@@ -39,7 +39,7 @@ impl CSquirrelVMHandle {
     /// **should** not be used outside of the [`crate::entry`] macro
     #[doc(hidden)]
     pub fn new(
-        handle: *mut CSquirrelVM,
+        mut handle: NonNull<CSquirrelVM>,
         context: ScriptContext,
         is_being_dropped: bool,
         token: EngineToken,
@@ -47,14 +47,22 @@ impl CSquirrelVMHandle {
         unsafe {
             match (context, is_being_dropped) {
                 (ScriptContext::SERVER, false) => {
-                    _ = SQVM_SERVER.get(token).replace(Some((*handle).sqvm))
+                    _ = SQVM_SERVER.get(token).replace(Some(
+                        NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
+                    ))
                 }
                 (ScriptContext::SERVER, true) => _ = SQVM_SERVER.get(token).replace(None),
                 (ScriptContext::CLIENT, false) => {
-                    _ = SQVM_CLIENT.get(token).replace(Some((*handle).sqvm))
+                    _ = SQVM_CLIENT.get(token).replace(Some(
+                        NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
+                    ))
                 }
                 (ScriptContext::CLIENT, true) => _ = SQVM_CLIENT.get(token).replace(None),
-                (ScriptContext::UI, false) => _ = SQVM_UI.get(token).replace(Some((*handle).sqvm)),
+                (ScriptContext::UI, false) => {
+                    _ = SQVM_UI.get(token).replace(Some(
+                        NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
+                    ))
+                }
                 (ScriptContext::UI, true) => _ = SQVM_UI.get(token).replace(None),
             }
         }
@@ -79,7 +87,7 @@ impl CSquirrelVMHandle {
 
         let name = to_cstring(&name);
 
-        unsafe { (sqfunctions.sq_defconst)(self.handle, name.as_ptr(), value.into()) }
+        unsafe { (sqfunctions.sq_defconst)(self.handle.as_ptr(), name.as_ptr(), value.into()) }
     }
 
     /// gets the raw pointer to [`HSquirrelVM`]
@@ -92,8 +100,8 @@ impl CSquirrelVMHandle {
     /// [`UnsafeHandle`] : when used outside of engine thread can cause race conditions or ub
     ///
     /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
-    pub unsafe fn get_sqvm(&self) -> UnsafeHandle<*mut HSquirrelVM> {
-        unsafe { UnsafeHandle::internal_new((*self.handle).sqvm) }
+    pub const unsafe fn get_sqvm(&self) -> UnsafeHandle<NonNull<HSquirrelVM>> {
+        unsafe { UnsafeHandle::internal_new(NonNull::new_unchecked(self.handle.as_ref().sqvm)) }
     }
     /// gets the raw pointer to [`CSquirrelVM`]
     ///
@@ -105,7 +113,7 @@ impl CSquirrelVMHandle {
     /// [`UnsafeHandle`] : when used outside of engine thread can cause race conditions or ub
     ///
     /// [`UnsafeHandle`] should only be used to transfer the pointers to other places in the engine thread like sqfunctions or runframe
-    pub const unsafe fn get_cs_sqvm(&self) -> UnsafeHandle<*mut CSquirrelVM> {
+    pub const unsafe fn get_cs_sqvm(&self) -> UnsafeHandle<NonNull<CSquirrelVM>> {
         UnsafeHandle::internal_new(self.handle)
     }
 
@@ -183,17 +191,17 @@ impl<T: IntoSquirrelArgs> SquirrelFn<T> {
     /// This function will return an error if the fails to execute for some reason which is unlikely since it would be type checked
     pub fn run(
         &mut self,
-        sqvm: *mut HSquirrelVM,
+        sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &'static SquirrelFunctions,
         args: T,
     ) -> Result<(), CallError> {
         unsafe {
             let amount = args.into_push(sqvm, sqfunctions);
 
-            (sqfunctions.sq_pushobject)(sqvm, self.func.as_callable());
-            (sqfunctions.sq_pushroottable)(sqvm);
+            (sqfunctions.sq_pushobject)(sqvm.as_ptr(), self.func.as_callable());
+            (sqfunctions.sq_pushroottable)(sqvm.as_ptr());
 
-            if (sqfunctions.sq_call)(sqvm, amount, true as u32, true as u32)
+            if (sqfunctions.sq_call)(sqvm.as_ptr(), amount, true as u32, true as u32)
                 == SQRESULT::SQRESULT_ERROR
             {
                 return Err(CallError::FunctionFailedToExecute);
@@ -209,7 +217,7 @@ impl<T: IntoSquirrelArgs> SquirrelFn<T> {
     /// This function will return an error if the fails to execute for some reason which is unlikely since it would be type checked
     pub fn call(
         &mut self,
-        sqvm: *mut HSquirrelVM,
+        sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &'static SquirrelFunctions,
         args: T,
     ) -> Result<(), CallError> {
@@ -264,7 +272,7 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 /// }
 /// ```
 pub fn call_sq_function<R: GetFromSQObject>(
-    sqvm: *mut HSquirrelVM,
+    sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &'static SquirrelFunctions,
     function_name: impl AsRef<str>,
 ) -> Result<R, CallError> {
@@ -274,7 +282,7 @@ pub fn call_sq_function<R: GetFromSQObject>(
     let function_name = try_cstring(function_name.as_ref())?;
 
     let result = unsafe {
-        (sqfunctions.sq_getfunction)(sqvm, function_name.as_ptr(), ptr, std::ptr::null())
+        (sqfunctions.sq_getfunction)(sqvm.as_ptr(), function_name.as_ptr(), ptr, std::ptr::null())
     };
 
     if result != 0 {
@@ -310,7 +318,7 @@ pub fn call_sq_function<R: GetFromSQObject>(
 /// }
 /// ```
 pub fn call_sq_object_function<R: GetFromSQObject>(
-    sqvm: *mut HSquirrelVM,
+    sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &'static SquirrelFunctions,
     mut obj: SQHandle<SQClosure>,
 ) -> Result<R, CallError> {
@@ -319,12 +327,12 @@ pub fn call_sq_object_function<R: GetFromSQObject>(
 
 #[inline]
 fn _call_sq_object_function<R: GetFromSQObject>(
-    sqvm: *mut HSquirrelVM,
+    mut sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &'static SquirrelFunctions,
     ptr: *mut SQObject,
 ) -> Result<R, CallError> {
     unsafe {
-        let sqvm = &mut *sqvm;
+        let sqvm = sqvm.as_mut();
         (sqfunctions.sq_pushobject)(sqvm, ptr);
         (sqfunctions.sq_pushroottable)(sqvm);
 
@@ -358,7 +366,7 @@ fn _call_sq_object_function<R: GetFromSQObject>(
 /// }
 /// ```
 pub fn compile_string(
-    sqvm: *mut HSquirrelVM,
+    sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &SquirrelFunctions,
     should_throw_error: bool,
     code: impl AsRef<str>,
@@ -376,7 +384,7 @@ pub fn compile_string(
 
     unsafe {
         let result = (sqfunctions.sq_compilebuffer)(
-            sqvm,
+            sqvm.as_ptr(),
             &mut compile_buffer as *mut CompileBufferState,
             BUFFER_NAME,
             -1,
@@ -384,9 +392,9 @@ pub fn compile_string(
         );
 
         if result != SQRESULT::SQRESULT_ERROR {
-            (sqfunctions.sq_pushroottable)(sqvm);
+            (sqfunctions.sq_pushroottable)(sqvm.as_ptr());
 
-            if (sqfunctions.sq_call)(sqvm, 1, 0, 0) == SQRESULT::SQRESULT_ERROR {
+            if (sqfunctions.sq_call)(sqvm.as_ptr(), 1, 0, 0) == SQRESULT::SQRESULT_ERROR {
                 Err(SQCompileError::BufferFailedToExecute)
             } else {
                 Ok(())

@@ -36,7 +36,10 @@ pub enum AsyncEngineMessage {
         function_name: String,
         /// the arguments that will passed to it via the closure (use `AsyncEngineMessage::run_squirrel_func`)
         args: Box<
-            dyn FnOnce(*mut HSquirrelVM, &'static SquirrelFunctions) -> i32 + 'static + Send + Sync,
+            dyn FnOnce(NonNull<HSquirrelVM>, &'static SquirrelFunctions) -> i32
+                + 'static
+                + Send
+                + Sync,
         >,
     },
     /// contains a closure that will be executed once on the next engine frame

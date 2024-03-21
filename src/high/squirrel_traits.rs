@@ -3,7 +3,7 @@
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove this later
 
 pub use rrplug_proc::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName};
-use std::mem::MaybeUninit;
+use std::{mem::MaybeUninit, ptr::NonNull};
 
 use super::{
     squirrel::{SQHandle, SquirrelFn},
@@ -37,7 +37,7 @@ macro_rules! push_to_sqvm {
 
         impl PushToSquirrelVm for $t {
             #[inline]
-            fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) {
+            fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
                 $function(sqvm, sqfunctions, self)
             }
         }
@@ -55,7 +55,7 @@ pub trait PushToSquirrelVm {
     const DEFAULT_RESULT: SQRESULT = SQRESULT::SQRESULT_NOTNULL;
 
     /// pushes the value to the stack
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions);
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions);
 }
 
 push_to_sqvm! {
@@ -72,7 +72,7 @@ impl<T> PushToSquirrelVm for Vec<T>
 where
     T: PushToSquirrelVm,
 {
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) {
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
         push_sq_array(sqvm, sqfunctions, self);
     }
 }
@@ -81,8 +81,8 @@ impl PushToSquirrelVm for () {
     const DEFAULT_RESULT: SQRESULT = SQRESULT::SQRESULT_NULL;
 
     #[inline]
-    fn push_to_sqvm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) {
-        unsafe { (sqfunctions.sq_pushnull)(sqvm) };
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+        unsafe { (sqfunctions.sq_pushnull)(sqvm.as_ptr()) };
     }
 }
 
@@ -97,19 +97,19 @@ impl PushToSquirrelVm for () {
 /// - returning from native functions
 pub trait ReturnToVm {
     /// returns a value defined by [`SQRESULT`]
-    fn return_to_vm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) -> SQRESULT;
+    fn return_to_vm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) -> SQRESULT;
 }
 
 impl<T: PushToSquirrelVm> ReturnToVm for Option<T> {
     /// returns a `ornull T` to the sqvm
-    fn return_to_vm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) -> SQRESULT {
+    fn return_to_vm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) -> SQRESULT {
         match self {
             Some(rtrn) => {
                 rtrn.push_to_sqvm(sqvm, sqfunctions);
                 T::DEFAULT_RESULT
             }
             None => {
-                unsafe { (sqfunctions.sq_pushnull)(sqvm) };
+                unsafe { (sqfunctions.sq_pushnull)(sqvm.as_ptr()) };
                 SQRESULT::SQRESULT_NULL
             }
         }
@@ -120,7 +120,7 @@ impl<T: PushToSquirrelVm, E: ToString> ReturnToVm for Result<T, E> {
     /// will raise a squirrel exception if it's an error
     ///
     /// result returns of T,R are identical to non result returns of T
-    fn return_to_vm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) -> SQRESULT {
+    fn return_to_vm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) -> SQRESULT {
         match self {
             Ok(rtrn) => {
                 rtrn.push_to_sqvm(sqvm, sqfunctions);
@@ -128,7 +128,7 @@ impl<T: PushToSquirrelVm, E: ToString> ReturnToVm for Result<T, E> {
             }
             Err(err) => {
                 let err = crate::to_c_string!(err.to_string());
-                unsafe { (sqfunctions.sq_raiseerror)(sqvm, err.as_ptr()) };
+                unsafe { (sqfunctions.sq_raiseerror)(sqvm.as_ptr(), err.as_ptr()) };
                 SQRESULT::SQRESULT_ERROR
             }
         }
@@ -137,7 +137,7 @@ impl<T: PushToSquirrelVm, E: ToString> ReturnToVm for Result<T, E> {
 
 impl<T: PushToSquirrelVm> ReturnToVm for T {
     /// any return for types simply pushes it and returns NonNull
-    fn return_to_vm(self, sqvm: *mut HSquirrelVM, sqfunctions: &SquirrelFunctions) -> SQRESULT {
+    fn return_to_vm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) -> SQRESULT {
         self.push_to_sqvm(sqvm, sqfunctions);
         T::DEFAULT_RESULT
     }
@@ -150,23 +150,25 @@ pub trait IntoSquirrelArgs: Sync + Send {
     /// converts a implemenator of this trait into a closure that pushes it to the squirrel stack when ran
     fn into_function(
         self,
-    ) -> Box<dyn FnOnce(*mut HSquirrelVM, &'static SquirrelFunctions) -> i32 + 'static + Send + Sync>
+    ) -> Box<
+        dyn FnOnce(NonNull<HSquirrelVM>, &'static SquirrelFunctions) -> i32 + 'static + Send + Sync,
+    >
     where
         Self: Sized + Send + Sync + 'static,
     {
         Box::new(
-            move |sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions| {
+            move |sqvm: NonNull<HSquirrelVM>, sqfunctions: &'static SquirrelFunctions| {
                 self.into_push(sqvm, sqfunctions)
             },
         )
     }
 
     /// pushes the args to the sqvm and returns the amount pushed
-    fn into_push(self, sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions) -> i32;
+    fn into_push(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &'static SquirrelFunctions) -> i32;
 }
 
 impl<T: PushToSquirrelVm + Send + Sync + 'static> IntoSquirrelArgs for T {
-    fn into_push(self, sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions) -> i32 {
+    fn into_push(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &'static SquirrelFunctions) -> i32 {
         self.push_to_sqvm(sqvm, sqfunctions);
         1
     }
@@ -177,7 +179,7 @@ impl<T: PushToSquirrelVm + Send + Sync + 'static> IntoSquirrelArgs for T {
 macro_rules! into_squirrel_args_impl{
     ( $( ($($ty_name: ident : $tuple_index:tt),*) );*; ) => { $(
         impl<$($ty_name: PushToSquirrelVm + 'static + Send + Sync,)*> IntoSquirrelArgs for ($($ty_name,)*) {
-            fn into_push(self, sqvm: *mut HSquirrelVM, sqfunctions: &'static SquirrelFunctions) -> i32 {
+            fn into_push(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &'static SquirrelFunctions) -> i32 {
                 $(
                     self.$tuple_index.push_to_sqvm(sqvm, sqfunctions);
                 )*
@@ -208,7 +210,7 @@ macro_rules! get_from_sqvm {
         impl GetFromSquirrelVm for $t {
             #[inline]
             fn get_from_sqvm(
-                sqvm: *mut HSquirrelVM,
+                sqvm: NonNull<HSquirrelVM>,
                 sqfunctions: &SquirrelFunctions,
                 stack_pos: i32,
             ) -> Self {
@@ -220,7 +222,7 @@ macro_rules! get_from_sqvm {
     ( $( ($($ty_name: ident : $var_name:ident),*) );*; ) => { $(
         impl<$($ty_name: PushToSquirrelVm,)*> GetFromSquirrelVm for Box<dyn Fn($($ty_name,)*)> {
             fn get_from_sqvm(
-                sqvm: *mut HSquirrelVM,
+                sqvm: NonNull<HSquirrelVM>,
                 sqfunctions: &'static SquirrelFunctions,
                 stack_pos: i32,
             ) -> Self {
@@ -245,7 +247,7 @@ pub trait GetFromSquirrelVm {
     /// tries to get the value out of the squirrel stack but it cannot fail
     /// so this can panic
     fn get_from_sqvm(
-        sqvm: *mut HSquirrelVM,
+        sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &'static SquirrelFunctions,
         stack_pos: i32,
     ) -> Self;
@@ -265,7 +267,7 @@ where
     T: GetFromSQObject,
 {
     fn get_from_sqvm(
-        sqvm: *mut HSquirrelVM,
+        sqvm: NonNull<HSquirrelVM>,
         _: &'static SquirrelFunctions,
         stack_pos: i32,
     ) -> Self {
@@ -275,7 +277,7 @@ where
 
 impl GetFromSquirrelVm for Option<&mut CPlayer> {
     fn get_from_sqvm(
-        sqvm: *mut HSquirrelVM,
+        mut sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &SquirrelFunctions,
         stack_pos: i32,
     ) -> Self {
@@ -286,7 +288,7 @@ impl GetFromSquirrelVm for Option<&mut CPlayer> {
                 "CPlayer only exists on server vm use C_Player for CLIENT and UI"
             );
 
-            let sqvm = sqvm.as_mut().expect("the sqvm was invalid");
+            let sqvm = sqvm.as_mut();
             let cs_sqvm = sqvm
                 .sharedState
                 .as_ref()
@@ -321,13 +323,13 @@ impl GetFromSquirrelVm for Option<&mut CPlayer> {
 
 impl GetFromSquirrelVm for SQHandle<SQClosure> {
     fn get_from_sqvm(
-        sqvm: *mut HSquirrelVM,
+        sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &SquirrelFunctions,
         stack_pos: i32,
     ) -> Self {
         unsafe {
             let mut obj = std::mem::MaybeUninit::<SQObject>::uninit();
-            (sqfunctions.sq_getobject)(sqvm, stack_pos, obj.as_mut_ptr());
+            (sqfunctions.sq_getobject)(sqvm.as_ptr(), stack_pos, obj.as_mut_ptr());
             Self::new(obj.assume_init()).expect("the SQObject wasn't a closure")
         }
     }
@@ -336,7 +338,7 @@ impl GetFromSquirrelVm for SQHandle<SQClosure> {
 impl<T: IntoSquirrelArgs> GetFromSquirrelVm for SquirrelFn<T> {
     #[inline]
     fn get_from_sqvm(
-        sqvm: *mut HSquirrelVM,
+        sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &'static SquirrelFunctions,
         stack_pos: i32,
     ) -> Self {
@@ -349,7 +351,7 @@ impl<T: IntoSquirrelArgs> GetFromSquirrelVm for SquirrelFn<T> {
 
 impl GetFromSquirrelVm for () {
     /// exists for dynamic returns of some functions
-    fn get_from_sqvm(_: *mut HSquirrelVM, _: &SquirrelFunctions, _: i32) -> Self {}
+    fn get_from_sqvm(_: NonNull<HSquirrelVM>, _: &SquirrelFunctions, _: i32) -> Self {}
 }
 
 // Get From SQObject Trait
@@ -371,9 +373,7 @@ pub trait GetFromSQObject {
 
 impl GetFromSQObject for () {
     #[inline]
-    fn get_from_sqobject(_: &SQObject) -> Self {
-        ()
-    }
+    fn get_from_sqobject(_: &SQObject) -> Self {}
 }
 
 impl GetFromSQObject for String {

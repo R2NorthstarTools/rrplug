@@ -196,6 +196,8 @@ macro_rules! entry {
                     }
 
                     let token = unsafe { high::engine::EngineToken::new_unchecked() };
+                    let sqvm =
+                        std::ptr::NonNull::new(sqvm).expect("sqvm should not be null on sqvm init");
                     let handle =
                         high::squirrel::CSquirrelVMHandle::new(sqvm, context, false, token);
 
@@ -206,6 +208,8 @@ macro_rules! entry {
                         .try_into()
                         .expect("sqvm was not valid :((((");
                     let token = unsafe { high::engine::EngineToken::new_unchecked() };
+                    let sqvm = std::ptr::NonNull::new(sqvm)
+                        .expect("sqvm should not be null on sqvm destroy");
                     let handle = high::squirrel::CSquirrelVMHandle::new(sqvm, context, true, token);
                     PLUGIN.wait().on_sqvm_destroyed(&handle, token);
                 }

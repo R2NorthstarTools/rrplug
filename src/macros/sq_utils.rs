@@ -40,23 +40,24 @@ macro_rules! call_sq_function {
                 let ptr = obj.as_mut_ptr();
 
                 let function_name = $crate::to_c_string!(std::convert::Into::<String>::into($function_name));
+                let sqvm = $sqvm;
 
                 let result = unsafe {
-                    ($sqfunctions.sq_getfunction)($sqvm, function_name.as_ptr(), ptr, std::ptr::null())
+                    ($sqfunctions.sq_getfunction)(sqvm.as_ptr(), function_name.as_ptr(), ptr, std::ptr::null())
                 };
 
                 if result != 0 {
                     Err($crate::errors::CallError::FunctionNotFound(function_name.to_string_lossy().into())) // totaly safe :clueless:
                 } else {
                     unsafe {
-                        ($sqfunctions.sq_pushobject)($sqvm, ptr);
-                        ($sqfunctions.sq_pushroottable)($sqvm);
+                        ($sqfunctions.sq_pushobject)(sqvm.as_ptr(), ptr);
+                        ($sqfunctions.sq_pushroottable)(sqvm.as_ptr());
 
                         $(
-                            $arg.push_to_sqvm($sqvm, $sqfunctions);
+                            $arg.push_to_sqvm(sqvm, $sqfunctions);
                         )*
 
-                        if ($sqfunctions.sq_call)($sqvm, ARGS_AMOUNT, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR  {
+                        if ($sqfunctions.sq_call)(sqvm.as_ptr(), ARGS_AMOUNT, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR  {
                             Err($crate::errors::CallError::FunctionFailedToExecute)
                         } else {
                             Ok(())
@@ -101,14 +102,14 @@ macro_rules! call_sq_object_function {
                 let sqvm = $sqvm;
                 let ptr = $obj.as_callable();
                 unsafe {
-                    (sqfunctions.sq_pushobject)(sqvm, ptr);
-                    (sqfunctions.sq_pushroottable)(sqvm);
+                    (sqfunctions.sq_pushobject)(sqvm.as_ptr(), ptr);
+                    (sqfunctions.sq_pushroottable)(sqvm.as_ptr());
 
                     $(
                         $arg.push_to_sqvm(sqvm, sqfunctions);
                     )*
 
-                    let result = if (sqfunctions.sq_call)(sqvm, ARGS_AMOUNT, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR {
+                    let result = if (sqfunctions.sq_call)(sqvm.as_ptr(), ARGS_AMOUNT, true as u32, true as u32) == $crate::bindings::squirrelclasstypes::SQRESULT::SQRESULT_ERROR {
                         Err($crate::errors::CallError::FunctionFailedToExecute)
                     } else {
                         Ok(())

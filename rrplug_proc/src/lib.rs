@@ -173,12 +173,13 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
         #[doc(hidden)]
         #[doc = "generated ffi function for #func_name"]
         #vis extern "C" fn #sq_functions_func (sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM) -> rrplug::bindings::squirrelclasstypes::SQRESULT {
+            let sqvm = std::ptr::NonNull::new(sqvm).expect("sqvm has to be non null");
             use rrplug::high::squirrel_traits::{GetFromSquirrelVm,ReturnToVm};
             let sq_functions = SQFUNCTIONS.from_sqvm(sqvm);
 
             #(#sub_stms)*
 
-            fn inner_function( sqvm: *mut rrplug::bindings::squirreldatatypes::HSquirrelVM, sq_functions: &'static SquirrelFunctions #(, #input_vec)* ) #output {
+            fn inner_function( sqvm: std::ptr::NonNull<rrplug::bindings::squirreldatatypes::HSquirrelVM>, sq_functions: &'static SquirrelFunctions #(, #input_vec)* ) #output {
                 let engine_token = unsafe { rrplug::high::engine::EngineToken::new_unchecked() };
                 #(#stmts)*
             }
