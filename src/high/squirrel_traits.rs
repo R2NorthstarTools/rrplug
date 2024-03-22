@@ -22,6 +22,7 @@ use crate::{
             get_sq_vector, push_sq_array, push_sq_bool, push_sq_float, push_sq_int, push_sq_object,
             push_sq_string, push_sq_vector, sqvm_to_context,
         },
+        utils::to_cstring,
     },
     prelude::*,
 };
@@ -123,7 +124,7 @@ impl<T: PushToSquirrelVm, E: ToString> ReturnToVm for Result<T, E> {
                 T::DEFAULT_RESULT
             }
             Err(err) => {
-                let err = crate::to_c_string!(err.to_string());
+                let err = to_cstring(err.to_string().as_str());
                 unsafe { (sqfunctions.sq_raiseerror)(sqvm.as_ptr(), err.as_ptr()) };
                 SQRESULT::SQRESULT_ERROR
             }
