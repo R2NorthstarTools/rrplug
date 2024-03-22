@@ -11,8 +11,8 @@ pub mod engine_sync;
 
 #[doc(hidden)]
 #[cfg(not(feature = "async_engine"))]
+#[doc = "enable engine sync feature if you want to use it"]
 pub mod engine_sync {
-    //! enable engine sync feature if you want to use it
 
     #[doc(hidden)]
     #[inline(always)]

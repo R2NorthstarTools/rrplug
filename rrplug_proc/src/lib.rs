@@ -4,7 +4,7 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{format_ident, quote, quote_spanned, ToTokens};
 use syn::{
-    self, parse, parse_macro_input, parse_str, punctuated::Punctuated, spanned::Spanned,
+    parse, parse_macro_input, parse_str, punctuated::Punctuated, spanned::Spanned,
     AngleBracketedGenericArguments, DeriveInput, Error as SynError, FnArg, Ident, ImplItem,
     ImplItemFn, ItemFn, ItemImpl, ReturnType, Stmt, Token, Type, TypePath,
 };

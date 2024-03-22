@@ -199,8 +199,8 @@ macro_rules! impl_sqvm_name {
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 mod test {
-    #![allow(dead_code)]
 
     struct Test;
 

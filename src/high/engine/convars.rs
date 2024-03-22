@@ -87,9 +87,9 @@ pub struct ConVarValues {
     ///
     /// the strings should always be valid utf8
     pub value: String,
-    /// float value
+    /// float value will be 0 if it's a string
     pub value_float: f32,
-    ///
+    /// int representation of the convar will be 0 if it's a string
     pub value_int: i32,
 }
 

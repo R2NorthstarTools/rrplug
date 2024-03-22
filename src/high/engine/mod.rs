@@ -190,8 +190,8 @@ impl EngineData {
 // hacky way to test compile failure
 
 #[cfg(doctest)]
+#[allow(unused)]
 mod doctest {
-    #![allow(unused)]
     use super::*;
 
     /// ```compile_fail

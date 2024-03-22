@@ -5,20 +5,16 @@
 pub use rrplug_proc::{GetFromSQObject, GetFromSquirrelVm, PushToSquirrelVm, SQVMName};
 use std::{mem::MaybeUninit, ptr::NonNull};
 
-use super::{
-    squirrel::{SQHandle, SquirrelFn},
-    vector::Vector3,
-};
 use crate::{
     bindings::{
         class_types::cplayer::CPlayer,
         squirrelclasstypes::SQRESULT,
         squirreldatatypes::{
-            HSquirrelVM, SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger,
-            SQNativeClosure, SQObject, SQObjectType, SQString, SQStructInstance, SQTable,
+            SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger, SQNativeClosure,
+            SQObject, SQObjectType, SQString, SQStructInstance, SQTable,
         },
-        squirrelfunctions::SquirrelFunctions,
     },
+    high::squirrel::SQHandle,
     mid::{
         server::cplayer::CPLAYER_VTABLE,
         squirrel::{

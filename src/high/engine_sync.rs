@@ -6,6 +6,7 @@ use once_cell::sync::OnceCell;
 use parking_lot::Mutex;
 use std::{
     mem::MaybeUninit,
+    ptr::NonNull,
     sync::mpsc::{self, Receiver, SendError, Sender},
 };
 
@@ -119,7 +120,7 @@ pub unsafe fn run_async_routine() {
 
                 let result = unsafe {
                     (sqfunctions.sq_getfunction)(
-                        sqvm,
+                        sqvm.as_ptr(),
                         to_cstring(&function_name).as_ptr(), // TODO: safe or not?
                         function_obj.as_mut_ptr(),
                         std::ptr::null(),
@@ -130,13 +131,17 @@ pub unsafe fn run_async_routine() {
                     log::warn!("async squirrel function failed to execute; it may not be global");
                 } else {
                     unsafe {
-                        (sqfunctions.sq_pushobject)(sqvm, function_obj.as_mut_ptr());
-                        (sqfunctions.sq_pushroottable)(sqvm);
+                        (sqfunctions.sq_pushobject)(sqvm.as_ptr(), function_obj.as_mut_ptr());
+                        (sqfunctions.sq_pushroottable)(sqvm.as_ptr());
 
                         let amount = args(sqvm, sqfunctions);
 
-                        if (sqfunctions.sq_call)(sqvm, amount + 1, true as u32, true as u32)
-                            == SQRESULT::SQRESULT_ERROR
+                        if (sqfunctions.sq_call)(
+                            sqvm.as_ptr(),
+                            amount + 1,
+                            true as u32,
+                            true as u32,
+                        ) == SQRESULT::SQRESULT_ERROR
                         {
                             log::warn!("async squirrel function failed to execute!")
                         }

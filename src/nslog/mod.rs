@@ -2,17 +2,14 @@ use crate::bindings::plugin_abi::LogLevel;
 use crate::high::UnsafeHandle;
 use crate::mid::northstar::{NorthstarSys, NORTHSTAR_DATA};
 use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
-use std::ffi::{c_char, CStr, CString};
+use once_cell::sync::OnceCell;
+use std::ffi::{CStr, CString};
 use std::panic;
 use windows::Win32::Foundation::HMODULE;
 
-const C_STRING_ERROR: *const c_char =
-    "rrplug logger failed to transform a String to a CString\0".as_ptr() as *const c_char;
+const C_STRING_ERROR: &CStr = c"rrplug logger failed to transform a String to a CString";
 
-static mut LOGGER: NorthstarLogger = NorthstarLogger {
-    ns_sys: None,
-    plugin_handle: HMODULE(0),
-};
+static LOGGER: OnceCell<NorthstarLogger> = OnceCell::new();
 
 pub fn try_init(plugin_handle: HMODULE) -> Result<(), SetLoggerError> {
     panic::set_hook(Box::new(|info| {
@@ -29,11 +26,9 @@ pub fn try_init(plugin_handle: HMODULE) -> Result<(), SetLoggerError> {
         log::error!("");
     }));
 
-    unsafe {
-        LOGGER = NorthstarLogger::init(plugin_handle);
+    _ = LOGGER.set(NorthstarLogger::init(plugin_handle));
 
-        log::set_logger(&LOGGER).map(|()| log::set_max_level(LevelFilter::Info))
-    }
+    log::set_logger(LOGGER.wait()).map(|()| log::set_max_level(LevelFilter::Info))
 }
 
 struct NorthstarLogger {
@@ -82,8 +77,7 @@ fn to_cstring<T>(string: T) -> CString
 where
     T: ToString,
 {
-    CString::new(string.to_string())
-        .unwrap_or_else(|_| CString::from(unsafe { CStr::from_ptr(C_STRING_ERROR) }))
+    CString::new(string.to_string()).unwrap_or_else(|_| CString::from(C_STRING_ERROR))
 }
 
 /// this is needed because [`Level`] doesn't have the same order

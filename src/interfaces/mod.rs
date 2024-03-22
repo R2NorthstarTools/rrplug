@@ -9,6 +9,7 @@ mod test {
     use crate::rrplug;
     use rrplug_proc::as_interface;
 
+    #[allow(dead_code)] // TODO: fix later
     #[repr(C)]
     struct TestInterface {
         the_line: &'static str,
