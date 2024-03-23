@@ -7,16 +7,7 @@ this crate provides convenient abstractions with compile time checks while not l
 
 ## rrplug template
 
-install cargo-generate if you don't have it
-```bash
-cargo install cargo-generate
-```
-
-```bash
-cargo generate -g  https://github.com/catornot/rrplug.git
-```
-
-a git [template](https://github.com/catornot/rrplug-template) also exists but it may or not be maintained as well 
+plugins v4 removed some dependencies on external files so now templates are redundant but a [template](https://github.com/catornot/rrplug-template) still exists
 
 ## cross compiling plugins
 
@@ -41,3 +32,5 @@ rrplug had a major rewrite for each plugins version so versions that a `x` plugi
 | `3.*.*` |  `v3`   |
 | `2.*.*` |  `v2`   |
 | `0.1.*` |  `v1`   |
+
+rrplug 4 release soon
