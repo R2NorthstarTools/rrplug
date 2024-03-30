@@ -33,7 +33,6 @@ impl RegisterConCommands {
         help_string: &str,
         flags: i32,
     ) -> Result<*mut ConCommand, RegisterError> {
-        // TODO: use IMemAlloc here
         let name = try_cstring(name)?.into_bytes_with_nul();
         let name_ptr =
             unsafe {

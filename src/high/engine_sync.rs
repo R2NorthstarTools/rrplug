@@ -121,7 +121,7 @@ pub unsafe fn run_async_routine() {
                 let result = unsafe {
                     (sqfunctions.sq_getfunction)(
                         sqvm.as_ptr(),
-                        to_cstring(&function_name).as_ptr(), // TODO: safe or not?
+                        to_cstring(&function_name).as_ptr(),
                         function_obj.as_mut_ptr(),
                         std::ptr::null(),
                     )

@@ -171,7 +171,6 @@ impl<T: PushToSquirrelVm + Send + Sync + 'static> IntoSquirrelArgs for T {
     }
 }
 
-// TODO: format this
 // TODO: check for correctness
 macro_rules! into_squirrel_args_impl{
     ( $( ($($ty_name: ident : $tuple_index:tt),*) );*; ) => { $(

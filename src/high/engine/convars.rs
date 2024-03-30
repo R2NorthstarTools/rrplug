@@ -168,7 +168,6 @@ impl ConVarRegister {
     }
 }
 
-// TODO: rewrite convars with thread_local!
 // so the convars have to init at mod scope with a macro
 // sync and send must be removed from ConVarStruct to forbid unsafe access with race condition
 // altought a unsafe way of initing the ConVarStruct should be given
@@ -406,6 +405,8 @@ impl ConVarStruct {
     }
 
     // TODO: add exclusive access set_value s aka &mut self
+    // this might not be needed acutally since this acts like a Cell where you can't get a reference to internal parts
+    // well the string can be referenced but eh ub is fine ig XD
     // this really should not be a &self
 
     /// set the int value of the convar

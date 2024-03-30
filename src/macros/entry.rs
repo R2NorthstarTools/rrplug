@@ -37,14 +37,16 @@ macro_rules! entry {
 
             use high::engine::EngineData;
             use mid::squirrel::SQFUNCTIONS;
+            use std::ffi::{CStr, CString};
             use $crate::bindings::{plugin_abi, squirrelclasstypes, squirreldatatypes};
             use $crate::exports::log;
+            use $crate::exports::windows::{
+                core::PCSTR, Win32::System::LibraryLoader::GetModuleHandleA,
+            };
             use $crate::interfaces::external::SourceInterface;
             use $crate::plugin::Plugin;
             use $crate::rrplug;
             use $crate::{high, mid};
-
-            use std::ffi::CString;
 
             pub static PLUGIN: $crate::exports::OnceCell<$plugin> =
                 $crate::exports::OnceCell::new();
@@ -110,6 +112,27 @@ macro_rules! entry {
 
                     if PLUGIN.set(plugin).is_err() {
                         panic!("PLUGIN failed initialization")
+                    }
+
+                    if reloaded {
+                        const ENGINE: &CStr = c"engine.dll";
+                        const SERVER: &CStr = c"server.dll";
+                        const CLIENT: &CStr = c"client.dll";
+                        unsafe {
+                            _ = self.OnLibraryLoaded(
+                                GetModuleHandleA(PCSTR(ENGINE.as_ptr().cast()))
+                                    .expect("engine.dll should exists if called for reload"),
+                                ENGINE.as_ptr(),
+                            );
+                            if let Ok(handle) = GetModuleHandleA(PCSTR(CLIENT.as_ptr().cast())) {
+                                self.OnLibraryLoaded(handle, CLIENT.as_ptr());
+                            } // client gets loaded before server
+                            self.OnLibraryLoaded(
+                                GetModuleHandleA(PCSTR(SERVER.as_ptr().cast()))
+                                    .expect("server.dll should exists if called for reload"),
+                                SERVER.as_ptr(),
+                            );
+                        }
                     }
                 }
                 fn Finalize(&self) {

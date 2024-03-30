@@ -122,38 +122,6 @@ macro_rules! call_sq_object_function {
     )
 }
 
-// TODO: remove this
-/*
-/// calls any function defined on the sqvm
-/// the call will happen on the next engine frame
-///
-/// macro version of [`crate::high::squirrel::async_call_sq_function`], used to call a function with args
-///
-/// ## example
-/// ```no_run
-/// # use rrplug::prelude::*;
-///
-/// rrplug::async_call_sq_function!(ScriptVmType::Client, "SomeSQFunc", 9347, "Test".to_string());
-/// ```
-#[macro_export]
-macro_rules! async_call_sq_function {
-    ($context:expr, $function_name:expr, $( $arg:expr ),* ) => (
-        $crate::high::squirrel::async_call_sq_function(
-            $context,
-            $function_name,
-            Some( Box::new( move |sqvm,sqfunctions| {
-                use $crate::high::squirrel_traits::PushToSquirrelVm;
-                $(
-                    $arg.push_to_sqvm(sqvm, sqfunctions);
-                )*
-
-                $crate::macros::sq_utils::__arg_count_helper([$($crate::__replace_expr!($arg)),*]) as i32
-            } )),
-        )
-    );
-}
-*/
-
 /// internal macro used in counting args in some macros
 #[doc(hidden)]
 #[macro_export]

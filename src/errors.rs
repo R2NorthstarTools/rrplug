@@ -155,7 +155,6 @@ pub enum InterfaceGetterError<'a> {
     InterfaceNotFound(&'a str),
 }
 
-// TODO: make a macro for this
 impl InterfaceGetterError<'_> {
     /// logs the error with the builtin logger
     pub fn log(&self) {
