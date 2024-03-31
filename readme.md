@@ -3,6 +3,8 @@
 [![docs.rs](https://docs.rs/rrplug/badge.svg)](https://docs.rs/rrplug)
 [![rrplug-test-build](https://github.com/R2NorthstarTools/rrplug/actions/workflows/rrplug-test-build.yml/badge.svg?branch=master)](https://github.com/R2NorthstarTools/rrplug/actions/workflows/rrplug-test-build.yml)
 
+framework for working with [R2Northstar](https://northstar.tf/)'s plugin system.
+
 this crate provides convenient abstractions with compile time checks while not limiting unsafe access to any parts of plugin sys or the titanfall 2 engine.
 
 ## rrplug template
@@ -32,5 +34,3 @@ rrplug had a major rewrite for each plugins version so versions that a `x` plugi
 | `3.*.*` |  `v3`   |
 | `2.*.*` |  `v2`   |
 | `0.1.*` |  `v1`   |
-
-rrplug 4 release soon

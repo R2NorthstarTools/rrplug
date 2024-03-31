@@ -1,19 +1,26 @@
-//! rrplug is a safe wrapper around the plugin system in [R2Northstar](https://northstar.tf/)
+//! # rrplug
+//! framework for working with [R2Northstar](https://northstar.tf/)'s plugin system.
 //!
-//! rrplug uses compile time or sometimes runtime checks to guarantee safety in abstractions
+//! this crate provides convenient abstractions with compile time checks while not limiting unsafe access to any parts of plugin sys or the titanfall 2 engine.
 //!
 //! ## rrplug template
 //!
-//! install cargo-generate if you don't have it
-//! ```bash
-//! cargo install cargo-generate
-//! ```
+//! plugins v4 removed some dependencies on external files so now templates are redundant but a [template](https://github.com/catornot/rrplug-template) still exists
+//!
+//! ## cross compiling plugins
+//!
+//! To compile a plugin from a host machine that's not using windows, you need to install the required target.
 //!
 //! ```bash
-//! cargo generate -g  https://github.com/catornot/rrplug.git
+//! rustup target add x86_64-pc-windows-gnu
 //! ```
 //!
-//! a git [template](https://github.com/catornot/rrplug-template) also exists but it may or not be maintained as well
+//! Then create a cargo config to always compile your project for windows.
+//!
+//! ```bash
+//! mkdir .cargo
+//! echo "[build]\ntarget = \"x86_64-pc-windows-gnu\"" > .cargo/config.toml
+//! ```
 
 #![deny(
     unsafe_op_in_unsafe_fn,

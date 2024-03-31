@@ -2,10 +2,10 @@
 name = "rrplug"
 version = "4.0.0"
 authors = ["catornot"]
-description = "wrappers and functions for R2Northstar plugins"
-repository = "https://github.com/catornot/rrplug"
+description = "framework for R2Northstar plugins"
+repository = "https://github.com/R2NorthstarTools/rrplug"
 license = "Apache-2.0 OR MIT"
-keywords = ["plugin", "northstar", "titanfall"]
+keywords = ["plugin", "northstar", "titanfall", "wrappers", "framework", "titanfall2", "r2northstar"]
 exclude  = [".gitignore"]
 edition = "2021"
 rust-version = "1.77"
