@@ -30,7 +30,7 @@ echo "[build]\ntarget = \"x86_64-pc-windows-gnu\"" > .cargo/config.toml
 rrplug had a major rewrite for each plugins version so versions that a `x` plugins version are `x.\*.\*`
 | rrplug  | plugins |
 | :-----: | :-----: |
-| `master`|  `v4`   |
+| `4.*.*` |  `v4`   |
 | `3.*.*` |  `v3`   |
 | `2.*.*` |  `v2`   |
 | `0.1.*` |  `v1`   |
