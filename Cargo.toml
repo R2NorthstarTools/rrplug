@@ -29,3 +29,19 @@ targets = ["x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"] # hopefully docs.r
 [features]
 # default = ["async_engine"]
 async_engine = []
+
+[[example]]
+crate-type = ["cdylib"]
+name = "squirrel_example"
+path = "examples/squirrel_example.rs"
+
+[[example]]
+crate-type = ["cdylib"]
+name = "cvar_example"
+path = "examples/cvar_example.rs"
+
+[[example]]
+crate-type = ["cdylib"]
+name = "async_engine"
+path = "examples/async_engine.rs"
+required-features = ["async_engine"]

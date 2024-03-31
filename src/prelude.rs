@@ -30,6 +30,9 @@ pub use crate::{
 };
 pub use log;
 
+#[cfg(feature = "async_engine")]
+pub use crate::high::engine_sync::{async_execute, AsyncEngineMessage};
+
 // consider adding more stuff ^
 
 /// puts a thread on sleep in milliseconds
