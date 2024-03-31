@@ -30,3 +30,8 @@ jobs:
         cargo clippy
     - name: Run tests
       run: cargo test --verbose --target x86_64-pc-windows-msvc 
+    - name: Test examples
+      run: | 
+        cargo build --example async_engine --features="async_engine" 
+        cargo build --example cvar_example 
+        cargo build --example squirrel_example 
