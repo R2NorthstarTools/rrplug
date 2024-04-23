@@ -78,9 +78,7 @@ impl PushToSquirrelVm for () {
     const DEFAULT_RESULT: SQRESULT = SQRESULT::SQRESULT_NULL;
 
     #[inline]
-    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
-        unsafe { (sqfunctions.sq_pushnull)(sqvm.as_ptr()) };
-    }
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {}
 }
 
 // Return Trait
