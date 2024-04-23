@@ -78,7 +78,7 @@ impl PushToSquirrelVm for () {
     const DEFAULT_RESULT: SQRESULT = SQRESULT::SQRESULT_NULL;
 
     #[inline]
-    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {}
+    fn push_to_sqvm(self, _: NonNull<HSquirrelVM>, _: &SquirrelFunctions) {}
 }
 
 // Return Trait
@@ -164,8 +164,14 @@ pub trait IntoSquirrelArgs: Sync + Send {
 
 impl<T: PushToSquirrelVm + Send + Sync + 'static> IntoSquirrelArgs for T {
     fn into_push(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &'static SquirrelFunctions) -> i32 {
-        self.push_to_sqvm(sqvm, sqfunctions);
-        1
+        // hack :(
+        // no specialization
+        if T::DEFAULT_RESULT != SQRESULT::SQRESULT_NULL {
+            self.push_to_sqvm(sqvm, sqfunctions);
+            1
+        } else {
+            0
+        }
     }
 }
 
