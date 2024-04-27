@@ -64,7 +64,7 @@ push_to_sqvm! {
     push_sq_float::<f32>;
     push_sq_bool::<bool>;
     push_sq_vector::<Vector3>;
-    push_sq_object::<MaybeUninit<SQObject>>;
+    push_sq_object::<SQObject>;
 }
 
 impl<T> PushToSquirrelVm for Vec<T>
@@ -287,7 +287,7 @@ get_from_sqvm! {
     get_sq_float::<f32>;
     get_sq_bool::<bool>;
     get_sq_vector::<Vector3>;
-    get_sq_object::<MaybeUninit<SQObject>>;
+    get_sq_object::<SQObject>;
 }
 
 impl<T> GetFromSquirrelVm for Vec<T>

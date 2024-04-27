@@ -184,6 +184,18 @@ pub struct SquirrelFn<T: IntoSquirrelArgs> {
 }
 
 impl<T: IntoSquirrelArgs> SquirrelFn<T> {
+    /// creates a new [`SquirrelFn`] using the invariance of [`SQHandle<SQClosure>`]
+    ///
+    /// # Safety
+    ///
+    /// doesn't check if the function passed has the correct args and return type
+    pub const unsafe fn new_unchecked(obj: SQHandle<SQClosure>) -> Self {
+        Self {
+            func: obj,
+            phantom: PhantomData,
+        }
+    }
+
     /// calls the underlying squirrel function on the provided sqvm
     ///
     /// # Errors
@@ -222,6 +234,12 @@ impl<T: IntoSquirrelArgs> SquirrelFn<T> {
         args: T,
     ) -> Result<(), CallError> {
         self.run(sqvm, sqfunctions, args)
+    }
+}
+
+impl<T: IntoSquirrelArgs> AsRef<SQHandle<SQClosure>> for SquirrelFn<T> {
+    fn as_ref(&self) -> &SQHandle<SQClosure> {
+        &self.func
     }
 }
 
@@ -266,7 +284,7 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 /// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn test_call_sq_object_function() -> Result<(),String> {
-///     call_sq_function::<()>(sqvm, sq_functions, "someFunction").map_err(|err| err.to_string())?;
+///     call_sq_function::<(), _>(sqvm, sq_functions, "someFunction", ()).map_err(|err| err.to_string())?;
 ///
 ///     Ok(())
 /// }
@@ -313,7 +331,7 @@ pub fn call_sq_function<R: GetFromSQObject, A: IntoSquirrelArgs>(
 /// # use rrplug::{high::squirrel::SQHandle,bindings::squirreldatatypes::SQClosure};
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn call_sqvm_function(mut func: SQHandle<SQClosure>) -> Result<(),String>{
-///     call_sq_object_function::<()>(sqvm, sq_functions, func).map_err(|err| err.to_string())?;
+///     call_sq_object_function::<(), _>(sqvm, sq_functions, func, ()).map_err(|err| err.to_string())?;
 ///
 ///     Ok(())
 /// }

@@ -232,9 +232,9 @@ pub fn push_sq_vector(
 pub fn push_sq_object(
     sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &SquirrelFunctions,
-    mut object: MaybeUninit<SQObject>,
+    mut object: SQObject,
 ) {
-    unsafe { (sqfunctions.sq_pushobject)(sqvm.as_ptr(), object.as_mut_ptr()) };
+    unsafe { (sqfunctions.sq_pushobject)(sqvm.as_ptr(), &mut object) };
 }
 
 /// gets a array of T at a stack pos
@@ -343,13 +343,13 @@ pub fn get_sq_object(
     sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &SquirrelFunctions,
     stack_pos: i32,
-) -> MaybeUninit<SQObject> {
+) -> SQObject {
     let mut obj: MaybeUninit<SQObject> = MaybeUninit::uninit();
     unsafe {
         (sqfunctions.sq_getobject)(sqvm.as_ptr(), stack_pos, obj.as_mut_ptr());
     };
 
-    obj
+    unsafe { obj.assume_init() }
 }
 
 /// gets a function [`SQObject`] from the sqvm
