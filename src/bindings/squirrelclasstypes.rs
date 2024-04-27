@@ -275,7 +275,7 @@ impl TryFrom<i32> for ScriptContext {
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         if value <= Self::UI as i32 && value >= Self::SERVER as i32 {
-            Ok(unsafe { std::mem::transmute(value) })
+            Ok(unsafe { std::mem::transmute::<i32, ScriptContext>(value) })
         } else {
             Err(value)
         }
@@ -396,3 +396,5 @@ pub type RegisterSquirrelFuncType_External = unsafe extern "C" fn(
     funcReg: *mut SQFuncRegistration,
     unknown: ::std::os::raw::c_char,
 ) -> i64;
+pub type sq_createscriptinstanceType =
+    unsafe extern "C" fn(ent: *mut ::std::os::raw::c_void) -> *mut SQObject;

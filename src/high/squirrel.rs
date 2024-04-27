@@ -271,10 +271,11 @@ pub fn register_sq_functions(get_info_func: FuncSQFuncInfo) {
 ///     Ok(())
 /// }
 /// ```
-pub fn call_sq_function<R: GetFromSQObject>(
+pub fn call_sq_function<R: GetFromSQObject, A: IntoSquirrelArgs>(
     sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &'static SquirrelFunctions,
     function_name: impl AsRef<str>,
+    args: A,
 ) -> Result<R, CallError> {
     let mut obj = std::mem::MaybeUninit::<SQObject>::zeroed();
     let ptr = obj.as_mut_ptr();
@@ -288,9 +289,9 @@ pub fn call_sq_function<R: GetFromSQObject>(
     if result != 0 {
         Err(CallError::FunctionNotFound(
             function_name.to_string_lossy().into(),
-        )) // totaly safe :clueless:
+        ))
     } else {
-        _call_sq_object_function(sqvm, sqfunctions, ptr)
+        _call_sq_object_function(sqvm, sqfunctions, ptr, args)
     }
 }
 
@@ -317,31 +318,38 @@ pub fn call_sq_function<R: GetFromSQObject>(
 ///     Ok(())
 /// }
 /// ```
-pub fn call_sq_object_function<R: GetFromSQObject>(
+pub fn call_sq_object_function<R: GetFromSQObject, A: IntoSquirrelArgs>(
     sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &'static SquirrelFunctions,
     mut obj: SQHandle<SQClosure>,
+    args: A,
 ) -> Result<R, CallError> {
-    _call_sq_object_function(sqvm, sqfunctions, obj.as_callable())
+    _call_sq_object_function(sqvm, sqfunctions, obj.as_callable(), args)
 }
 
 #[inline]
-fn _call_sq_object_function<R: GetFromSQObject>(
+fn _call_sq_object_function<R: GetFromSQObject, A: IntoSquirrelArgs>(
     mut sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &'static SquirrelFunctions,
     ptr: *mut SQObject,
+    args: A,
 ) -> Result<R, CallError> {
     unsafe {
-        let sqvm = sqvm.as_mut();
-        (sqfunctions.sq_pushobject)(sqvm, ptr);
-        (sqfunctions.sq_pushroottable)(sqvm);
+        let sqvm_ref = sqvm.as_mut();
+        (sqfunctions.sq_pushobject)(sqvm_ref, ptr);
+        (sqfunctions.sq_pushroottable)(sqvm_ref);
 
-        if (sqfunctions.sq_call)(sqvm, 1, true as u32, true as u32) == SQRESULT::SQRESULT_ERROR {
+        let amount = args.into_push(sqvm, sqfunctions);
+
+        if (sqfunctions.sq_call)(sqvm_ref, amount + 1, true as u32, true as u32)
+            == SQRESULT::SQRESULT_ERROR
+        {
             Err(CallError::FunctionFailedToExecute)
         } else {
             Ok(R::get_from_sqobject(
-                sqvm._stack
-                    .add(sqvm._top as usize - 1)
+                sqvm_ref
+                    ._stack
+                    .add(sqvm_ref._top as usize - 1)
                     .as_ref()
                     .ok_or(CallError::FunctionFailedToExecute)?,
             ))

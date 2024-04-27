@@ -173,7 +173,7 @@ pub unsafe fn sqvm_to_context(sqvm: NonNull<HSquirrelVM>) -> ScriptContext {
 pub fn push_sq_array<T>(
     sqvm: NonNull<HSquirrelVM>,
     sqfunctions: &SquirrelFunctions,
-    arguments: Vec<T>,
+    arguments: impl IntoIterator<Item = T>,
 ) where
     T: PushToSquirrelVm,
 {

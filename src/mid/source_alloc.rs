@@ -26,6 +26,7 @@ pub struct SourceAlloc(OnceCell<UnsafeHandle<&'static IMemAlloc>>);
 impl SourceAlloc {
     pub(crate) fn init(&self) {
         let create_global_mem_alloc = unsafe {
+            #[allow(clippy::missing_transmute_annotations)]
             std::mem::transmute::<_, CreateGlobalMemAlloc>(
                 GetProcAddress(
                     GetModuleHandleA(PCSTR("tier0.dll\0".as_ptr())).expect("couldn't find tier0"),

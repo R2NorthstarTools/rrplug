@@ -78,7 +78,7 @@ impl From<SQVector> for Vector3 {
 impl From<*const SQObject> for Vector3 {
     #[inline]
     fn from(value: *const SQObject) -> Self {
-        unsafe { std::mem::transmute::<_, SQVector>(*value) }.into()
+        unsafe { std::mem::transmute::<SQObject, SQVector>(*value) }.into()
     }
 }
 

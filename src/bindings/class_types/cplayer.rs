@@ -92,7 +92,6 @@ offset_struct! {
         vec_abs_origin: Vector3 where offset(0x100490),
         is_performing_boost_action: bool where offset(0x25BE),
         zipline_valid3p_weapon_layer_anim: bool where offset(0x240C),
-        player_script_net_data_global: i32 where offset(0x345C),
         zooming: i32 where offset(0x1598), // this is like a bool but a i32. what?
         zoom_toggle_on: bool where offset(0x1599),
         zoom_base_frac: f32 where offset(0x159C),
@@ -101,6 +100,9 @@ offset_struct! {
         camo_index: i32 where offset(0xA04),
         decal_index: i32 where offset(0xA08),
         team: i32 where offset(0x5E4),
+        current_command: *const c_void where offset(0x21d8),
+        player_script_net_data_global: i32 where offset(0x345c),
+        player_script_net_data_exclusive: i32 where offset(0x3460),
     }
 }
 

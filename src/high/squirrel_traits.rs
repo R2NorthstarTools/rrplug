@@ -27,6 +27,8 @@ use crate::{
     prelude::*,
 };
 
+use super::UnsafeHandle;
+
 // Push Trait
 
 macro_rules! push_to_sqvm {
@@ -79,6 +81,32 @@ impl PushToSquirrelVm for () {
 
     #[inline]
     fn push_to_sqvm(self, _: NonNull<HSquirrelVM>, _: &SquirrelFunctions) {}
+}
+
+impl PushToSquirrelVm for &CPlayer {
+    /// SAFETY: the object is stored inside the entity and the entity is not being modified  
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+        unsafe {
+            let obj =
+                (sqfunctions.sq_create_script_instance)((self as *const CPlayer).cast_mut().cast());
+            (sqfunctions.sq_pushobject)(sqvm.as_ptr(), obj);
+        }
+    }
+}
+
+impl<T: PushToSquirrelVm, const N: usize> PushToSquirrelVm for [T; N] {
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+        push_sq_array(sqvm, sqfunctions, self);
+    }
+}
+
+impl<T: PushToSquirrelVm> PushToSquirrelVm for UnsafeHandle<T>
+where
+    T: PushToSquirrelVm,
+{
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+        self.take().push_to_sqvm(sqvm, sqfunctions)
+    }
 }
 
 // Return Trait
@@ -141,7 +169,7 @@ impl<T: PushToSquirrelVm> ReturnToVm for T {
 // IntoSquirrelArgs Trait
 
 /// closure that simplies pushing groups of items to the squirrel vm; asynchronously or immediately
-pub trait IntoSquirrelArgs: Sync + Send {
+pub trait IntoSquirrelArgs {
     /// converts a implemenator of this trait into a closure that pushes it to the squirrel stack when ran
     fn into_function(
         self,

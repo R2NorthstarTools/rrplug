@@ -26,7 +26,7 @@ entry!(ExamplePlugin);
 fn great_person(function: SQHandle<SQClosure>) -> Result<String, rrplug::errors::CallError> {
     // non type safe way of getting a return from a function
     // this could be changed if the crate gets some attention
-    let name = call_sq_object_function(sqvm, sq_functions, function)?;
+    let name = call_sq_object_function(sqvm, sq_functions, function, ())?;
 
     log::info!("hello, {}", name);
 

@@ -59,7 +59,7 @@
 use std::{
     alloc::{GlobalAlloc, Layout},
     borrow::Cow,
-    ffi::{c_char, CStr},
+    ffi::{c_char, c_void, CStr},
     mem,
     ptr::addr_of_mut,
 };
@@ -228,7 +228,7 @@ impl ConVarStruct {
                 .write(convar_classes.iconvar_vtable);
 
             #[allow(clippy::crosspointer_transmute)] // its what c++ this->convar_malloc is
-            (convar_classes.convar_malloc)(mem::transmute(addr_of_mut!((*convar).m_pMalloc)), 0, 0); // Allocate new memory for ConVar.
+            (convar_classes.convar_malloc)(addr_of_mut!((*convar).m_pMalloc).cast(), 0, 0); // Allocate new memory for ConVar.
 
             convar
         };
@@ -426,7 +426,7 @@ impl ConVarStruct {
             let set_value_int = vtable_array[14];
             // the index for SetValue for ints; weird stuff
 
-            let func = mem::transmute::<_, fn(*const ConVar, i32)>(set_value_int);
+            let func = mem::transmute::<*const c_void, fn(*const ConVar, i32)>(set_value_int);
 
             func(self.inner, new_value)
         }
@@ -449,7 +449,7 @@ impl ConVarStruct {
             let set_value_float = vtable_array[13];
             // the index for SetValue for floats; weird stuff
 
-            let func = mem::transmute::<_, fn(*const ConVar, f32)>(set_value_float);
+            let func = mem::transmute::<*const c_void, fn(*const ConVar, f32)>(set_value_float);
 
             func(self.inner, new_value)
         }
@@ -469,7 +469,8 @@ impl ConVarStruct {
             let set_value_string = vtable_array[12];
             // the index for SetValue for strings; weird stuff
 
-            let func = mem::transmute::<_, fn(*const ConVar, *const c_char)>(set_value_string);
+            let func =
+                mem::transmute::<*const c_void, fn(*const ConVar, *const c_char)>(set_value_string);
 
             let string_value = to_cstring(new_value.as_ref());
             func(self.inner, string_value.as_ptr())

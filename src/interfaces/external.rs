@@ -73,6 +73,7 @@ macro_rules! create_external_interface {
                 $func_vis unsafe fn $name( &self, $($arg_name: $arg,)* ) -> $output {
                     use $crate::interfaces::external::SourceInterface;
                     use std::ffi::c_void;
+                    #[allow(clippy::missing_transmute_annotations)]
                     unsafe { (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg),*) -> $output>(self.get_func($mod_name::Counter::$name as usize)))(
                         self as *const Self as *const c_void, $($arg_name),*
                     ) }
@@ -106,6 +107,7 @@ pub trait SourceInterface<Rtrn = Self> {
     ) -> Result<&'static Rtrn, InterfaceGetterError<'_>> {
         let mut status = MaybeUninit::uninit();
         unsafe {
+            #[allow(clippy::missing_transmute_annotations)]
             let create_interface = std::mem::transmute::<_, CreateInterface>(
                 GetProcAddress(dll_ptr, PCSTR("CreateInterface\0".as_ptr())).ok_or(
                     InterfaceGetterError::NullCreateInterface(dll_ptr.0 as usize),
@@ -133,6 +135,7 @@ pub trait SourceInterface<Rtrn = Self> {
         let mut status = MaybeUninit::uninit();
         unsafe {
             let dll_name = try_cstring(dll_name)?;
+            #[allow(clippy::missing_transmute_annotations)]
             let create_interface = std::mem::transmute::<_, CreateInterface>(
                 GetProcAddress(
                     GetModuleHandleA(PCSTR(dll_name.as_ptr() as *const u8))?,

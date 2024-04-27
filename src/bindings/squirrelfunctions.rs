@@ -46,6 +46,7 @@ offset_functions! {
 
         sq_get_entity_constant_cbase_entity = sq_GetEntityConstantType where offset(0x418AF0);
         sq_getentityfrominstance = sq_getentityfrominstanceType where offset(0x1E920);
+        sq_create_script_instance = sq_createscriptinstanceType where offset(0x43f2f0);
 
         sq_getfunction = sq_getfunctionType where offset(0x6c80);
         sq_stackinfos = sq_stackinfosType where offset(0x35920);
@@ -100,6 +101,7 @@ offset_functions! {
 
         sq_get_entity_constant_cbase_entity = sq_GetEntityConstantType where offset(0x3E49B0);
         sq_getentityfrominstance = sq_getentityfrominstanceType where offset(0x114F0);
+        sq_create_script_instance = sq_createscriptinstanceType where offset(0xc20e0);
 
         sq_getfunction = sq_getfunctionType where offset(0x06cb0);
         sq_stackinfos = sq_stackinfosType where offset(0x35970);
@@ -147,6 +149,7 @@ pub struct SquirrelFunctions {
     pub sq_getfunction: sq_getfunctionType,
     pub sq_getentityfrominstance: sq_getentityfrominstanceType,
     pub sq_get_entity_constant_cbase_entity: sq_GetEntityConstantType,
+    pub sq_create_script_instance: sq_createscriptinstanceType,
     pub sq_pushnewstructinstance: sq_pushnewstructinstanceType,
     pub sq_sealstructslot: sq_sealstructslotType,
 }
@@ -189,6 +192,7 @@ impl From<&ClientSQFunctions> for SquirrelFunctions {
             sq_getfunction: val.sq_getfunction,
             sq_getentityfrominstance: val.sq_getentityfrominstance,
             sq_get_entity_constant_cbase_entity: val.sq_get_entity_constant_cbase_entity,
+            sq_create_script_instance: val.sq_create_script_instance,
             sq_pushnewstructinstance: val.sq_pushnewstructinstance,
             sq_sealstructslot: val.sq_sealstructslot,
         }
@@ -233,6 +237,7 @@ impl From<&ServerSQFunctions> for SquirrelFunctions {
             sq_getfunction: val.sq_getfunction,
             sq_getentityfrominstance: val.sq_getentityfrominstance,
             sq_get_entity_constant_cbase_entity: val.sq_get_entity_constant_cbase_entity,
+            sq_create_script_instance: val.sq_create_script_instance,
             sq_pushnewstructinstance: val.sq_pushnewstructinstance,
             sq_sealstructslot: val.sq_sealstructslot,
         }

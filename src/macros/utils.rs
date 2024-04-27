@@ -49,6 +49,7 @@ macro_rules! impl_vmethod {
             use std::ffi::c_void;
 
             let func = (*(self.vtable as *const [usize;u32::MAX as usize]))[$offset];
+            #[allow(clippy::missing_transmute_annotations)]
             (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>(func))
             (
                 self as *const _ as *const c_void,
@@ -66,6 +67,7 @@ macro_rules! impl_vmethod {
             use std::ffi::c_void;
 
             let func = (**(self.class as *const *const [usize;u32::MAX as usize]))[$offset];
+            #[allow(clippy::missing_transmute_annotations)]
             (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>(func))
             (
                 self.class as *const c_void,
@@ -83,6 +85,7 @@ macro_rules! impl_vmethod {
             use std::ffi::c_void;
 
             let func = (*(**self.vtable as *const [usize;u32::MAX as usize]))[$offset];
+            #[allow(clippy::missing_transmute_annotations)]
             (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>(func))
             (
                 self as *const _ as *const c_void,
@@ -164,6 +167,7 @@ macro_rules! offset_functions {
                 _ = static_var.set( unsafe {
                     Self {
                         $(
+                            #[allow(clippy::missing_transmute_annotations)]
                             $name: std::mem::transmute(dll.offset( $addr )), // transmute is used since it's easier but a lot more unsafe so yeah
                         )*
                     }
