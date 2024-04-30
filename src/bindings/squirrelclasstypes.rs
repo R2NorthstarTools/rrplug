@@ -374,6 +374,11 @@ pub type sq_createuserdataType =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iSize: SQInteger) -> *mut ::std::os::raw::c_void;
 pub type sq_setuserdatatypeidType =
     unsafe extern "C" fn(sqvm: *mut HSquirrelVM, iStackpos: SQInteger, iTypeId: u64) -> SQRESULT;
+pub type sq_setreleasehookType = unsafe extern "C" fn(
+    sqvm: *mut HSquirrelVM,
+    iStackpos: SQInteger,
+    releaseHook: unsafe extern "C" fn(val: *const ::std::os::raw::c_void, size: SQInteger),
+) -> SQRESULT;
 pub type sq_getentityfrominstanceType =
     unsafe extern "C" fn(
         sqvm: *mut CSquirrelVM,

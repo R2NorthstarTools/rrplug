@@ -535,6 +535,7 @@ sqvm_name! {
     Vector3 = "vector";
     Option<&mut CPlayer> = "entity";
     SQHandle<SQClosure> = "var";
+    SQObject = "var";
     () = "void";
 }
 

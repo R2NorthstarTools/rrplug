@@ -53,7 +53,7 @@ impl AsyncEngineMessage {
     pub fn run_squirrel_func(
         name: impl Into<String>,
         context: ScriptContext,
-        args: impl IntoSquirrelArgs + 'static,
+        args: impl IntoSquirrelArgs + 'static + Send + Sync,
     ) -> Self {
         Self::ExecuteSquirrel {
             function_name: name.into(),

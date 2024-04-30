@@ -43,6 +43,7 @@ offset_functions! {
 
         sq_createuserdata = sq_createuserdataType where offset(0x38D0);
         sq_setuserdatatypeid = sq_setuserdatatypeidType where offset(0x6470);
+        sq_setreleasehook = sq_setreleasehookType where offset(0x8a10);
 
         sq_get_entity_constant_cbase_entity = sq_GetEntityConstantType where offset(0x418AF0);
         sq_getentityfrominstance = sq_getentityfrominstanceType where offset(0x1E920);
@@ -98,6 +99,7 @@ offset_functions! {
 
         sq_createuserdata = sq_createuserdataType where offset(0x38D0);
         sq_setuserdatatypeid = sq_setuserdatatypeidType where offset(0x6490);
+        sq_setreleasehook = sq_setreleasehookType where offset(0x8a40);
 
         sq_get_entity_constant_cbase_entity = sq_GetEntityConstantType where offset(0x3E49B0);
         sq_getentityfrominstance = sq_getentityfrominstanceType where offset(0x114F0);
@@ -146,6 +148,7 @@ pub struct SquirrelFunctions {
     pub sq_stackinfos: sq_stackinfosType,
     pub sq_createuserdata: sq_createuserdataType,
     pub sq_setuserdatatypeid: sq_setuserdatatypeidType,
+    pub sq_setreleasehook: sq_setreleasehookType,
     pub sq_getfunction: sq_getfunctionType,
     pub sq_getentityfrominstance: sq_getentityfrominstanceType,
     pub sq_get_entity_constant_cbase_entity: sq_GetEntityConstantType,
@@ -189,6 +192,7 @@ impl From<&ClientSQFunctions> for SquirrelFunctions {
             sq_stackinfos: val.sq_stackinfos,
             sq_createuserdata: val.sq_createuserdata,
             sq_setuserdatatypeid: val.sq_setuserdatatypeid,
+            sq_setreleasehook: val.sq_setreleasehook,
             sq_getfunction: val.sq_getfunction,
             sq_getentityfrominstance: val.sq_getentityfrominstance,
             sq_get_entity_constant_cbase_entity: val.sq_get_entity_constant_cbase_entity,
@@ -234,6 +238,7 @@ impl From<&ServerSQFunctions> for SquirrelFunctions {
             sq_stackinfos: val.sq_stackinfos,
             sq_createuserdata: val.sq_createuserdata,
             sq_setuserdatatypeid: val.sq_setuserdatatypeid,
+            sq_setreleasehook: val.sq_setreleasehook,
             sq_getfunction: val.sq_getfunction,
             sq_getentityfrominstance: val.sq_getentityfrominstance,
             sq_get_entity_constant_cbase_entity: val.sq_get_entity_constant_cbase_entity,
