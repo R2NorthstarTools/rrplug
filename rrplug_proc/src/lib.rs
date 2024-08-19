@@ -58,7 +58,6 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     } = input;
 
     let stmts = block.stmts;
-    let mut sub_stms: Vec<Stmt> = Vec::new();
     let ident = &sig.ident;
     let input = &sig.inputs;
     let input_vec: Vec<FnArg> = input.iter().filter_map(|arg| filter_args(arg)).collect();
@@ -112,16 +111,12 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
     match input_mapping(input, &mut sq_stack_pos) {
         Ok(tks) => {
             for tk in tks {
-                push_stmts!(sq_gets_stmts, tk);
+                sq_gets_stmts.push(parse_macro_input!(tk as Stmt));
             }
         }
         Err(err) => {
             return err.to_compile_error().into();
         }
-    }
-    sq_gets_stmts.reverse();
-    for s in sq_gets_stmts {
-        sub_stms.insert(0, parse(quote! {#[allow(unused_mut)] #s}.into()).unwrap());
     }
 
     let mut script_vm: Punctuated<TypePath, Token![|]> = Punctuated::new();
@@ -177,7 +172,10 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
             use rrplug::high::squirrel_traits::{GetFromSquirrelVm,ReturnToVm};
             let sq_functions = SQFUNCTIONS.from_sqvm(sqvm);
 
-            #(#sub_stms)*
+            #[allow(unused)]
+            let mut current_stack_pos = 1;
+
+            #(#sq_gets_stmts)*
 
             fn inner_function( sqvm: std::ptr::NonNull<rrplug::bindings::squirreldatatypes::HSquirrelVM>, sq_functions: &'static SquirrelFunctions #(, #input_vec)* ) #output {
                 let engine_token = unsafe { rrplug::high::engine::EngineToken::new_unchecked() };

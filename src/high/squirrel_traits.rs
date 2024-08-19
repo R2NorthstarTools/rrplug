@@ -271,14 +271,33 @@ macro_rules! get_from_sqvm {
 ///
 /// # Use cases
 /// - getting the arguments in native closures
-pub trait GetFromSquirrelVm {
+pub trait GetFromSquirrelVm: Sized {
     /// tries to get the value out of the squirrel stack but it cannot fail
     /// so this can panic
+    ///
+    /// this is the user function do not overwrite the other one
     fn get_from_sqvm(
         sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &'static SquirrelFunctions,
         stack_pos: i32,
     ) -> Self;
+
+    /// this is only for certain internal apis
+    ///
+    /// don't use this only for internal apis
+    fn get_from_sqvm_internal(
+        sqvm: NonNull<HSquirrelVM>,
+        sqfunctions: &'static SquirrelFunctions,
+        stack_pos: &mut i32,
+    ) -> Self {
+        let s = Self::get_from_sqvm(sqvm, sqfunctions, *stack_pos);
+
+        // increament by the size this thing in the stack
+        // for some reason userdata also has a table pushed with it; quite annoying
+        *stack_pos += 1;
+
+        s
+    }
 }
 
 get_from_sqvm! {

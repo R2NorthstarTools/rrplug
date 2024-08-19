@@ -3,10 +3,19 @@
 //! squirrel vm related function and statics
 
 use parking_lot::Mutex;
-use std::{marker::PhantomData, ptr::NonNull};
+use std::{
+    any::TypeId,
+    hash::{DefaultHasher, Hash, Hasher},
+    marker::PhantomData,
+    ops::{Add, Deref, DerefMut},
+    ptr::{self, NonNull},
+};
 
 use super::{
-    squirrel_traits::{GetFromSQObject, IntoSquirrelArgs, IsSQObject},
+    squirrel_traits::{
+        GetFromSQObject, GetFromSquirrelVm, IntoSquirrelArgs, IsSQObject, PushToSquirrelVm,
+        SQVMName,
+    },
     UnsafeHandle,
 };
 use crate::{
@@ -240,6 +249,165 @@ impl<T: IntoSquirrelArgs> SquirrelFn<T> {
 impl<T: IntoSquirrelArgs> AsRef<SQHandle<SQClosure>> for SquirrelFn<T> {
     fn as_ref(&self) -> &SQHandle<SQClosure> {
         &self.func
+    }
+}
+
+/// [`UserData`] is used to push user provided data to the sqvm for storage
+///
+/// [`UserDataRef`] can be used to access the data from functions calls
+///
+/// [`UserData`] handles dropping the data via a release hook in sqvm
+pub struct UserData<T>(Box<T>);
+
+impl<T: 'static> UserData<T> {
+    /// Creates a new [`UserData<T>`].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use rrplug::prelude::*;
+    /// # use rrplug::high::squirrel::UserData;
+    /// // cannot be pushed to sqvm normally
+    /// struct HttpClient;
+    ///
+    /// #[rrplug::sqfunction(VM = "SERVER | CLIENT | UI")]
+    /// fn build_client() -> UserData<HttpClient> {
+    ///     UserData::new(HttpClient)
+    /// }
+    /// ```
+    pub fn new(userdata: T) -> Self {
+        Self(userdata.into())
+    }
+
+    /// Creates a new [`UserData<T>`] from boxed data
+    pub fn from_boxed(userdata: Box<T>) -> Self {
+        Self(userdata)
+    }
+}
+
+impl<T: 'static> From<T> for UserData<T> {
+    fn from(value: T) -> Self {
+        Self(value.into())
+    }
+}
+
+impl<T: 'static> From<Box<T>> for UserData<T> {
+    fn from(value: Box<T>) -> Self {
+        Self(value)
+    }
+}
+
+impl<T> SQVMName for UserData<T> {
+    fn get_sqvm_name() -> String {
+        "userdata".to_string()
+    }
+}
+
+impl<T: 'static> PushToSquirrelVm for UserData<T> {
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+        unsafe {
+            (sqfunctions.sq_createuserdata)(sqvm.as_ptr(), std::mem::size_of::<*mut T>() as i32)
+                .cast::<*mut T>()
+                .write(Box::leak(self.0));
+
+            let mut hasher = DefaultHasher::new();
+            TypeId::of::<T>().hash(&mut hasher);
+
+            (sqfunctions.sq_setuserdatatypeid)(sqvm.as_ptr(), -1, hasher.finish());
+            (sqfunctions.sq_setreleasehook)(sqvm.as_ptr(), -1, releasehook::<T>);
+        };
+
+        extern "C" fn releasehook<T>(userdata: *const std::ffi::c_void, _: i32) {
+            unsafe {
+                let _ = Box::from_raw(*userdata.cast::<*mut T>());
+            };
+        }
+    }
+}
+
+/// Used to refrence [`UserData`] stored on the sqvm
+///
+/// the data cannot be moved out of since it's referenec counted in the sqvm
+///
+/// # SAFETY
+///
+/// [`UserDataRef`] **MUST** remain within the same stackframe (aka get dropped before the squirrel function returns it was created in)
+/// otherwise bad things will happen since the underlying [`UserData`] might get dropped
+///
+/// This should be inforced by `!Move` and `!Sync` constraints so this is just a warning
+///
+/// # Example
+///
+/// ```
+/// # use rrplug::prelude::*;
+/// # use rrplug::high::squirrel::UserDataRef;
+/// struct HiddenMessage(String); // msg cannot be accessed from the sqvm
+///
+/// #[rrplug::sqfunction(VM = "SERVER")]
+/// fn get_secret_msg(msg: UserDataRef<HiddenMessage>) -> String {
+///     msg.0.chars().map(|_| '*').collect()
+/// }
+/// ```
+pub struct UserDataRef<'a, T>(&'a mut T, PhantomData<*mut ()>);
+
+impl<'a, T: 'static> GetFromSquirrelVm for UserDataRef<'a, T> {
+    fn get_from_sqvm(
+        sqvm: NonNull<HSquirrelVM>,
+        sqfunctions: &'static SquirrelFunctions,
+        stack_pos: i32,
+    ) -> Self {
+        let mut out_ptr = ptr::null_mut();
+
+        let mut hasher = DefaultHasher::new();
+        TypeId::of::<T>().hash(&mut hasher);
+        let type_id = hasher.finish();
+
+        let mut out_type_id = type_id;
+
+        unsafe {
+            debug_assert!(
+                (sqfunctions.sq_getuserdata)(
+                    sqvm.as_ptr(),
+                    stack_pos,
+                    &mut out_ptr,
+                    &mut out_type_id
+                ) != SQRESULT::SQRESULT_ERROR
+            )
+        }
+
+        debug_assert_eq!(type_id, out_type_id, "script provided incorrect userdata");
+
+        UserDataRef(unsafe { &mut **out_ptr.cast::<*mut T>() }, PhantomData)
+    }
+
+    fn get_from_sqvm_internal(
+        sqvm: NonNull<HSquirrelVM>,
+        sqfunctions: &'static SquirrelFunctions,
+        stack_pos: &mut i32,
+    ) -> Self {
+        let userdata = Self::get_from_sqvm(sqvm, sqfunctions, stack_pos.add(1));
+        *stack_pos += 2; // for some reason userdata also has a table pushed with it
+        userdata
+    }
+}
+
+impl<'a, T> SQVMName for UserDataRef<'a, T> {
+    fn get_sqvm_name() -> String {
+        "userdata".to_string()
+    }
+}
+
+impl<'a, T> Deref for UserDataRef<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
+}
+
+impl<'a, T> DerefMut for UserDataRef<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.0
     }
 }
 

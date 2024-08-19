@@ -40,13 +40,6 @@ impl Parse for Args {
     }
 }
 
-macro_rules! push_stmts {
-    ($stmts:ident, $tk:ident) => {
-        let new_stmt = parse_macro_input!($tk as Stmt);
-        $stmts.insert(0, new_stmt);
-    };
-}
-
 pub fn input_mapping(
     args: &Punctuated<FnArg, Comma>,
     sq_stack_pos: &mut i32,
@@ -63,7 +56,8 @@ pub fn input_mapping(
         let ty = get_arg_type(arg)?;
 
         let tk = quote! {
-                let #name: #ty = GetFromSquirrelVm::get_from_sqvm(sqvm, sq_functions, #sq_stack_pos);
+                #[allow(unused_mut)]
+                let #name: #ty = GetFromSquirrelVm::get_from_sqvm_internal(sqvm, sq_functions, &mut current_stack_pos);
         }.into();
 
         token_streams.push(tk);
