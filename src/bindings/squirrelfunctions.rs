@@ -54,6 +54,9 @@ offset_functions! {
 
         sq_pushnewstructinstance = sq_pushnewstructinstanceType where offset(0x53e0);
         sq_sealstructslot = sq_sealstructslotType where offset(0x5510);
+
+        sq_suspendthread = sq_suspendthreadType where offset(0x434f0);
+        sq_threadwakeup = sq_threadwakeupType where offset(0x8780);
     }
 }
 
@@ -110,6 +113,9 @@ offset_functions! {
 
         sq_pushnewstructinstance = sq_pushnewstructinstanceType where offset(0x5400);
         sq_sealstructslot = sq_sealstructslotType where offset(0x5530);
+
+        sq_suspendthread = sq_suspendthreadType where offset(0x43550);
+        sq_threadwakeup = sq_threadwakeupType where offset(0x87b0);
     }
 }
 
@@ -155,6 +161,8 @@ pub struct SquirrelFunctions {
     pub sq_create_script_instance: sq_createscriptinstanceType,
     pub sq_pushnewstructinstance: sq_pushnewstructinstanceType,
     pub sq_sealstructslot: sq_sealstructslotType,
+    pub sq_suspendthread: sq_suspendthreadType,
+    pub sq_threadwakeup: sq_threadwakeupType,
 }
 
 impl From<&ClientSQFunctions> for SquirrelFunctions {
@@ -199,6 +207,8 @@ impl From<&ClientSQFunctions> for SquirrelFunctions {
             sq_create_script_instance: val.sq_create_script_instance,
             sq_pushnewstructinstance: val.sq_pushnewstructinstance,
             sq_sealstructslot: val.sq_sealstructslot,
+            sq_suspendthread: val.sq_suspendthread,
+            sq_threadwakeup: val.sq_threadwakeup,
         }
     }
 }
@@ -245,6 +255,8 @@ impl From<&ServerSQFunctions> for SquirrelFunctions {
             sq_create_script_instance: val.sq_create_script_instance,
             sq_pushnewstructinstance: val.sq_pushnewstructinstance,
             sq_sealstructslot: val.sq_sealstructslot,
+            sq_suspendthread: val.sq_suspendthread,
+            sq_threadwakeup: val.sq_threadwakeup,
         }
     }
 }

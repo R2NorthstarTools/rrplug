@@ -403,3 +403,15 @@ pub type RegisterSquirrelFuncType_External = unsafe extern "C" fn(
 ) -> i64;
 pub type sq_createscriptinstanceType =
     unsafe extern "C" fn(ent: *mut ::std::os::raw::c_void) -> *mut SQObject;
+pub type sq_suspendthreadType = unsafe extern "C" fn(
+    thread_sqvm: *mut HSquirrelVM,
+    *const *mut HSquirrelVM,
+    usize,
+    *mut HSquirrelVM,
+) -> SQRESULT;
+pub type sq_threadwakeupType = unsafe extern "C" fn(
+    thread_sqvm: *mut HSquirrelVM,
+    i32,
+    *const ::std::os::raw::c_void,
+    *mut HSquirrelVM,
+) -> SQRESULT;

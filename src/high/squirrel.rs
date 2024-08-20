@@ -411,6 +411,150 @@ impl<'a, T> DerefMut for UserDataRef<'a, T> {
     }
 }
 
+/// suspends a thread when returned from a native sqfunction
+pub struct SuspendThread<T: PushToSquirrelVm + SQVMName> {
+    phantom: PhantomData<T>,
+}
+
+impl<T: PushToSquirrelVm + SQVMName> SQVMName for SuspendThread<T> {
+    fn get_sqvm_name() -> String {
+        T::get_sqvm_name()
+    }
+}
+
+impl<T: PushToSquirrelVm + SQVMName> PushToSquirrelVm for SuspendThread<T> {
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+        unsafe { (sqfunctions.sq_suspendthread)(sqvm.as_ptr(), &sqvm.as_ptr(), 5, sqvm.as_ptr()) };
+    }
+}
+
+impl<T: PushToSquirrelVm + SQVMName> SuspendThread<T> {
+    const fn new() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
+    }
+
+    fn is_thread_and_throw_error(
+        thread_sqvm: NonNull<HSquirrelVM>,
+        sqfunctions: &SquirrelFunctions,
+    ) -> bool {
+        use super::squirrel_traits::ReturnToVm;
+        let mut is_thread = true;
+
+        // idk if this is how to check it
+        if 2 < unsafe { thread_sqvm.as_ref()._suspended } {
+            Err::<i32, _>("Cannot suspend thread from within code function calls".to_string())
+                .return_to_vm(thread_sqvm, sqfunctions);
+            is_thread = false
+        }
+
+        is_thread
+    }
+
+    /// Spawns a native thread.
+    /// When completed it resumes the thread
+    ///
+    /// # SAFETY
+    /// this thread cannot live long the parent sqvm
+    #[cfg(feature = "async_engine")]
+    pub fn new_with_thread<F>(thread_sqvm: NonNull<HSquirrelVM>, mut thread_func: F) -> Self
+    where
+        F: FnMut() -> T + Send + 'static,
+        T: Send + Sync + 'static,
+    {
+        use crate::high::engine_sync::{async_execute, AsyncEngineMessage};
+        let thread_sqvm = unsafe { UnsafeHandle::new(thread_sqvm) };
+
+        if !Self::is_thread_and_throw_error(thread_sqvm, SQFUNCTIONS.from_sqvm(thread_sqvm)) {
+            return Self::new();
+        }
+
+        std::thread::spawn(move || {
+            let result = thread_func();
+
+            // TODO: check if the sqvm has expired
+            async_execute(AsyncEngineMessage::run_func(move |_| {
+                let thread_sqvm = thread_sqvm.take();
+                let sq_functions = SQFUNCTIONS.from_sqvm(thread_sqvm);
+
+                result.push_to_sqvm(thread_sqvm, sq_functions);
+                unsafe { resume_thread(thread_sqvm, sq_functions) };
+            }))
+        });
+
+        Self::new()
+    }
+
+    /// calls a function to store the ref to wake up this thread sqvm
+    ///
+    /// the stored [`ThreadWakeUp`] cannot outlive the parent sqvm
+    pub fn new_with_store<F>(thread_sqvm: NonNull<HSquirrelVM>, mut store_func: F) -> Self
+    where
+        F: FnMut(ThreadWakeUp<T>),
+    {
+        if !Self::is_thread_and_throw_error(thread_sqvm, SQFUNCTIONS.from_sqvm(thread_sqvm)) {
+            return Self::new();
+        }
+
+        store_func(ThreadWakeUp {
+            thread_sqvm,
+            phantom: PhantomData::<T>,
+        });
+
+        Self::new()
+    }
+
+    /// returns a [`ThreadWakeUp`] for this thread
+    ///
+    /// # Failure
+    ///
+    /// fails to return [`ThreadWakeUp`] if the sqvm is not a thread
+    pub fn new_both(thread_sqvm: NonNull<HSquirrelVM>) -> (Self, Option<ThreadWakeUp<T>>) {
+        if !Self::is_thread_and_throw_error(thread_sqvm, SQFUNCTIONS.from_sqvm(thread_sqvm)) {
+            return (Self::new(), None);
+        }
+
+        (
+            Self::new(),
+            Some(ThreadWakeUp {
+                thread_sqvm,
+                phantom: PhantomData::<T>,
+            }),
+        )
+    }
+}
+
+/// stores the thread sqvm to wake up and the return type in the generic
+pub struct ThreadWakeUp<T: PushToSquirrelVm> {
+    thread_sqvm: NonNull<HSquirrelVM>,
+    phantom: PhantomData<T>,
+}
+
+impl<T: PushToSquirrelVm> ThreadWakeUp<T> {
+    /// resumes the sqvm thread
+    ///
+    /// ub if it outlived the parent sqvm
+    pub fn resume(self, data: T) {
+        let sq_functions = SQFUNCTIONS.from_sqvm(self.thread_sqvm);
+        data.push_to_sqvm(self.thread_sqvm, sq_functions);
+        unsafe { resume_thread(self.thread_sqvm, sq_functions) };
+    }
+}
+
+/// # SAFETY
+/// has to be valid and cannot live long the parent sqvm
+unsafe fn resume_thread(thread_sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+    unsafe {
+        _ = (sqfunctions.sq_threadwakeup)(
+            thread_sqvm.as_ptr(),
+            5,
+            std::ptr::null(),
+            thread_sqvm.as_ptr(),
+        )
+    }
+}
+
 /// Adds a sqfunction to the registration list
 ///
 /// The sqfunction will be registered when its vm is loaded
