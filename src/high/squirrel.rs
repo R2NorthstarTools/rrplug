@@ -464,12 +464,12 @@ impl<T: PushToSquirrelVm + SQVMName> SuspendThread<T> {
         T: Send + Sync + 'static,
     {
         use crate::high::engine_sync::{async_execute, AsyncEngineMessage};
-        let thread_sqvm = unsafe { UnsafeHandle::new(thread_sqvm) };
 
         if !Self::is_thread_and_throw_error(thread_sqvm, SQFUNCTIONS.from_sqvm(thread_sqvm)) {
             return Self::new();
         }
 
+        let thread_sqvm = unsafe { UnsafeHandle::new(thread_sqvm) };
         std::thread::spawn(move || {
             let result = thread_func();
 
