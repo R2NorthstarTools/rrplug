@@ -140,7 +140,7 @@ pub struct SQHandle<H: IsSQObject> {
 
 impl<H: IsSQObject> SQHandle<H> {
     /// creates a new [`SQHandle`] by checking if the sqobject has the correct type at runtime
-    pub fn new(value: SQObject) -> Result<Self, SQObject> {
+    pub fn try_new(value: SQObject) -> Result<Self, SQObject> {
         let ty = value._Type;
         if ty == H::OT_TYPE || ty == H::RT_TYPE {
             Ok(Self {

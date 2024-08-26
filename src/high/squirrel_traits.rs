@@ -368,7 +368,7 @@ impl GetFromSquirrelVm for Option<&mut CPlayer> {
     }
 }
 
-impl GetFromSquirrelVm for SQHandle<SQClosure> {
+impl<T: IsSQObject> GetFromSquirrelVm for SQHandle<T> {
     fn get_from_sqvm(
         sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &SquirrelFunctions,
@@ -377,7 +377,17 @@ impl GetFromSquirrelVm for SQHandle<SQClosure> {
         unsafe {
             let mut obj = std::mem::MaybeUninit::<SQObject>::uninit();
             (sqfunctions.sq_getobject)(sqvm.as_ptr(), stack_pos, obj.as_mut_ptr());
-            Self::new(obj.assume_init()).expect("the SQObject wasn't a closure")
+
+            match Self::try_new(obj.assume_init()) {
+                Ok(handle) => handle,
+                Err(_) => {
+                    panic!(
+                        "the object wasn't the correct type got {:X} expected {}",
+                        obj.assume_init()._Type as i32,
+                        std::any::type_name::<T>()
+                    );
+                }
+            }
         }
     }
 }
@@ -468,7 +478,7 @@ impl<T: IntoSquirrelArgs> GetFromSQObject for SquirrelFn<T> {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         SquirrelFn {
-            func: SQHandle::new(obj.to_owned())
+            func: SQHandle::try_new(obj.to_owned())
                 .expect("the squirrel object wasn't a function lol L"),
             phantom: std::marker::PhantomData,
         }
