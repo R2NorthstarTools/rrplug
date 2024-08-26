@@ -155,7 +155,7 @@ macro_rules! offset_functions {
             $(pub $name: $t,)*
         }
 
-        #[allow(clippy::missing_safety_doc,clippy::useless_transmute)]
+        #[allow(clippy::missing_safety_doc,clippy::useless_transmute, clippy::macro_metavars_in_unsafe)]
         impl $struct_name {
             pub unsafe fn try_init(dll: &$crate::mid::engine::DLLPointer, static_var: &$crate::exports::OnceCell<Self>) {
                 use $crate::mid::engine::WhichDll;

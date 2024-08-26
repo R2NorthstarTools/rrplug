@@ -554,6 +554,15 @@ sqvm_name! {
     Vector3 = "vector";
     Option<&mut CPlayer> = "entity";
     SQHandle<SQClosure> = "var";
+    SQHandle<SQTable> = "table";
+    SQHandle<SQString> = "string";
+    SQHandle<SQArray> = "array";
+    SQHandle<SQFloat> = "float";
+    SQHandle<SQInteger> = "int";
+    SQHandle<SQFunctionProto> = "var";
+    SQHandle<SQStructInstance> = "var";
+    SQHandle<SQBool> = "bool";
+    SQHandle<SQNativeClosure> = "var";
     SQObject = "var";
     () = "void";
 }
