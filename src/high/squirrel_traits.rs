@@ -285,6 +285,8 @@ pub trait GetFromSquirrelVm: Sized {
     /// this is only for certain internal apis
     ///
     /// don't use this only for internal apis
+    #[doc(hidden)]
+    #[inline]
     fn get_from_sqvm_internal(
         sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &'static SquirrelFunctions,
@@ -471,6 +473,29 @@ impl GetFromSQObject for Vector3 {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         (obj as *const SQObject).into()
+    }
+}
+
+impl GetFromSQObject for SQObject {
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        *obj
+    }
+}
+
+impl<T: IsSQObject> GetFromSQObject for SQHandle<T> {
+    #[inline]
+    fn get_from_sqobject(obj: &SQObject) -> Self {
+        match Self::try_new(*obj) {
+            Ok(handle) => handle,
+            Err(_) => {
+                panic!(
+                    "the object wasn't the correct type got {:X} expected {}",
+                    obj._Type as i32,
+                    std::any::type_name::<T>()
+                );
+            }
+        }
     }
 }
 

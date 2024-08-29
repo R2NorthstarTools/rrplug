@@ -48,7 +48,7 @@ impl SourceAlloc {
     ///
     /// the source allocator has more functions which may be useful
     pub fn get_underlying_alloc(&self) -> &'static IMemAlloc {
-        self.0.wait().get()
+        unsafe { self.0.get_unchecked().get() } // should be init
     }
 }
 
