@@ -235,6 +235,7 @@ macro_rules! entry {
                         .expect("sqvm should not be null on sqvm destroy");
                     let handle = high::squirrel::CSquirrelVMHandle::new(sqvm, context, true, token);
                     PLUGIN.wait().on_sqvm_destroyed(&handle, token);
+                    unsafe { $crate::high::engine_sync::run_async_routine() }; // run all possible stuff to not leak into next sqvm
                 }
                 fn OnLibraryLoaded(
                     &self,

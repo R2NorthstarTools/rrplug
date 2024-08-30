@@ -732,7 +732,7 @@ pub fn compile_string(
         if result != SQRESULT::SQRESULT_ERROR {
             (sqfunctions.sq_pushroottable)(sqvm.as_ptr());
 
-            if (sqfunctions.sq_call)(sqvm.as_ptr(), 1, 0, 0) == SQRESULT::SQRESULT_ERROR {
+            if (sqfunctions.sq_call)(sqvm.as_ptr(), 1, 1, 1) == SQRESULT::SQRESULT_ERROR {
                 Err(SQCompileError::BufferFailedToExecute)
             } else {
                 Ok(())
