@@ -206,7 +206,7 @@ impl<T: PushToSquirrelVm> IntoSquirrelArgs for T {
 // TODO: check for correctness
 macro_rules! into_squirrel_args_impl{
     ( $( ($($ty_name: ident : $tuple_index:tt),*) );*; ) => { $(
-        impl<$($ty_name: PushToSquirrelVm + 'static + Send + Sync,)*> IntoSquirrelArgs for ($($ty_name,)*) {
+        impl<$($ty_name: PushToSquirrelVm,)*> IntoSquirrelArgs for ($($ty_name,)*) {
             fn into_push(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &'static SquirrelFunctions) -> i32 {
                 $(
                     self.$tuple_index.push_to_sqvm(sqvm, sqfunctions);
