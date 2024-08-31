@@ -190,7 +190,7 @@ pub trait IntoSquirrelArgs {
     fn into_push(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &'static SquirrelFunctions) -> i32;
 }
 
-impl<T: PushToSquirrelVm + Send + Sync + 'static> IntoSquirrelArgs for T {
+impl<T: PushToSquirrelVm> IntoSquirrelArgs for T {
     fn into_push(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &'static SquirrelFunctions) -> i32 {
         // hack :(
         // no specialization
