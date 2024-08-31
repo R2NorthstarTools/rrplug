@@ -133,16 +133,16 @@ impl CSquirrelVMHandle {
 }
 
 /// runtime check for [`SQObject`] types
-pub struct SQHandle<H: IsSQObject> {
+pub struct SQHandle<'a, H: IsSQObject<'a>> {
     inner: SQObject,
-    marker: PhantomData<H>,
+    marker: PhantomData<&'a H>,
 }
 
-impl<H: IsSQObject> SQHandle<H> {
+impl<'a, H: IsSQObject<'a>> SQHandle<'a, H> {
     /// creates a new [`SQHandle`] by checking if the sqobject has the correct type at runtime
     pub fn try_new(value: SQObject) -> Result<Self, SQObject> {
         let ty = value._Type;
-        if ty == H::OT_TYPE || ty == H::RT_TYPE {
+        if ty == H::OT_TYPE {
             Ok(Self {
                 inner: value,
                 marker: PhantomData,
@@ -164,22 +164,32 @@ impl<H: IsSQObject> SQHandle<H> {
     }
 
     /// a getter
-    pub const fn get(&self) -> &SQObject {
+    pub const fn get_obj(&self) -> &SQObject {
         &self.inner
     }
 
     /// a mut getter
-    pub fn get_mut(&mut self) -> &mut SQObject {
+    pub fn get_mut_obj(&mut self) -> &mut SQObject {
         &mut self.inner
     }
 
     /// consumes itself and returns the [`SQObject`]
-    pub const fn take(self) -> SQObject {
+    pub const fn take_obj(self) -> SQObject {
         self.inner
+    }
+
+    /// a getter
+    pub fn get(&'a self) -> &H {
+        H::extract(&self.inner._VAL)
+    }
+
+    /// a mut getter
+    pub fn get_mut(&'a mut self) -> &mut H {
+        H::extract_mut(&mut self.inner._VAL)
     }
 }
 
-impl SQHandle<SQClosure> {
+impl<'a> SQHandle<'a, SQClosure> {
     /// used in some macros to enforce type safety
     pub fn as_callable(&mut self) -> *mut SQObject {
         &mut self.inner as *mut SQObject
@@ -187,18 +197,18 @@ impl SQHandle<SQClosure> {
 }
 
 /// provides invariance for calling squirrel functions with little overhead
-pub struct SquirrelFn<T: IntoSquirrelArgs> {
-    pub(crate) func: SQHandle<SQClosure>,
+pub struct SquirrelFn<'a, T: IntoSquirrelArgs> {
+    pub(crate) func: SQHandle<'a, SQClosure>,
     pub(crate) phantom: PhantomData<*mut T>,
 }
 
-impl<T: IntoSquirrelArgs> SquirrelFn<T> {
+impl<'a, T: IntoSquirrelArgs> SquirrelFn<'a, T> {
     /// creates a new [`SquirrelFn`] using the invariance of [`SQHandle<SQClosure>`]
     ///
     /// # Safety
     ///
     /// doesn't check if the function passed has the correct args and return type
-    pub const unsafe fn new_unchecked(obj: SQHandle<SQClosure>) -> Self {
+    pub const unsafe fn new_unchecked(obj: SQHandle<'a, SQClosure>) -> Self {
         Self {
             func: obj,
             phantom: PhantomData,
@@ -246,8 +256,8 @@ impl<T: IntoSquirrelArgs> SquirrelFn<T> {
     }
 }
 
-impl<T: IntoSquirrelArgs> AsRef<SQHandle<SQClosure>> for SquirrelFn<T> {
-    fn as_ref(&self) -> &SQHandle<SQClosure> {
+impl<'a, T: IntoSquirrelArgs> AsRef<SQHandle<'a, SQClosure>> for SquirrelFn<'a, T> {
+    fn as_ref(&self) -> &SQHandle<'a, SQClosure> {
         &self.func
     }
 }

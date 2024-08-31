@@ -11,7 +11,7 @@ use crate::{
         squirrelclasstypes::SQRESULT,
         squirreldatatypes::{
             SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger, SQNativeClosure,
-            SQObject, SQObjectType, SQString, SQStructInstance, SQTable,
+            SQObject, SQObjectType, SQObjectValue, SQString, SQStructInstance, SQTable,
         },
     },
     high::squirrel::SQHandle,
@@ -370,7 +370,7 @@ impl GetFromSquirrelVm for Option<&mut CPlayer> {
     }
 }
 
-impl<T: IsSQObject> GetFromSquirrelVm for SQHandle<T> {
+impl<'a, T: IsSQObject<'a>> GetFromSquirrelVm for SQHandle<'a, T> {
     fn get_from_sqvm(
         sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &SquirrelFunctions,
@@ -394,7 +394,7 @@ impl<T: IsSQObject> GetFromSquirrelVm for SQHandle<T> {
     }
 }
 
-impl<T: IntoSquirrelArgs> GetFromSquirrelVm for SquirrelFn<T> {
+impl<'a, T: IntoSquirrelArgs> GetFromSquirrelVm for SquirrelFn<'a, T> {
     #[inline]
     fn get_from_sqvm(
         sqvm: NonNull<HSquirrelVM>,
@@ -483,7 +483,7 @@ impl GetFromSQObject for SQObject {
     }
 }
 
-impl<T: IsSQObject> GetFromSQObject for SQHandle<T> {
+impl<'a, T: IsSQObject<'a>> GetFromSQObject for SQHandle<'a, T> {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         match Self::try_new(*obj) {
@@ -499,7 +499,7 @@ impl<T: IsSQObject> GetFromSQObject for SQHandle<T> {
     }
 }
 
-impl<T: IntoSquirrelArgs> GetFromSQObject for SquirrelFn<T> {
+impl<'a, T: IntoSquirrelArgs> GetFromSQObject for SquirrelFn<'a, T> {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         SquirrelFn {
@@ -565,6 +565,17 @@ macro_rules! sqvm_name {
             }
         )*
     };
+
+    ( $( LIFE $t:ty = $sqty:literal );*; ) => {
+        $(
+            impl<'a> SQVMName for $t {
+                #[inline]
+                fn get_sqvm_name() -> String {
+                     $sqty.to_string()
+                }
+            }
+        )*
+    };
 }
 
 /// the sqvm name of a type in rust
@@ -588,18 +599,21 @@ sqvm_name! {
     bool = "bool";
     Vector3 = "vector";
     Option<&mut CPlayer> = "entity";
-    SQHandle<SQClosure> = "var";
-    SQHandle<SQTable> = "table";
-    SQHandle<SQString> = "string";
-    SQHandle<SQArray> = "array";
-    SQHandle<SQFloat> = "float";
-    SQHandle<SQInteger> = "int";
-    SQHandle<SQFunctionProto> = "var";
-    SQHandle<SQStructInstance> = "var";
-    SQHandle<SQBool> = "bool";
-    SQHandle<SQNativeClosure> = "var";
     SQObject = "var";
     () = "void";
+}
+
+sqvm_name! {
+    LIFE SQHandle<'a, SQClosure> = "var";
+    LIFE SQHandle<'a, SQTable> = "table";
+    LIFE SQHandle<'a, SQString> = "string";
+    LIFE SQHandle<'a, SQArray> = "array";
+    LIFE SQHandle<'a, SQFloat> = "float";
+    LIFE SQHandle<'a, SQInteger> = "int";
+    LIFE SQHandle<'a, SQFunctionProto> = "var";
+    LIFE SQHandle<'a, SQStructInstance> = "var";
+    LIFE SQHandle<'a, SQBool> = "bool";
+    LIFE SQHandle<'a, SQNativeClosure> = "var";
 }
 
 sqvm_name! {
@@ -615,7 +629,7 @@ sqvm_name! {
     (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9, T10: v10);
 }
 
-impl<T: SQVMName + IntoSquirrelArgs> SQVMName for SquirrelFn<T> {
+impl<'a, T: SQVMName + IntoSquirrelArgs> SQVMName for SquirrelFn<'a, T> {
     fn get_sqvm_name() -> String {
         format!("void functionref({})", T::get_sqvm_name())
     }
@@ -650,34 +664,72 @@ impl<T: SQVMName, E> SQVMName for Result<T, E> {
 // Markers
 
 macro_rules! is_sq_object {
-    ( $( $object:ty,RT: $rt:expr,OT: $ot:expr );*; ) => { $(
+    ( $( $object:ty,RT: $rt:expr,OT: $ot:expr, EXTRACT: * $extract:ident );*; ) => {
+        $(
+            impl<'a> IsSQObject<'a> for $object {
+                const OT_TYPE: SQObjectType = $ot;
+                const RT_TYPE: SQObjectType = $rt;
 
-        impl IsSQObject for $object {
-            const OT_TYPE: SQObjectType = $ot;
-            const RT_TYPE: SQObjectType = $rt;
-        }
-    )* }
+                fn extract_mut(val: &'a mut SQObjectValue) -> &'a mut Self {
+                    unsafe { &mut *val.$extract } // asummed to be init
+                }
+
+                fn extract(val: &'a SQObjectValue) -> &'a Self {
+                    unsafe { &*val.$extract } // asummed to be init
+                }
+            }
+        )*
+    };
+
+    ( $( $object:ty,RT: $rt:expr,OT: $ot:expr, EXTRACT: $extract:ident );*; ) => {
+        $(
+            impl<'a> IsSQObject<'a> for $object {
+                const OT_TYPE: SQObjectType = $ot;
+                const RT_TYPE: SQObjectType = $rt;
+
+                fn extract_mut(val: &'a mut SQObjectValue) -> &'a mut Self {
+                    unsafe { std::mem::transmute(&mut val.$extract) } // asummed to be init
+                }
+
+                fn extract(val: &'a SQObjectValue) -> &'a Self {
+                    unsafe { std::mem::transmute(&val.$extract) } // asummed to be init
+                }
+            }
+        )*
+    }
 }
 
 /// trait to define SQObject types
-pub trait IsSQObject {
+pub trait IsSQObject<'a> {
     /// ot type
     const OT_TYPE: SQObjectType;
     /// return type
     const RT_TYPE: SQObjectType;
+
+    /// extracts the `Self` out of the SQObjectValue
+    ///
+    /// this is unsafe if [`SQHandle`] wasn't used
+    fn extract(val: &'a SQObjectValue) -> &'a Self;
+
+    /// extracts the `Self` out of the SQObjectValue
+    ///
+    /// this is unsafe if [`SQHandle`] wasn't used
+    fn extract_mut(val: &'a mut SQObjectValue) -> &'a mut Self;
 }
 
 is_sq_object! {
-    SQTable, RT: SQObjectType::RT_TABLE, OT: SQObjectType::OT_TABLE;
-    SQString, RT: SQObjectType::RT_STRING, OT: SQObjectType::OT_STRING;
-    SQFunctionProto, RT: SQObjectType::RT_FUNCPROTO, OT: SQObjectType::OT_FUNCPROTO;
-    SQClosure, RT: SQObjectType::RT_CLOSURE, OT: SQObjectType::OT_CLOSURE;
-    SQStructInstance, RT: SQObjectType::RT_INSTANCE, OT: SQObjectType::OT_INSTANCE;
-    SQNativeClosure, RT: SQObjectType::RT_NATIVECLOSURE, OT: SQObjectType::OT_NATIVECLOSURE;
-    SQArray, RT: SQObjectType::RT_ARRAY, OT: SQObjectType::OT_ARRAY;
-    SQFloat, RT: SQObjectType::RT_FLOAT, OT: SQObjectType::OT_FLOAT;
-    SQInteger, RT: SQObjectType::RT_INTEGER, OT: SQObjectType::OT_INTEGER;
-    SQBool, RT: SQObjectType::RT_BOOL, OT: SQObjectType::OT_BOOL;
+    SQTable, RT: SQObjectType::RT_TABLE, OT: SQObjectType::OT_TABLE, EXTRACT: * asTable;
+    SQString, RT: SQObjectType::RT_STRING, OT: SQObjectType::OT_STRING, EXTRACT: * asString;
+    SQFunctionProto, RT: SQObjectType::RT_FUNCPROTO, OT: SQObjectType::OT_FUNCPROTO, EXTRACT: * asFuncProto;
+    SQClosure, RT: SQObjectType::RT_CLOSURE, OT: SQObjectType::OT_CLOSURE, EXTRACT: * asClosure;
+    SQStructInstance, RT: SQObjectType::RT_INSTANCE, OT: SQObjectType::OT_INSTANCE, EXTRACT: * asStructInstance;
+    SQNativeClosure, RT: SQObjectType::RT_NATIVECLOSURE, OT: SQObjectType::OT_NATIVECLOSURE, EXTRACT: * asNativeClosure;
+    SQArray, RT: SQObjectType::RT_ARRAY, OT: SQObjectType::OT_ARRAY, EXTRACT: * asArray;
+}
+is_sq_object! {
+    SQFloat, RT: SQObjectType::RT_FLOAT, OT: SQObjectType::OT_FLOAT, EXTRACT: asFloat;
+    SQInteger, RT: SQObjectType::RT_INTEGER, OT: SQObjectType::OT_INTEGER, EXTRACT: asInteger;
+    SQBool, RT: SQObjectType::RT_BOOL, OT: SQObjectType::OT_BOOL, EXTRACT: asInteger;
 } // not a thing? SQStructDef, RT: SQObjectType::, OT: SQObjectType::;
 
 // TODO: so here is the idea
