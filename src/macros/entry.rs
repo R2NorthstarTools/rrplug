@@ -61,10 +61,7 @@ macro_rules! entry {
                     Self
                 }
 
-                const fn GetString(
-                    &self,
-                    prop: plugin_abi::PluginString,
-                ) -> *const std::ffi::c_char {
+                fn GetString(&self, prop: plugin_abi::PluginString) -> *const std::ffi::c_char {
                     match prop {
                         plugin_abi::PluginString::Name => {
                             $plugin::PLUGIN_INFO.get_name().as_ptr() as *const i8
@@ -75,13 +72,34 @@ macro_rules! entry {
                         plugin_abi::PluginString::DependencyName => {
                             $plugin::PLUGIN_INFO.get_dependency_name().as_ptr() as *const i8
                         }
+                        #[allow(unreachable_patterns)]
+                        // for some reason this warning appears even tho the pattern is non exhaustive
+                        _ => {
+                            log::warn!("invalid plugin string requested!");
+                            c"err".as_ptr()
+                        }
                     }
                 }
 
-                const fn GetField(&self, prop: plugin_abi::PluginField) -> i64 {
+                fn GetField(&self, prop: plugin_abi::PluginField) -> i64 {
                     match prop {
                         plugin_abi::PluginField::Context => {
                             $plugin::PLUGIN_INFO.get_context().bits() as i64
+                        }
+                        plugin_abi::PluginField::Color => {
+                            let mut packed = 0;
+                            let color = $plugin::PLUGIN_INFO.get_color();
+
+                            packed += color.red as i64;
+                            packed += (color.green as i64) << 8;
+                            packed += (color.blue as i64) << 16;
+
+                            packed
+                        }
+                        #[allow(unreachable_patterns)]
+                        _ => {
+                            log::warn!("invalid plugin field requested!");
+                            0
                         }
                     }
                 }

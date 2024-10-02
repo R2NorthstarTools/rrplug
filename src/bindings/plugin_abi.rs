@@ -28,6 +28,7 @@ pub enum LogLevel {
 
 #[repr(i32)]
 #[derive(Debug, Copy, Clone)]
+#[non_exhaustive]
 pub enum PluginString {
     Name,           // the name of the plugin
     LogName,        // the name used for logging
@@ -36,8 +37,10 @@ pub enum PluginString {
 
 #[repr(u32)]
 #[derive(Debug, Copy, Clone)]
+#[non_exhaustive]
 pub enum PluginField {
     Context,
+    Color,
 }
 
 bitflags! {
@@ -46,4 +49,12 @@ bitflags! {
         const DEDICATED = 0x1;
         const CLIENT = 0x2;
     }
+}
+
+#[repr(packed)]
+#[derive(Debug, Copy, Clone)]
+pub struct PluginColor {
+    pub red: u8,
+    pub green: u8,
+    pub blue: u8,
 }

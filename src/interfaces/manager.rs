@@ -63,7 +63,7 @@ unsafe extern "C" fn create_interface(
 ///
 /// # Safety
 ///
-/// marked as unsafe for now since I don't know if the current Interface api is invariant enough
+/// marked as unsafe for now since I don't know if the current Interface api safe enough and wouldn't be exploited from safe rust
 ///
 /// interfaces must be sync and send have to deal with the Interface struct instead of there struct which all handled by the [`crate::as_interface`] macro
 pub unsafe fn register_interface<T: Send + Sync + 'static + AsInterface>(
