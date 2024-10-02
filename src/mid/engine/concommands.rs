@@ -81,12 +81,9 @@ impl RegisterConCommands {
         ) -> ::std::os::raw::c_int,
     ) -> Result<*mut ConCommand, RegisterError> {
         self.mid_register_concommand(name, callback, help_string, flags)
-            .map(move |command| {
-                unsafe {
-                    (*command).m_pCompletionCallback = Some(completion_callback);
-                    (*command).m_nCallbackFlags |= 0x3;
-                }
-                command
+            .inspect(move |command| unsafe {
+                (*(*command)).m_pCompletionCallback = Some(completion_callback);
+                (*(*command)).m_nCallbackFlags |= 0x3;
             })
     }
 }

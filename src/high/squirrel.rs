@@ -290,7 +290,7 @@ impl<T: 'static> UserData<T> {
     }
 
     /// Creates a new [`UserData<T>`] from boxed data
-    pub fn from_boxed(userdata: Box<T>) -> Self {
+    pub const fn from_boxed(userdata: Box<T>) -> Self {
         Self(userdata)
     }
 }
