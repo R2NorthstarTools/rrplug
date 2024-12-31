@@ -100,7 +100,7 @@ dependencies = [
 
 [[package]]
 name = "rrplug"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "bitflags",
  "log",
@@ -113,7 +113,7 @@ dependencies = [
 
 [[package]]
 name = "rrplug_proc"
-version = "4.0.0"
+version = "4.1.0"
 dependencies = [
  "proc-macro2",
  "quote",

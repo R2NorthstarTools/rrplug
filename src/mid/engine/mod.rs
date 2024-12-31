@@ -15,7 +15,7 @@ pub static ENGINE_DATA: OnceCell<EngineData> = OnceCell::new();
 
 impl EngineData {
     /// just returns everything in it's raw form
-
+    ///
     /// returns the functions and statics needed to register ConVars
     ///
     /// if you need to use it for some reason you can refer to rrplug code in [`crate::high::engine::convars`]
