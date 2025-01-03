@@ -7,7 +7,7 @@ use std::{
     any::TypeId,
     hash::{DefaultHasher, Hash, Hasher},
     marker::PhantomData,
-    ops::{Add, Deref, DerefMut},
+    ops::{Deref, DerefMut},
     ptr::{self, NonNull},
 };
 
@@ -400,7 +400,7 @@ impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> GetFromSquirrelVm
             debug_assert!(
                 (sqfunctions.sq_getuserdata)(
                     sqvm.as_ptr(),
-                    stack_pos,
+                    stack_pos + 1,
                     &mut out_ptr,
                     &mut out_type_id
                 ) != SQRESULT::SQRESULT_ERROR
@@ -410,16 +410,6 @@ impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> GetFromSquirrelVm
         debug_assert_eq!(id, out_type_id, "script provided incorrect userdata");
 
         UserDataRef(unsafe { &mut **out_ptr.cast::<*mut T>() }, PhantomData)
-    }
-
-    fn get_from_sqvm_internal(
-        sqvm: NonNull<HSquirrelVM>,
-        sqfunctions: &'static SquirrelFunctions,
-        stack_pos: &mut i32,
-    ) -> Self {
-        let userdata = Self::get_from_sqvm(sqvm, sqfunctions, stack_pos.add(1));
-        *stack_pos += 2; // for some reason userdata also has a table pushed with it
-        userdata
     }
 }
 
@@ -590,6 +580,37 @@ unsafe fn resume_thread(thread_sqvm: NonNull<HSquirrelVM>, sqfunctions: &Squirre
             std::ptr::null(),
             thread_sqvm.as_ptr(),
         )
+    }
+}
+
+/// logs the type at the arg it's replacing
+pub struct PrintType;
+
+impl GetFromSquirrelVm for PrintType {
+    fn get_from_sqvm(
+        sqvm: NonNull<HSquirrelVM>,
+        _sqfunctions: &'static SquirrelFunctions,
+        stack_pos: i32,
+    ) -> Self {
+        unsafe {
+            log::info!(
+                "type at {stack_pos} is {:?}",
+                sqvm.as_ref()
+                    ._stackOfCurrentFunction
+                    .add(stack_pos as usize)
+                    .as_ref()
+                    .map(|obj| obj._Type)
+                    .unwrap_or(SQObjectType::OT_NULL)
+            );
+        }
+
+        Self
+    }
+}
+
+impl SQVMName for PrintType {
+    fn get_sqvm_name() -> String {
+        "var".to_string()
     }
 }
 
