@@ -29,8 +29,9 @@ impl SourceAlloc {
             #[allow(clippy::missing_transmute_annotations)]
             std::mem::transmute::<_, CreateGlobalMemAlloc>(
                 GetProcAddress(
-                    GetModuleHandleA(PCSTR("tier0.dll\0".as_ptr())).expect("couldn't find tier0"),
-                    PCSTR("CreateGlobalMemAlloc\0".as_ptr()),
+                    GetModuleHandleA(PCSTR(c"tier0.dll".as_ptr().cast()))
+                        .expect("couldn't find tier0"),
+                    PCSTR(c"CreateGlobalMemAlloc".as_ptr().cast()),
                 )
                 .expect("couldn't find CreateGlobalMemAlloc"),
             )

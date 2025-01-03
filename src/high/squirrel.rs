@@ -21,7 +21,7 @@ use super::{
 use crate::{
     bindings::{
         squirrelclasstypes::{CompileBufferState, SQRESULT},
-        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
+        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject, SQObjectType},
         squirrelfunctions::SquirrelFunctions,
     },
     errors::{CallError, SQCompileError},
@@ -179,17 +179,17 @@ impl<'a, H: IsSQObject<'a>> SQHandle<'a, H> {
     }
 
     /// a getter
-    pub fn get(&'a self) -> &H {
+    pub fn get(&'a self) -> &'a H {
         H::extract(&self.inner._VAL)
     }
 
     /// a mut getter
-    pub fn get_mut(&'a mut self) -> &mut H {
+    pub fn get_mut(&'a mut self) -> &'a mut H {
         H::extract_mut(&mut self.inner._VAL)
     }
 }
 
-impl<'a> SQHandle<'a, SQClosure> {
+impl SQHandle<'_, SQClosure> {
     /// used in some macros to enforce type safety
     pub fn as_callable(&mut self) -> *mut SQObject {
         &mut self.inner as *mut SQObject
@@ -267,9 +267,9 @@ impl<'a, T: IntoSquirrelArgs> AsRef<SQHandle<'a, SQClosure>> for SquirrelFn<'a, 
 /// [`UserDataRef`] can be used to access the data from functions calls
 ///
 /// [`UserData`] handles dropping the data via a release hook in sqvm
-pub struct UserData<T>(Box<T>);
+pub struct UserData<T, const OVERWRITE: bool = false, const VALUE: u64 = 0>(Box<T>);
 
-impl<T: 'static> UserData<T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> UserData<T, OVERWRITE, VALUE> {
     /// Creates a new [`UserData<T>`].
     ///
     /// # Example
@@ -295,35 +295,48 @@ impl<T: 'static> UserData<T> {
     }
 }
 
-impl<T: 'static> From<T> for UserData<T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> From<T>
+    for UserData<T, OVERWRITE, VALUE>
+{
     fn from(value: T) -> Self {
         Self(value.into())
     }
 }
 
-impl<T: 'static> From<Box<T>> for UserData<T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> From<Box<T>>
+    for UserData<T, OVERWRITE, VALUE>
+{
     fn from(value: Box<T>) -> Self {
         Self(value)
     }
 }
 
-impl<T> SQVMName for UserData<T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> SQVMName
+    for UserData<T, OVERWRITE, VALUE>
+{
     fn get_sqvm_name() -> String {
         "userdata".to_string()
     }
 }
 
-impl<T: 'static> PushToSquirrelVm for UserData<T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> PushToSquirrelVm
+    for UserData<T, OVERWRITE, VALUE>
+{
     fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
         unsafe {
             (sqfunctions.sq_createuserdata)(sqvm.as_ptr(), std::mem::size_of::<*mut T>() as i32)
                 .cast::<*mut T>()
                 .write(Box::leak(self.0));
 
-            let mut hasher = DefaultHasher::new();
-            TypeId::of::<T>().hash(&mut hasher);
+            let id = if !OVERWRITE {
+                let mut hasher = DefaultHasher::new();
+                TypeId::of::<T>().hash(&mut hasher);
+                hasher.finish()
+            } else {
+                VALUE
+            };
 
-            (sqfunctions.sq_setuserdatatypeid)(sqvm.as_ptr(), -1, hasher.finish());
+            (sqfunctions.sq_setuserdatatypeid)(sqvm.as_ptr(), -1, id);
             (sqfunctions.sq_setreleasehook)(sqvm.as_ptr(), -1, releasehook::<T>);
         };
 
@@ -337,7 +350,7 @@ impl<T: 'static> PushToSquirrelVm for UserData<T> {
 
 /// Used to refrence [`UserData`] stored on the sqvm
 ///
-/// the data cannot be moved out of since it's referenec counted in the sqvm
+/// the data cannot be moved out of since it's reference counted in the sqvm
 ///
 /// # SAFETY
 ///
@@ -358,9 +371,14 @@ impl<T: 'static> PushToSquirrelVm for UserData<T> {
 ///     msg.0.chars().map(|_| '*').collect()
 /// }
 /// ```
-pub struct UserDataRef<'a, T>(&'a mut T, PhantomData<*mut ()>);
+pub struct UserDataRef<'a, T, const OVERWRITE: bool = false, const VALUE: u64 = 0>(
+    &'a mut T,
+    PhantomData<*mut ()>,
+);
 
-impl<'a, T: 'static> GetFromSquirrelVm for UserDataRef<'a, T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> GetFromSquirrelVm
+    for UserDataRef<'_, T, OVERWRITE, VALUE>
+{
     fn get_from_sqvm(
         sqvm: NonNull<HSquirrelVM>,
         sqfunctions: &'static SquirrelFunctions,
@@ -368,11 +386,15 @@ impl<'a, T: 'static> GetFromSquirrelVm for UserDataRef<'a, T> {
     ) -> Self {
         let mut out_ptr = ptr::null_mut();
 
-        let mut hasher = DefaultHasher::new();
-        TypeId::of::<T>().hash(&mut hasher);
-        let type_id = hasher.finish();
+        let id = if !OVERWRITE {
+            let mut hasher = DefaultHasher::new();
+            TypeId::of::<T>().hash(&mut hasher);
+            hasher.finish()
+        } else {
+            VALUE
+        };
 
-        let mut out_type_id = type_id;
+        let mut out_type_id = id;
 
         unsafe {
             debug_assert!(
@@ -385,7 +407,7 @@ impl<'a, T: 'static> GetFromSquirrelVm for UserDataRef<'a, T> {
             )
         }
 
-        debug_assert_eq!(type_id, out_type_id, "script provided incorrect userdata");
+        debug_assert_eq!(id, out_type_id, "script provided incorrect userdata");
 
         UserDataRef(unsafe { &mut **out_ptr.cast::<*mut T>() }, PhantomData)
     }
@@ -401,13 +423,17 @@ impl<'a, T: 'static> GetFromSquirrelVm for UserDataRef<'a, T> {
     }
 }
 
-impl<'a, T> SQVMName for UserDataRef<'a, T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> SQVMName
+    for UserDataRef<'_, T, OVERWRITE, VALUE>
+{
     fn get_sqvm_name() -> String {
         "userdata".to_string()
     }
 }
 
-impl<'a, T> Deref for UserDataRef<'a, T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> Deref
+    for UserDataRef<'_, T, OVERWRITE, VALUE>
+{
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -415,7 +441,9 @@ impl<'a, T> Deref for UserDataRef<'a, T> {
     }
 }
 
-impl<'a, T> DerefMut for UserDataRef<'a, T> {
+impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> DerefMut
+    for UserDataRef<'_, T, OVERWRITE, VALUE>
+{
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.0
     }
@@ -719,7 +747,7 @@ pub fn compile_string(
     should_throw_error: bool,
     code: impl AsRef<str>,
 ) -> Result<(), SQCompileError> {
-    const BUFFER_NAME: *const i8 = "compile_string\0".as_ptr() as *const i8;
+    const BUFFER_NAME: *const i8 = c"compile_string".as_ptr();
 
     let buffer =
         try_cstring(code.as_ref()).unwrap_or_else(|_| to_cstring(&code.as_ref().replace('\0', "")));
