@@ -15,7 +15,6 @@ use super::interface::{AsInterface, Interface};
 static REGISTERED_INTERFACES: Lazy<Mutex<HashMap<&'static str, UnsafeHandle<*const c_void>>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
-#[no_mangle]
 #[export_name = "CreateInterface"]
 unsafe extern "C" fn create_interface(
     interface_name: *const c_char,
