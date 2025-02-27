@@ -51,7 +51,7 @@ bitflags! {
     }
 }
 
-#[repr(packed)]
+#[repr(C, packed)]
 #[derive(Debug, Copy, Clone)]
 pub struct PluginColor {
     pub red: u8,

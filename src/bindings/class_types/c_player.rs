@@ -6,7 +6,7 @@ use crate::{high::vector::Vector3, impl_vmethods};
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct C_Player {
-    pub vtable: *const usize,
+    pub vftable: *const usize,
 }
 
 impl_vmethods! {

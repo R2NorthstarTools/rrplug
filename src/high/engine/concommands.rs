@@ -117,7 +117,7 @@ impl CCommandResult {
     }
 }
 
-impl<'a> From<*mut [c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize]> for CommandCompletion<'a> {
+impl From<*mut [c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize]> for CommandCompletion<'_> {
     fn from(commands: *mut [c_char; COMMAND_COMPLETION_ITEM_LENGTH as usize]) -> Self {
         Self {
             suggestions: unsafe {

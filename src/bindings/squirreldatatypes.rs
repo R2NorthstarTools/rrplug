@@ -2,7 +2,6 @@
 
 #![allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
 #[allow(unused_imports)]
-
 pub type releasehookType = ::std::option::Option<
     unsafe extern "C" fn(val: *mut ::std::os::raw::c_void, size: ::std::os::raw::c_int),
 >;

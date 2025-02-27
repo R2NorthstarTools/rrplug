@@ -109,7 +109,7 @@ pub trait SourceInterface<Rtrn = Self> {
         unsafe {
             #[allow(clippy::missing_transmute_annotations)]
             let create_interface = std::mem::transmute::<_, CreateInterface>(
-                GetProcAddress(dll_ptr, PCSTR("CreateInterface\0".as_ptr())).ok_or(
+                GetProcAddress(dll_ptr, PCSTR(c"CreateInterface".as_ptr().cast())).ok_or(
                     InterfaceGetterError::NullCreateInterface(dll_ptr.0 as usize),
                 )?,
             );
@@ -139,7 +139,7 @@ pub trait SourceInterface<Rtrn = Self> {
             let create_interface = std::mem::transmute::<_, CreateInterface>(
                 GetProcAddress(
                     GetModuleHandleA(PCSTR(dll_name.as_ptr() as *const u8))?,
-                    PCSTR("CreateInterface\0".as_ptr()),
+                    PCSTR(c"CreateInterface".as_ptr().cast()),
                 )
                 .ok_or(InterfaceGetterError::NullCreateInterface(0x0))?,
             );

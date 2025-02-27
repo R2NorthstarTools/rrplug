@@ -268,3 +268,19 @@ impl Div for QAngle {
         }
     }
 }
+
+#[repr(C)]
+/// A Quaternion yes
+pub struct Quaternion {
+    x: f32,
+    y: f32,
+    z: f32,
+    w: f32,
+}
+
+#[repr(C)]
+#[allow(non_camel_case_types, non_snake_case)]
+/// hmm
+pub struct matrix3x4_t {
+    m_flMatVal: [[f32; 4]; 3],
+}

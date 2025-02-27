@@ -48,7 +48,7 @@ macro_rules! impl_vmethod {
         pub unsafe fn $name( &self, $($arg_name: $arg),* ) -> $output {
             use std::ffi::c_void;
 
-            let func = (*(self.vtable as *const [usize;u32::MAX as usize]))[$offset];
+            let func = (*(self.vftable as *const [usize;u32::MAX as usize]))[$offset];
             #[allow(clippy::missing_transmute_annotations)]
             (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg,)*) -> $output>(func))
             (
@@ -202,6 +202,17 @@ macro_rules! impl_sqvm_name {
     };
 }
 
+/// macro to test the size of structs
+#[macro_export]
+macro_rules! size_assert {
+    // TODO: remove the unique name once https://doc.rust-lang.org/std/macro.concat_idents.html is stable
+    ($check_name:ident where $struct:ident == $size:literal ) => {
+        #[allow(non_snake_case, non_upper_case_globals, dead_code)]
+        #[doc(hidden)]
+        static $check_name: () = assert!(std::mem::size_of::<$struct>() == $size);
+    };
+}
+
 #[cfg(test)]
 #[allow(dead_code)]
 mod test {
@@ -209,6 +220,8 @@ mod test {
     struct Test;
 
     impl_sqvm_name!(Test => "Test");
+
+    size_assert!(I32_SIZE where i32 == 0x4);
 
     offset_functions! {
         ENGINE_FUNCTIONS + EngineFunctions for WhichDll::Engine => {

@@ -355,13 +355,14 @@ impl GetFromSquirrelVm for Option<&mut CPlayer> {
             .cast::<CPlayer>()
             .as_mut()?;
 
-            if ent.vtable.copy_inner()
-                != CPLAYER_VTABLE
+            if !std::ptr::addr_eq(
+                ent.vftable,
+                CPLAYER_VTABLE
                     .get()
                     .expect("CPlayer vtable is missing wtf?")
                     .vtable
-                    .cast::<usize>()
-            {
+                    .cast::<usize>(),
+            ) {
                 return None;
             }
 
@@ -394,7 +395,7 @@ impl<'a, T: IsSQObject<'a>> GetFromSquirrelVm for SQHandle<'a, T> {
     }
 }
 
-impl<'a, T: IntoSquirrelArgs> GetFromSquirrelVm for SquirrelFn<'a, T> {
+impl<T: IntoSquirrelArgs> GetFromSquirrelVm for SquirrelFn<'_, T> {
     #[inline]
     fn get_from_sqvm(
         sqvm: NonNull<HSquirrelVM>,
@@ -499,7 +500,7 @@ impl<'a, T: IsSQObject<'a>> GetFromSQObject for SQHandle<'a, T> {
     }
 }
 
-impl<'a, T: IntoSquirrelArgs> GetFromSQObject for SquirrelFn<'a, T> {
+impl<T: IntoSquirrelArgs> GetFromSQObject for SquirrelFn<'_, T> {
     #[inline]
     fn get_from_sqobject(obj: &SQObject) -> Self {
         SquirrelFn {
@@ -629,7 +630,7 @@ sqvm_name! {
     (T1: v1, T2: v2, T3: v3, T4: v4, T5: v5, T6: v6, T7: v7, T8: v8, T9: v9, T10: v10);
 }
 
-impl<'a, T: SQVMName + IntoSquirrelArgs> SQVMName for SquirrelFn<'a, T> {
+impl<T: SQVMName + IntoSquirrelArgs> SQVMName for SquirrelFn<'_, T> {
     fn get_sqvm_name() -> String {
         format!("void functionref({})", T::get_sqvm_name())
     }

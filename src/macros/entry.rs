@@ -319,7 +319,6 @@ macro_rules! entry {
                 }
             }
 
-            #[no_mangle]
             #[export_name = "DllMain"]
             extern "stdcall" fn dll_main(
                 _hmodule: $crate::exports::windows::Win32::Foundation::HINSTANCE,
