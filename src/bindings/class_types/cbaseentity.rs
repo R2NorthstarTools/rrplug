@@ -1,8 +1,8 @@
 #![allow(non_camel_case_types, non_snake_case)]
 use std::ffi::{c_char, c_void};
 
-use super::cplayer::EHandle;
-use crate::{bindings::cvar::convar::Color, prelude::Vector3, size_assert};
+use super::cplayer::{CPlayer, EHandle};
+use crate::{bindings::cvar::convar::Color, impl_vmethods, prelude::Vector3, size_assert};
 
 #[repr(C)]
 pub struct IServerNetworkable {
@@ -46,9 +46,7 @@ pub struct CCollisionProperty {
 size_assert!(SIZE_COLLISON_PROP where CCollisionProperty == 112);
 
 #[repr(C)]
-pub struct CBaseEntity
-// : public IServerEntity
-{
+pub struct CBaseEntity {
     pub vftable: *const c_void,
     pub m_RefEHandle: EHandle, // 0x8 ( Size = 4 ) // handle
     pub gap_c: [c_char; 4],
@@ -261,3 +259,35 @@ pub struct CBaseEntity
     pub m_physDummyMotionEnabled: bool, // 0x9d9 ( Size = 1 )
 }
 size_assert!(SIZE_BASE where CBaseEntity == 0x9E0);
+
+// recheck this
+impl_vmethods! {
+    impl CBaseEntity {
+        pub fn some_get_origin_varient_02(vector: *mut Vector3) -> *mut Vector3 where offset(133);
+        pub fn some_get_origin_varient_01(vector: *mut Vector3) -> *mut Vector3 where offset(134);
+        pub fn eye_angles(vector: *mut Vector3) -> *mut Vector3 where offset(135);
+        pub fn get_angles(vector: *mut Vector3) -> *mut Vector3 where offset(136);
+        pub fn get_eye_position(vector: *mut Vector3) -> *mut Vector3 where offset(137);
+        pub fn get_center_position(vector: *mut Vector3) -> *mut Vector3 where offset(138);
+        pub fn get_origin(vector: *mut Vector3) -> *mut Vector3 where offset(139);
+        pub fn get_forward_vector(vector: *mut Vector3, unk1: *const c_void, unk2: *const c_void) -> () where offset(140);
+    }
+}
+
+// maybe this should be somewhere else
+// TODO: turn this into down and up cast trait
+impl CBaseEntity {
+    pub fn up_cast(&self) -> Option<&CPlayer> {
+        crate::mid::server::cplayer::CPLAYER_VTABLE
+            .get()
+            .filter(|vtable| std::ptr::addr_eq(vtable.vtable, self.vftable))
+            .and_then(|_| unsafe { std::ptr::from_ref(self).cast::<CPlayer>().as_ref() })
+    }
+
+    pub fn up_cast_mut(&mut self) -> Option<&mut CPlayer> {
+        crate::mid::server::cplayer::CPLAYER_VTABLE
+            .get()
+            .filter(|vtable| std::ptr::addr_eq(vtable.vtable, self.vftable))
+            .and_then(|_| unsafe { std::ptr::from_mut(self).cast::<CPlayer>().as_mut() })
+    }
+}
