@@ -107,12 +107,12 @@ impl CCommandResult {
     }
 
     /// returns the whole [`Vec`] as a slice
-    pub fn get_args(&self) -> &[String] {
+    pub const fn get_args(&self) -> &[String] {
         &self.args
     }
 
     /// returns the command's name
-    pub fn get_command(&self) -> &str {
+    pub const fn get_command(&self) -> &str {
         &self.command
     }
 }
