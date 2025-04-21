@@ -5,4 +5,5 @@ pub mod cbasecombatcharacter;
 pub mod cbaseentity;
 pub mod client;
 pub mod cplayer;
+pub mod cweaponx;
 pub mod globalvars;

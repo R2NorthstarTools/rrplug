@@ -5,7 +5,7 @@
 pub use crate::{
     bindings::{
         plugin_abi::PluginContext, squirrelclasstypes::ScriptContext,
-        squirreldatatypes::HSquirrelVM, squirrelfunctions::SquirrelFunctions,
+        squirreldatatypes::HSquirrelVM, squirrelfunctions::SquirrelFunctions, DynamicCast,
     },
     entry,
     high::{

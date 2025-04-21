@@ -28,7 +28,7 @@
     clippy::missing_const_for_fn
 )]
 #![warn(missing_docs)]
-// #![allow(clippy::missing_safety_doc)] // toggle theese two for release/dev
+#![allow(clippy::missing_safety_doc)] // toggle theese two for release/dev
 
 #[allow(missing_docs)]
 pub mod bindings;

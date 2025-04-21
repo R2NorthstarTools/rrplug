@@ -2,6 +2,9 @@
 
 use std::fmt::{Debug, Display};
 
+#[cfg(doc)]
+use class_types::{cbaseentity::CBaseEntity, cplayer::CPlayer};
+
 pub mod class_types;
 pub mod cvar;
 pub mod plugin_abi;
@@ -56,4 +59,14 @@ impl<T: Display, const U: usize> Display for OffsetStructField<T, U> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&format!("{}", self.value))
     }
+}
+
+/// trait to share to allow easier multiple up castings of certain classes
+///
+/// # Ex
+///
+/// [CBaseEntity] -> [CPlayer]
+pub trait DynamicCast<T> {
+    fn dynamic_cast(&self) -> Option<&T>;
+    fn dynamic_cast_mut(&mut self) -> Option<&mut T>;
 }

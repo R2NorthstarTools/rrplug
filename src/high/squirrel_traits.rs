@@ -16,7 +16,7 @@ use crate::{
     },
     high::squirrel::SQHandle,
     mid::{
-        server::cplayer::CPLAYER_VTABLE,
+        server::ENTITY_CLASS_VTABLE,
         squirrel::{
             get_sq_array, get_sq_bool, get_sq_float, get_sq_int, get_sq_object, get_sq_string,
             get_sq_vector, push_sq_array, push_sq_bool, push_sq_float, push_sq_int, push_sq_object,
@@ -357,10 +357,10 @@ impl GetFromSquirrelVm for Option<&mut CPlayer> {
 
             if !std::ptr::addr_eq(
                 ent.vftable,
-                CPLAYER_VTABLE
+                ENTITY_CLASS_VTABLE
                     .get()
                     .expect("CPlayer vtable is missing wtf?")
-                    .vtable
+                    .cplayer
                     .cast::<usize>(),
             ) {
                 return None;

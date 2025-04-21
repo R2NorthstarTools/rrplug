@@ -1,4 +1,4 @@
-//! client vesrion of [`super::cplayer`]
+//! client version of [`super::cplayer`]
 
 use crate::{high::vector::Vector3, impl_vmethods};
 

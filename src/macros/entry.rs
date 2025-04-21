@@ -283,9 +283,9 @@ macro_rules! entry {
                             &dll_ptr,
                             &mid::engine::concommands::REGISTER_CONCOMNMADS,
                         );
-                        mid::server::cplayer::CPlayerVtable::try_init(
+                        mid::server::EntityClassVtable::try_init(
                             &dll_ptr,
-                            &mid::server::cplayer::CPLAYER_VTABLE,
+                            &mid::server::ENTITY_CLASS_VTABLE,
                         );
                     }
                     mid::squirrel::SQFUNCTIONS.fetch_functions(&dll_ptr);

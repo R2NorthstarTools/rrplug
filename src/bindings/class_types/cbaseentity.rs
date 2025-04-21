@@ -1,8 +1,16 @@
 #![allow(non_camel_case_types, non_snake_case)]
 use std::ffi::{c_char, c_void};
 
-use super::cplayer::{CPlayer, EHandle};
-use crate::{bindings::cvar::convar::Color, impl_vmethods, prelude::Vector3, size_assert};
+use super::{
+    cplayer::{CPlayer, EHandle},
+    cweaponx::CWeaponX,
+};
+use crate::{
+    bindings::{cvar::convar::Color, DynamicCast},
+    impl_vmethods,
+    prelude::Vector3,
+    size_assert,
+};
 
 #[repr(C)]
 pub struct IServerNetworkable {
@@ -274,20 +282,34 @@ impl_vmethods! {
     }
 }
 
-// maybe this should be somewhere else
-// TODO: turn this into down and up cast trait
-impl CBaseEntity {
-    pub fn up_cast(&self) -> Option<&CPlayer> {
-        crate::mid::server::cplayer::CPLAYER_VTABLE
+impl DynamicCast<CPlayer> for CBaseEntity {
+    fn dynamic_cast(&self) -> Option<&CPlayer> {
+        crate::mid::server::ENTITY_CLASS_VTABLE
             .get()
-            .filter(|vtable| std::ptr::addr_eq(vtable.vtable, self.vftable))
+            .filter(|vtable| std::ptr::addr_eq(vtable.cplayer, self.vftable))
             .and_then(|_| unsafe { std::ptr::from_ref(self).cast::<CPlayer>().as_ref() })
     }
 
-    pub fn up_cast_mut(&mut self) -> Option<&mut CPlayer> {
-        crate::mid::server::cplayer::CPLAYER_VTABLE
+    fn dynamic_cast_mut(&mut self) -> Option<&mut CPlayer> {
+        crate::mid::server::ENTITY_CLASS_VTABLE
             .get()
-            .filter(|vtable| std::ptr::addr_eq(vtable.vtable, self.vftable))
+            .filter(|vtable| std::ptr::addr_eq(vtable.cplayer, self.vftable))
             .and_then(|_| unsafe { std::ptr::from_mut(self).cast::<CPlayer>().as_mut() })
+    }
+}
+
+impl DynamicCast<CWeaponX> for CBaseEntity {
+    fn dynamic_cast(&self) -> Option<&CWeaponX> {
+        crate::mid::server::ENTITY_CLASS_VTABLE
+            .get()
+            .filter(|vtable| std::ptr::addr_eq(vtable.weaponx, self.vftable))
+            .and_then(|_| unsafe { std::ptr::from_ref(self).cast::<CWeaponX>().as_ref() })
+    }
+
+    fn dynamic_cast_mut(&mut self) -> Option<&mut CWeaponX> {
+        crate::mid::server::ENTITY_CLASS_VTABLE
+            .get()
+            .filter(|vtable| std::ptr::addr_eq(vtable.weaponx, self.vftable))
+            .and_then(|_| unsafe { std::ptr::from_mut(self).cast::<CWeaponX>().as_mut() })
     }
 }
