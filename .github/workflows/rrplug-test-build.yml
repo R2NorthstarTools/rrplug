@@ -15,8 +15,8 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/cache@v3.2.2
+    - uses: actions/checkout@v4
+    - uses: actions/cache@v4.2.3
       with:
          # A list of files, directories, and wildcard patterns to cache and restore
         path: target/
