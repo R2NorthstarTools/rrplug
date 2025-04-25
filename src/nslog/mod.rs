@@ -13,7 +13,13 @@ static LOGGER: OnceCell<NorthstarLogger> = OnceCell::new();
 
 pub fn try_init(plugin_handle: HMODULE) -> Result<(), SetLoggerError> {
     panic::set_hook(Box::new(|info| {
-        _ = std::fs::write("crash-dump-rs.txt", info.to_string());
+        _ = std::fs::write(
+            "crash-dump-rs.txt",
+            std::fs::read_to_string("crash-dump-rs.txt")
+                .ok()
+                .unwrap_or_default()
+                + &info.to_string(),
+        );
 
         log::error!("");
 
