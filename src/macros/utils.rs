@@ -7,6 +7,7 @@ use crate::high::squirrel_traits::SQVMName;
 ///
 /// examples of uses are in [`crate::bindings::class_types`]
 #[macro_export]
+#[deprecated]
 macro_rules! offset_struct {
     ( $v:vis struct $struct_name:ident { $( $name:ident : $t:ty where offset($offset:literal)),*, } ) => {
 
@@ -210,6 +211,20 @@ macro_rules! size_assert {
         #[allow(non_snake_case, non_upper_case_globals, dead_code)]
         #[doc(hidden)]
         static $check_name: () = assert!(std::mem::size_of::<$struct>() == $size);
+    };
+}
+
+/// macro to test the size of struct fieldss
+#[macro_export]
+macro_rules! field_assert {
+    // TODO: remove the unique name once https://doc.rust-lang.org/std/macro.concat_idents.html is stable
+    ($check_name:ident where $struct:ident, $field:ident == $size:literal ) => {
+        #[allow(non_snake_case, non_upper_case_globals, dead_code)]
+        #[doc(hidden)]
+        #[test]
+        fn $check_name() {
+            assert_eq!(::std::mem::offset_of!($struct, $field), $size);
+        }
     };
 }
 

@@ -21,7 +21,7 @@ pub fn try_init(plugin_handle: HMODULE) -> Result<(), SetLoggerError> {
         }
 
         log::error!("full message:");
-        log::error!("{}", info.to_string());
+        log::error!("{}", info);
 
         log::error!("");
     }));
