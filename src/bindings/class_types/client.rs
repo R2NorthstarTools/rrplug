@@ -5,6 +5,7 @@ use crate::{field_assert, size_assert};
 const PERSISTENCE_MAX_SIZE: usize = 0xDDCD;
 
 #[allow(non_camel_case_types, non_snake_case)]
+#[repr(C)]
 pub struct CClient {
     pub vftable: *const c_void,
     pub vftable2: *const c_void,
@@ -42,7 +43,7 @@ pub struct CClient {
     pub pad0: [c_char; 0x1E208],
 }
 
-// size_assert!(SIZE_CLIENT where CClient == 0x2D728);
+size_assert!(SIZE_CLIENT where CClient == 0x2D728);
 field_assert!(M_SZSERVERNAME where CClient, m_szServerName == 0x16);
 field_assert!(M_CONVARS where CClient, m_ConVars == 0x258);
 field_assert!(M_NSIGNONSTATE where CClient, m_nSignonState == 0x2A0);
