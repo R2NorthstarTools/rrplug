@@ -14,12 +14,14 @@ rust-version = "1.77"
 
 [dependencies]
 thiserror = "1.*"
-log = "0.4.*"
+log = { version = "0.4.*", optional = true }
 once_cell = "1.*"
 rrplug_proc = { path = "./rrplug_proc" }
 parking_lot = "0.12.*"
 windows = { version = "0.52.*", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_SystemServices"] }
 bitflags = "2.*"
+tracing = { version = "0.1.*", optional = true }
+tracing-subscriber = { version ="0.3.19", optional = true }
 
 [package.metadata.docs.rs]
 features = [ "async_engine" ]
@@ -27,8 +29,10 @@ default-target = "x86_64-pc-windows-msvc"
 targets = ["x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"] # hopefully docs.rs will still work
 
 [features]
-# default = ["async_engine"]
+default = ["logging-tracing"]
 async_engine = []
+logging-log = ["log"]
+logging-tracing = ["tracing", "tracing-subscriber"]
 
 [[example]]
 crate-type = ["cdylib"]

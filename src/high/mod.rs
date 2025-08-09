@@ -79,13 +79,21 @@ impl<T: Clone + Copy> UnsafeHandle<T> {
 
 impl<T: std::fmt::Debug> std::fmt::Debug for UnsafeHandle<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("{:?}", self.inner))
+        f.write_fmt(format_args!("{:?}", self.inner))
     }
 }
 
 impl<T: std::fmt::Display> std::fmt::Display for UnsafeHandle<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("{}", self.inner))
+        f.write_fmt(format_args!("{}", self.inner))
+    }
+}
+
+impl<T: Clone> Clone for UnsafeHandle<T> {
+    fn clone(&self) -> Self {
+        UnsafeHandle {
+            inner: self.inner.clone(),
+        }
     }
 }
 
