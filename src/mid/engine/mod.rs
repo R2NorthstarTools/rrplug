@@ -91,7 +91,7 @@ impl<'a> DLLPointer<'a> {
     }
 
     /// return the name of the dll
-    pub const fn which_dll(&self) -> &WhichDll {
+    pub const fn which_dll(&'_ self) -> &'_ WhichDll<'_> {
         &self.dll
     }
 

@@ -114,6 +114,7 @@ pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
 /// it creates a native closure btw but sqfunction is also a valid name for it.
 /// sqfunction is used in a lot of places with diffrent meanings `¯\_(ツ)_/¯`
 #[derive(Debug, PartialEq, Eq)]
+#[allow(unpredictable_function_pointer_comparisons)]
 pub struct SQFuncInfo {
     /// the name used in source code
     pub cpp_func_name: &'static str,
@@ -356,11 +357,11 @@ pub fn get_sq_object(
 ///
 /// # Errors
 /// fails if it doesn't exist
-pub fn get_sq_function_object(
+pub fn get_sq_function_object<'a>(
     sqvm: NonNull<HSquirrelVM>,
-    sqfunctions: &SquirrelFunctions,
+    sqfunctions: &'a SquirrelFunctions,
     function_name: impl AsRef<str>,
-) -> Result<SQHandle<SQClosure>, CallError> {
+) -> Result<SQHandle<'a, SQClosure>, CallError> {
     let mut obj = MaybeUninit::<SQObject>::zeroed();
 
     let function_name = try_cstring(function_name.as_ref())?;

@@ -7,7 +7,7 @@ use std::{mem::MaybeUninit, ptr::NonNull};
 
 use crate::{
     bindings::{
-        class_types::cplayer::CPlayer,
+        class_types::{cbaseentity::CBaseEntity, cplayer::CPlayer},
         squirrelclasstypes::SQRESULT,
         squirreldatatypes::{
             SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger, SQNativeClosure,
@@ -16,7 +16,6 @@ use crate::{
     },
     high::squirrel::SQHandle,
     mid::{
-        server::ENTITY_CLASS_VTABLE,
         squirrel::{
             get_sq_array, get_sq_bool, get_sq_float, get_sq_int, get_sq_object, get_sq_string,
             get_sq_vector, push_sq_array, push_sq_bool, push_sq_float, push_sq_int, push_sq_object,
@@ -89,6 +88,18 @@ impl PushToSquirrelVm for &CPlayer {
         unsafe {
             let obj =
                 (sqfunctions.sq_create_script_instance)((self as *const CPlayer).cast_mut().cast());
+            (sqfunctions.sq_pushobject)(sqvm.as_ptr(), obj);
+        }
+    }
+}
+
+impl PushToSquirrelVm for &CBaseEntity {
+    /// SAFETY: the object is stored inside the entity and the entity is not being modified  
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+        unsafe {
+            let obj = (sqfunctions.sq_create_script_instance)(
+                (self as *const CBaseEntity).cast_mut().cast(),
+            );
             (sqfunctions.sq_pushobject)(sqvm.as_ptr(), obj);
         }
     }
@@ -347,24 +358,48 @@ impl GetFromSquirrelVm for Option<&mut CPlayer> {
             let mut obj = MaybeUninit::<SQObject>::uninit();
             (sqfunctions.sq_getobject)(sqvm, stack_pos, obj.as_mut_ptr());
 
+            (sqfunctions.sq_getentityfrominstance)(
+                cs_sqvm,
+                obj.as_mut_ptr(),
+                (sqfunctions.sq_get_entity_constant_cbase_entity)(),
+            )
+            .cast::<CBaseEntity>()
+            .as_mut()?
+            .dynamic_cast_mut()
+        }
+    }
+}
+
+impl GetFromSquirrelVm for Option<&mut CBaseEntity> {
+    fn get_from_sqvm(
+        mut sqvm: NonNull<HSquirrelVM>,
+        sqfunctions: &SquirrelFunctions,
+        stack_pos: i32,
+    ) -> Self {
+        unsafe {
+            debug_assert_eq!(
+                sqvm_to_context(sqvm),
+                ScriptContext::SERVER,
+                "CBaseEnity only exists on server vm"
+            );
+
+            let sqvm = sqvm.as_mut();
+            let cs_sqvm = sqvm
+                .sharedState
+                .as_ref()
+                .expect("shared state was invalid")
+                .cSquirrelVM;
+
+            let mut obj = MaybeUninit::<SQObject>::uninit();
+            (sqfunctions.sq_getobject)(sqvm, stack_pos, obj.as_mut_ptr());
+
             let ent = (sqfunctions.sq_getentityfrominstance)(
                 cs_sqvm,
                 obj.as_mut_ptr(),
                 (sqfunctions.sq_get_entity_constant_cbase_entity)(),
             )
-            .cast::<CPlayer>()
+            .cast::<CBaseEntity>()
             .as_mut()?;
-
-            if !std::ptr::addr_eq(
-                ent.vftable,
-                ENTITY_CLASS_VTABLE
-                    .get()
-                    .expect("CPlayer vtable is missing wtf?")
-                    .cplayer
-                    .cast::<usize>(),
-            ) {
-                return None;
-            }
 
             Some(ent)
         }

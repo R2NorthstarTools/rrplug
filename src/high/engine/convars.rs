@@ -366,7 +366,7 @@ impl ConVarStruct {
 
     /// get the value as a cow string which will be a owned value if the string in the convar is not a utf-8 string
     /// or if the string was invalid
-    pub fn get_value_cow(&self) -> Cow<str> {
+    pub fn get_value_cow(&'_ self) -> Cow<'_, str> {
         self.get_value_c_str()
             .map(|cstr| cstr.to_string_lossy())
             .unwrap_or_default()

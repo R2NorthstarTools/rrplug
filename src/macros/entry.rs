@@ -320,7 +320,7 @@ macro_rules! entry {
             }
 
             #[export_name = "DllMain"]
-            extern "stdcall" fn dll_main(
+            extern "C" fn dll_main(
                 _hmodule: $crate::exports::windows::Win32::Foundation::HINSTANCE,
                 reason: u32,
                 _: *mut std::ffi::c_void,
