@@ -635,6 +635,7 @@ sqvm_name! {
     bool = "bool";
     Vector3 = "vector";
     Option<&mut CPlayer> = "entity";
+    Option<&mut CBaseEntity> = "entity";
     SQObject = "var";
     () = "void";
 }
