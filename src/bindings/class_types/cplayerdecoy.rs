@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[repr(C)]
-struct CPlayerDecoy {
+pub struct CPlayerDecoy {
     base: CBaseAnimating,
     m_currentState: i32,        // +0xeb8 size: 0x4 (0x1 * 0x4) type 5
     m_decoyFlags: i32,          // +0xebc size: 0x4 (0x1 * 0x4) type 5
