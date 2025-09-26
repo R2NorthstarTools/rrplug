@@ -38,31 +38,31 @@ pub struct CPlayerDecoy {
 }
 
 size_assert!(CPLAYERDECOY_DATA where CPlayerDecoy == 0xf60);
-field_assert!(CURRENTSTATE_DATA where CPlayerDecoy, m_currentState == 0xeb0);
-field_assert!(DECOYFLAGS_DATA where CPlayerDecoy, m_decoyFlags == 0xeb4);
-field_assert!(LASTPULSETIME_DATA where CPlayerDecoy, m_lastPulseTime == 0xeb8);
-field_assert!(PREVIOUSSTATE_DATA where CPlayerDecoy, m_previousState == 0xebc);
-field_assert!(DEATHTIME_DATA where CPlayerDecoy, m_deathTime == 0xec0);
-field_assert!(REMOVETIME_DATA where CPlayerDecoy, m_removeTime == 0xec4);
-field_assert!(NPCSOUNDTIME_DATA where CPlayerDecoy, m_npcSoundTime == 0xec8);
-field_assert!(NPCSOUNDINDEX_DATA where CPlayerDecoy, m_npcSoundIndex == 0xecc);
-field_assert!(FAKEWEAPON_DATA where CPlayerDecoy, m_fakeWeapon == 0xed0);
-field_assert!(STOWEDWEAPON_DATA where CPlayerDecoy, m_stowedWeapon == 0xed4);
-field_assert!(RUNSPEED_DATA where CPlayerDecoy, m_runSpeed == 0xed8);
-field_assert!(SPRINTSPEED_DATA where CPlayerDecoy, m_sprintSpeed == 0xedc);
-field_assert!(JUMPHEIGHT_DATA where CPlayerDecoy, m_jumpHeight == 0xee0);
-field_assert!(WALLRUNJUMPSTRENGTH_DATA where CPlayerDecoy, m_wallrunJumpStrength == 0xee4);
-field_assert!(JUMPTIME_DATA where CPlayerDecoy, m_jumpTime == 0xee8);
-field_assert!(NEXTFLICKERTIME_DATA where CPlayerDecoy, m_nextFlickerTime == 0xeec);
-field_assert!(FLICKERRATE_DATA where CPlayerDecoy, m_flickerRate == 0xef0);
-field_assert!(CURSPEED_DATA where CPlayerDecoy, m_curSpeed == 0xef4);
-field_assert!(SLIDEENDTIME_DATA where CPlayerDecoy, m_slideEndTime == 0xef8);
-field_assert!(ANIMENDTIME_DATA where CPlayerDecoy, m_animEndTime == 0xefc);
-field_assert!(DECOYHEIGHT_DATA where CPlayerDecoy, m_decoyHeight == 0xf00);
-field_assert!(PULSERATE_DATA where CPlayerDecoy, m_pulseRate == 0xf04);
-field_assert!(NEXTPULSETIME_DATA where CPlayerDecoy, m_nextPulseTime == 0xf08);
-field_assert!(UPDIR_DATA where CPlayerDecoy, m_upDir == 0xf0c);
-field_assert!(MODIFIERS_DATA where CPlayerDecoy, modifiers == 0xf18);
+field_assert!(CURRENTSTATE_DATA where CPlayerDecoy, m_currentState == 0xeb8);
+field_assert!(DECOYFLAGS_DATA where CPlayerDecoy, m_decoyFlags == 0xebc);
+field_assert!(LASTPULSETIME_DATA where CPlayerDecoy, m_lastPulseTime == 0xec0);
+field_assert!(PREVIOUSSTATE_DATA where CPlayerDecoy, m_previousState == 0xec4);
+field_assert!(DEATHTIME_DATA where CPlayerDecoy, m_deathTime == 0xec8);
+field_assert!(REMOVETIME_DATA where CPlayerDecoy, m_removeTime == 0xecc);
+field_assert!(NPCSOUNDTIME_DATA where CPlayerDecoy, m_npcSoundTime == 0xed0);
+field_assert!(NPCSOUNDINDEX_DATA where CPlayerDecoy, m_npcSoundIndex == 0xed4);
+field_assert!(FAKEWEAPON_DATA where CPlayerDecoy, m_fakeWeapon == 0xed8);
+field_assert!(STOWEDWEAPON_DATA where CPlayerDecoy, m_stowedWeapon == 0xedc);
+field_assert!(RUNSPEED_DATA where CPlayerDecoy, m_runSpeed == 0xee0);
+field_assert!(SPRINTSPEED_DATA where CPlayerDecoy, m_sprintSpeed == 0xee4);
+field_assert!(JUMPHEIGHT_DATA where CPlayerDecoy, m_jumpHeight == 0xee8);
+field_assert!(WALLRUNJUMPSTRENGTH_DATA where CPlayerDecoy, m_wallrunJumpStrength == 0xeec);
+field_assert!(JUMPTIME_DATA where CPlayerDecoy, m_jumpTime == 0xef0);
+field_assert!(NEXTFLICKERTIME_DATA where CPlayerDecoy, m_nextFlickerTime == 0xef4);
+field_assert!(FLICKERRATE_DATA where CPlayerDecoy, m_flickerRate == 0xef8);
+field_assert!(CURSPEED_DATA where CPlayerDecoy, m_curSpeed == 0xefc);
+field_assert!(SLIDEENDTIME_DATA where CPlayerDecoy, m_slideEndTime == 0xf00);
+field_assert!(ANIMENDTIME_DATA where CPlayerDecoy, m_animEndTime == 0xf04);
+field_assert!(DECOYHEIGHT_DATA where CPlayerDecoy, m_decoyHeight == 0xf08);
+field_assert!(PULSERATE_DATA where CPlayerDecoy, m_pulseRate == 0xf0c);
+field_assert!(NEXTPULSETIME_DATA where CPlayerDecoy, m_nextPulseTime == 0xf10);
+field_assert!(UPDIR_DATA where CPlayerDecoy, m_upDir == 0xf14);
+field_assert!(MODIFIERS_DATA where CPlayerDecoy, modifiers == 0xf20);
 
 impl DerefMut for CPlayerDecoy {
     fn deref_mut(&mut self) -> &mut Self::Target {
