@@ -189,7 +189,7 @@ impl DerefMut for CWeaponX {
     }
 }
 impl Deref for CWeaponX {
-    type Target = CBaseEntity;
+    type Target = CBaseCombatWeapon;
 
     fn deref(&self) -> &Self::Target {
         &self.base

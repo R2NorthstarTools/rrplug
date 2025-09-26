@@ -6,5 +6,6 @@ pub mod cbasecombatweapon;
 pub mod cbaseentity;
 pub mod client;
 pub mod cplayer;
+pub mod cplayerdecoy;
 pub mod cweaponx;
 pub mod globalvars;
