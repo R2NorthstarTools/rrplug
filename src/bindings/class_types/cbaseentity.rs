@@ -6,7 +6,7 @@ use super::{
     cweaponx::CWeaponX,
 };
 use crate::{
-    bindings::{cvar::convar::Color, DynamicCast},
+    bindings::{class_types::cplayerdecoy::CPlayerDecoy, cvar::convar::Color, DynamicCast},
     impl_vmethods,
     prelude::Vector3,
     size_assert,
@@ -311,5 +311,21 @@ impl DynamicCast<CWeaponX> for CBaseEntity {
             .get()
             .filter(|vtable| std::ptr::addr_eq(vtable.weaponx, self.vftable))
             .and_then(|_| unsafe { std::ptr::from_mut(self).cast::<CWeaponX>().as_mut() })
+    }
+}
+
+impl DynamicCast<CPlayerDecoy> for CBaseEntity {
+    fn dynamic_cast(&self) -> Option<&CPlayerDecoy> {
+        crate::mid::server::ENTITY_CLASS_VTABLE
+            .get()
+            .filter(|vtable| std::ptr::addr_eq(vtable.cplayerdecoy, self.vftable))
+            .and_then(|_| unsafe { std::ptr::from_ref(self).cast::<CPlayerDecoy>().as_ref() })
+    }
+
+    fn dynamic_cast_mut(&mut self) -> Option<&mut CPlayerDecoy> {
+        crate::mid::server::ENTITY_CLASS_VTABLE
+            .get()
+            .filter(|vtable| std::ptr::addr_eq(vtable.cplayerdecoy, self.vftable))
+            .and_then(|_| unsafe { std::ptr::from_mut(self).cast::<CPlayerDecoy>().as_mut() })
     }
 }
