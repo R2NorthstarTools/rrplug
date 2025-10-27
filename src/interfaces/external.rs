@@ -152,6 +152,15 @@ pub trait SourceInterface<Rtrn = Self> {
                 .ok_or(InterfaceGetterError::InterfaceNotFound(interface_name))
         }
     }
+
+    /// casts the pointer to this sturcutre
+    ///
+    /// # SAFETY
+    ///
+    /// pointer has to be this structure :)
+    unsafe fn from_ptr(ptr: *const ()) -> &'static Rtrn {
+        unsafe { &*ptr.cast() }
+    }
 }
 
 mod test {
