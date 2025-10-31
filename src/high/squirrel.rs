@@ -504,6 +504,8 @@ impl<T: PushToSquirrelVm + SQVMName> SuspendThread<T> {
             return Self::new();
         }
 
+        unsafe { thread_sqvm.read().uiRef += 1 };
+
         let thread_sqvm = unsafe { UnsafeHandle::new(thread_sqvm) };
         std::thread::spawn(move || {
             let result = thread_func();
@@ -512,6 +514,8 @@ impl<T: PushToSquirrelVm + SQVMName> SuspendThread<T> {
             async_execute(AsyncEngineMessage::run_func(move |_| {
                 let thread_sqvm = thread_sqvm.take();
                 let sq_functions = SQFUNCTIONS.from_sqvm(thread_sqvm);
+
+                unsafe { thread_sqvm.read().uiRef -= 1 };
 
                 result.push_to_sqvm(thread_sqvm, sq_functions);
                 unsafe { resume_thread(thread_sqvm, sq_functions) };
