@@ -9,6 +9,7 @@ use std::{
     marker::PhantomData,
     ops::{Deref, DerefMut},
     ptr::{self, NonNull},
+    sync::atomic::Ordering,
 };
 
 use super::{
@@ -26,7 +27,10 @@ use crate::{
     },
     errors::{CallError, SQCompileError},
     mid::{
-        squirrel::{FuncSQFuncInfo, SQFuncInfo, SQFUNCTIONS, SQVM_CLIENT, SQVM_SERVER, SQVM_UI},
+        squirrel::{
+            FuncSQFuncInfo, SQFuncInfo, SQFUNCTIONS, SQVM_CLIENT, SQVM_CLIENT_GENERATION,
+            SQVM_SERVER, SQVM_SERVER_GENERATION, SQVM_UI, SQVM_UI_GENERATION,
+        },
         utils::{to_cstring, try_cstring},
     },
     prelude::{EngineToken, ScriptContext},
@@ -56,18 +60,21 @@ impl CSquirrelVMHandle {
         unsafe {
             match (context, is_being_dropped) {
                 (ScriptContext::SERVER, false) => {
+                    SQVM_SERVER_GENERATION.fetch_add(1, Ordering::Relaxed);
                     _ = SQVM_SERVER.get(token).replace(Some(
                         NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
                     ))
                 }
                 (ScriptContext::SERVER, true) => _ = SQVM_SERVER.get(token).replace(None),
                 (ScriptContext::CLIENT, false) => {
+                    SQVM_CLIENT_GENERATION.fetch_add(1, Ordering::Relaxed);
                     _ = SQVM_CLIENT.get(token).replace(Some(
                         NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
                     ))
                 }
                 (ScriptContext::CLIENT, true) => _ = SQVM_CLIENT.get(token).replace(None),
                 (ScriptContext::UI, false) => {
+                    SQVM_UI_GENERATION.fetch_add(1, Ordering::Relaxed);
                     _ = SQVM_UI.get(token).replace(Some(
                         NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
                     ))

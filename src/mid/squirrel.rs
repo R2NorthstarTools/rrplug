@@ -6,7 +6,7 @@
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove later
 
-use std::{cell::RefCell, ffi::CStr, mem::MaybeUninit, ptr::NonNull};
+use std::{cell::RefCell, ffi::CStr, mem::MaybeUninit, ptr::NonNull, sync::atomic::AtomicU32};
 
 use once_cell::sync::OnceCell;
 
@@ -48,6 +48,13 @@ pub static SQVM_UI: EngineGlobal<RefCell<Option<NonNull<HSquirrelVM>>>> =
 /// the client sqvm
 pub static SQVM_CLIENT: EngineGlobal<RefCell<Option<NonNull<HSquirrelVM>>>> =
     EngineGlobal::new(RefCell::new(None));
+
+/// the server sqvm generation
+pub static SQVM_SERVER_GENERATION: AtomicU32 = AtomicU32::new(0);
+/// the ui sqvm generation
+pub static SQVM_UI_GENERATION: AtomicU32 = AtomicU32::new(0);
+/// the client sqvm generation
+pub static SQVM_CLIENT_GENERATION: AtomicU32 = AtomicU32::new(0);
 
 /// functions that are used to interact with the sqvm
 ///

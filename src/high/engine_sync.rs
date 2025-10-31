@@ -7,7 +7,10 @@ use parking_lot::Mutex;
 use std::{
     mem::MaybeUninit,
     ptr::NonNull,
-    sync::mpsc::{self, Receiver, SendError, Sender},
+    sync::{
+        atomic::Ordering,
+        mpsc::{self, Receiver, SendError, Sender},
+    },
 };
 
 use crate::{
@@ -17,7 +20,10 @@ use crate::{
         squirrelfunctions::SquirrelFunctions,
     },
     mid::{
-        squirrel::{SQFUNCTIONS, SQVM_CLIENT, SQVM_SERVER, SQVM_UI},
+        squirrel::{
+            SQFUNCTIONS, SQVM_CLIENT, SQVM_CLIENT_GENERATION, SQVM_SERVER, SQVM_SERVER_GENERATION,
+            SQVM_UI, SQVM_UI_GENERATION,
+        },
         utils::to_cstring,
     },
 };
@@ -42,6 +48,7 @@ pub enum AsyncEngineMessage {
                 + Send
                 + Sync,
         >,
+        generation: u32,
     },
     /// contains a closure that will be executed once on the next engine frame
     ExecuteFunction(Box<dyn FnOnce(EngineToken) + 'static + Send + Sync>),
@@ -59,6 +66,11 @@ impl AsyncEngineMessage {
             function_name: name.into(),
             context,
             args: args.into_function(),
+            generation: match context {
+                ScriptContext::SERVER => SQVM_SERVER_GENERATION.load(Ordering::Relaxed),
+                ScriptContext::CLIENT => SQVM_CLIENT_GENERATION.load(Ordering::Relaxed),
+                ScriptContext::UI => SQVM_UI_GENERATION.load(Ordering::Relaxed),
+            },
         }
     }
 
@@ -100,7 +112,22 @@ pub unsafe fn run_async_routine() {
                 context,
                 function_name,
                 args,
+                generation,
             } => {
+                match context {
+                    ScriptContext::SERVER
+                        if SQVM_SERVER_GENERATION.load(Ordering::Relaxed) == generation => {}
+                    ScriptContext::CLIENT
+                        if SQVM_CLIENT_GENERATION.load(Ordering::Relaxed) == generation => {}
+                    ScriptContext::UI
+                        if SQVM_UI_GENERATION.load(Ordering::Relaxed) == generation => {}
+                    _ => {
+                        log::warn!(
+                            "a async sq function call was called in the wrong sqvm generation"
+                        );
+                        return;
+                    }
+                }
                 let (sqvm, sqfunctions) = match context {
                     ScriptContext::SERVER => {
                         (SQVM_SERVER.get(token).borrow(), SQFUNCTIONS.server.wait())
