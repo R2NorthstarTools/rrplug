@@ -58,7 +58,7 @@ impl<T> UnsafeHandle<T> {
 
     /// returns a mut ref to the underlying value
     #[inline]
-    pub fn get_mut(&mut self) -> &mut T {
+    pub const fn get_mut(&mut self) -> &mut T {
         &mut self.inner
     }
 

@@ -390,17 +390,17 @@ impl ConVarStruct {
     }
 
     /// get the value as a i32
-    pub fn get_value_i32(&self) -> i32 {
+    pub const fn get_value_i32(&self) -> i32 {
         self.inner.m_Value.m_nValue
     }
 
     /// get the value as a bool
-    pub fn get_value_bool(&self) -> bool {
+    pub const fn get_value_bool(&self) -> bool {
         self.inner.m_Value.m_nValue != 0
     }
 
     /// get the value as a f32
-    pub fn get_value_f32(&self) -> f32 {
+    pub const fn get_value_f32(&self) -> f32 {
         self.inner.m_Value.m_fValue
     }
 
@@ -484,24 +484,24 @@ impl ConVarStruct {
     }
 
     /// returns [`true`] if the convar is registered
-    pub fn is_registered(&self) -> bool {
+    pub const fn is_registered(&self) -> bool {
         self.inner.m_ConCommandBase.m_bRegistered
     }
 
     /// returns [`true`] if the given flags are set for this convar
-    pub fn has_flags(&self, flags: i32) -> bool {
+    pub const fn has_flags(&self, flags: i32) -> bool {
         self.inner.m_ConCommandBase.m_nFlags & flags != 0
     }
 
     /// adds flags to the convar
-    pub fn add_flags(&mut self, flags: i32, _: EngineToken) {
+    pub const fn add_flags(&mut self, flags: i32, _: EngineToken) {
         self.inner.m_ConCommandBase.m_nFlags |= flags
     }
 
     /// removes flags from the convar
     ///
     /// only safe on the titanfall thread
-    pub fn remove_flags(&mut self, flags: i32, _: EngineToken) {
+    pub const fn remove_flags(&mut self, flags: i32, _: EngineToken) {
         self.inner.m_ConCommandBase.m_nFlags &= !flags // TODO: figure out if this still needs fixing
     }
 
@@ -509,7 +509,7 @@ impl ConVarStruct {
     ///
     /// # Safety
     /// accessing the underlying pointer can produce ub
-    pub unsafe fn get_raw_convar_ptr(&mut self) -> *mut ConVar {
+    pub const unsafe fn get_raw_convar_ptr(&mut self) -> *mut ConVar {
         self.inner
     }
 }

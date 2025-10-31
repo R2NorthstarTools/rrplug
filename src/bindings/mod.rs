@@ -37,7 +37,7 @@ impl<T, const U: usize> OffsetStructField<T, U> {
         &self.value
     }
 
-    pub fn get_inner_mut(&mut self) -> &mut T {
+    pub const fn get_inner_mut(&mut self) -> &mut T {
         &mut self.value
     }
 }

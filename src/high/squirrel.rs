@@ -176,7 +176,7 @@ impl<'a, H: IsSQObject<'a>> SQHandle<'a, H> {
     }
 
     /// a mut getter
-    pub fn get_mut_obj(&mut self) -> &mut SQObject {
+    pub const fn get_mut_obj(&mut self) -> &mut SQObject {
         &mut self.inner
     }
 
@@ -198,7 +198,7 @@ impl<'a, H: IsSQObject<'a>> SQHandle<'a, H> {
 
 impl SQHandle<'_, SQClosure> {
     /// used in some macros to enforce type safety
-    pub fn as_callable(&mut self) -> *mut SQObject {
+    pub const fn as_callable(&mut self) -> *mut SQObject {
         &mut self.inner as *mut SQObject
     }
 }

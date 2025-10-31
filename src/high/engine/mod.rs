@@ -62,7 +62,7 @@ impl<T> EngineGlobal<T> {
     /// get a mutable reference
     ///
     /// it's safe since you need an exclusive acces to [`EngineGlobal`]
-    pub fn get_mut(&mut self) -> &mut T {
+    pub const fn get_mut(&mut self) -> &mut T {
         self.0.get_mut()
     }
 
