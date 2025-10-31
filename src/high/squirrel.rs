@@ -498,13 +498,23 @@ impl<T: PushToSquirrelVm + SQVMName> SuspendThread<T> {
         F: FnMut() -> T + Send + 'static,
         T: Send + Sync + 'static,
     {
-        use crate::high::engine_sync::{async_execute, AsyncEngineMessage};
+        use crate::{
+            high::engine_sync::{async_execute, AsyncEngineMessage},
+            mid::squirrel::sqvm_to_context,
+        };
 
         if !Self::is_thread_and_throw_error(thread_sqvm, SQFUNCTIONS.from_sqvm(thread_sqvm)) {
             return Self::new();
         }
 
         unsafe { thread_sqvm.read().uiRef += 1 };
+
+        let context = unsafe { sqvm_to_context(thread_sqvm) };
+        let generation = match context {
+            ScriptContext::SERVER => SQVM_SERVER_GENERATION.load(Ordering::Relaxed),
+            ScriptContext::CLIENT => SQVM_CLIENT_GENERATION.load(Ordering::Relaxed),
+            ScriptContext::UI => SQVM_UI_GENERATION.load(Ordering::Relaxed),
+        };
 
         let thread_sqvm = unsafe { UnsafeHandle::new(thread_sqvm) };
         std::thread::spawn(move || {
@@ -516,6 +526,21 @@ impl<T: PushToSquirrelVm + SQVMName> SuspendThread<T> {
                 let sq_functions = SQFUNCTIONS.from_sqvm(thread_sqvm);
 
                 unsafe { thread_sqvm.read().uiRef -= 1 };
+
+                match context {
+                    ScriptContext::SERVER
+                        if SQVM_SERVER_GENERATION.load(Ordering::Relaxed) == generation => {}
+                    ScriptContext::CLIENT
+                        if SQVM_CLIENT_GENERATION.load(Ordering::Relaxed) == generation => {}
+                    ScriptContext::UI
+                        if SQVM_UI_GENERATION.load(Ordering::Relaxed) == generation => {}
+                    _ => {
+                        log::warn!(
+                            "a async sq function call was called in the wrong sqvm generation"
+                        );
+                        return;
+                    }
+                }
 
                 result.push_to_sqvm(thread_sqvm, sq_functions);
                 unsafe { resume_thread(thread_sqvm, sq_functions) };
