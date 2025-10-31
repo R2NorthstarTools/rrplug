@@ -29,7 +29,7 @@ impl ReloadResponse {
     ///
     /// # Safety
     ///
-    /// **this will create ub!**
+    /// **this will create dangling pointers**
     ///
     /// **unless** before calling this everything will be cleaned up!
     ///
