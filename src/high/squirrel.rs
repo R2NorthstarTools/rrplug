@@ -523,9 +523,6 @@ impl<T: PushToSquirrelVm + SQVMName> SuspendThread<T> {
             // TODO: check if the sqvm has expired
             async_execute(AsyncEngineMessage::run_func(move |_| {
                 let thread_sqvm = thread_sqvm.take();
-                let sq_functions = SQFUNCTIONS.from_sqvm(thread_sqvm);
-
-                unsafe { thread_sqvm.read().uiRef -= 1 };
 
                 match context {
                     ScriptContext::SERVER
@@ -541,6 +538,10 @@ impl<T: PushToSquirrelVm + SQVMName> SuspendThread<T> {
                         return;
                     }
                 }
+
+                let sq_functions = SQFUNCTIONS.from_sqvm(thread_sqvm);
+
+                unsafe { thread_sqvm.read().uiRef -= 1 };
 
                 result.push_to_sqvm(thread_sqvm, sq_functions);
                 unsafe { resume_thread(thread_sqvm, sq_functions) };
