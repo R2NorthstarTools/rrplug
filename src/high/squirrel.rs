@@ -57,24 +57,28 @@ impl CSquirrelVMHandle {
         is_being_dropped: bool,
         token: EngineToken,
     ) -> Self {
+        // on any change new sqvm change generation
+        match context {
+            ScriptContext::SERVER => SQVM_SERVER_GENERATION.fetch_add(1, Ordering::Relaxed),
+            ScriptContext::CLIENT => SQVM_CLIENT_GENERATION.fetch_add(1, Ordering::Relaxed),
+            ScriptContext::UI => SQVM_UI_GENERATION.fetch_add(1, Ordering::Relaxed),
+        };
+
         unsafe {
             match (context, is_being_dropped) {
                 (ScriptContext::SERVER, false) => {
-                    SQVM_SERVER_GENERATION.fetch_add(1, Ordering::Relaxed);
                     _ = SQVM_SERVER.get(token).replace(Some(
                         NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
                     ))
                 }
                 (ScriptContext::SERVER, true) => _ = SQVM_SERVER.get(token).replace(None),
                 (ScriptContext::CLIENT, false) => {
-                    SQVM_CLIENT_GENERATION.fetch_add(1, Ordering::Relaxed);
                     _ = SQVM_CLIENT.get(token).replace(Some(
                         NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
                     ))
                 }
                 (ScriptContext::CLIENT, true) => _ = SQVM_CLIENT.get(token).replace(None),
                 (ScriptContext::UI, false) => {
-                    SQVM_UI_GENERATION.fetch_add(1, Ordering::Relaxed);
                     _ = SQVM_UI.get(token).replace(Some(
                         NonNull::new(handle.as_mut().sqvm).expect("sqvm cannot be null"),
                     ))

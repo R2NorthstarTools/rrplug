@@ -111,6 +111,13 @@ impl<T: PushToSquirrelVm, const N: usize> PushToSquirrelVm for [T; N] {
     }
 }
 
+// hmm maybe bad idea but eh (looking at the copy stuff)
+impl<T: PushToSquirrelVm + Clone + Copy> PushToSquirrelVm for &[T] {
+    fn push_to_sqvm(self, sqvm: NonNull<HSquirrelVM>, sqfunctions: &SquirrelFunctions) {
+        push_sq_array(sqvm, sqfunctions, self.iter().copied());
+    }
+}
+
 impl<T: PushToSquirrelVm> PushToSquirrelVm for UnsafeHandle<T>
 where
     T: PushToSquirrelVm,
@@ -636,6 +643,8 @@ sqvm_name! {
     Vector3 = "vector";
     Option<&mut CPlayer> = "entity";
     Option<&mut CBaseEntity> = "entity";
+    Option<&CPlayer> = "entity";
+    Option<&CBaseEntity> = "entity";
     SQObject = "var";
     () = "void";
 }
@@ -675,6 +684,18 @@ impl<T: SQVMName + IntoSquirrelArgs> SQVMName for SquirrelFn<'_, T> {
 impl<T: SQVMName> SQVMName for Vec<T> {
     fn get_sqvm_name() -> String {
         format!("array<{}>", T::get_sqvm_name())
+    }
+}
+
+impl<T: SQVMName, const N: usize> SQVMName for [T; N] {
+    fn get_sqvm_name() -> String {
+        Vec::<T>::get_sqvm_name()
+    }
+}
+
+impl<T: SQVMName> SQVMName for &[T] {
+    fn get_sqvm_name() -> String {
+        Vec::<T>::get_sqvm_name()
     }
 }
 
