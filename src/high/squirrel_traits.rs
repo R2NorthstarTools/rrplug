@@ -780,7 +780,7 @@ is_sq_object! {
     SQString, RT: SQObjectType::RT_STRING, OT: SQObjectType::OT_STRING, EXTRACT: * asString;
     SQFunctionProto, RT: SQObjectType::RT_FUNCPROTO, OT: SQObjectType::OT_FUNCPROTO, EXTRACT: * asFuncProto;
     SQClosure, RT: SQObjectType::RT_CLOSURE, OT: SQObjectType::OT_CLOSURE, EXTRACT: * asClosure;
-    SQStructInstance, RT: SQObjectType::RT_INSTANCE, OT: SQObjectType::OT_INSTANCE, EXTRACT: * asStructInstance;
+    SQStructInstance, RT: SQObjectType::RT_INSTANCE, OT: SQObjectType::OT_STRUCT, EXTRACT: * asStructInstance;
     SQNativeClosure, RT: SQObjectType::RT_NATIVECLOSURE, OT: SQObjectType::OT_NATIVECLOSURE, EXTRACT: * asNativeClosure;
     SQArray, RT: SQObjectType::RT_ARRAY, OT: SQObjectType::OT_ARRAY, EXTRACT: * asArray;
 }

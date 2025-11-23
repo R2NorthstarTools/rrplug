@@ -3681,6 +3681,7 @@ pub struct CSquirrelVM {
     pub gap_2D0: [::std::os::raw::c_uchar; 24usize],
 }
 #[test]
+#[allow(clippy::transmutes_expressible_as_ptr_casts)]
 fn bindgen_test_layout_CSquirrelVM() {
     const UNINIT: ::std::mem::MaybeUninit<CSquirrelVM> = ::std::mem::MaybeUninit::uninit();
     let ptr = UNINIT.as_ptr();
@@ -3775,7 +3776,14 @@ fn bindgen_test_layout_CSquirrelVM() {
         )
     );
     assert_eq!(
-        unsafe { ::std::ptr::addr_of!((*ptr).formatString) as usize - ptr as usize },
+        unsafe {
+            // the lsp complains about an error here so it's a transmute now
+            ::std::mem::transmute::<
+                *const std::option::Option<unsafe extern "C" fn(i64, *const i8, ...) -> *mut i8>,
+                usize,
+            >(::std::ptr::addr_of!((*ptr).formatString))
+                - ptr as usize
+        },
         712usize,
         concat!(
             "Offset of field: ",

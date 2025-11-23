@@ -48,6 +48,7 @@ pub enum AsyncEngineMessage {
                 + Send
                 + Sync,
         >,
+        /// the generation of the sqvm
         generation: u32,
     },
     /// contains a closure that will be executed once on the next engine frame
