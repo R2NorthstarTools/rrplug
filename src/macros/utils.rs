@@ -152,6 +152,7 @@ macro_rules! offset_functions {
         pub static $static_name: $crate::exports::OnceCell<$struct_name> = $crate::exports::OnceCell::new();
 
         #[doc(hidden)]
+        #[repr(C)]
         pub struct $struct_name {
             $(pub $name: $t,)*
         }
