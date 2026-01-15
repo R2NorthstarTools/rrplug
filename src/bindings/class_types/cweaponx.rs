@@ -8,6 +8,33 @@ use super::{cbasecombatweapon::CBaseCombatWeapon, cbaseentity::CBaseEntity, cpla
 
 use crate::size_assert;
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Default)]
+#[repr(i32)]
+#[non_exhaustive]
+pub enum WeaponState {
+    #[default]
+    Nothing = 0,
+    Holstered = 1,
+    Deploying = 2,
+    Unk3 = 3,
+    Unk4 = 4,
+    OffhandUse = 5,
+    Unk6 = 6,
+    Unk7 = 7,
+    Unk8 = 8,
+    Shoot = 9,
+    Reload = 10,
+    Unk11 = 11,
+    Melee = 12,
+    Unk13 = 13,
+    Unk14 = 14,
+    Unk15 = 15,
+    Unk16 = 16,
+    Unk17 = 17,
+    Unk18 = 18,
+    Cooldown = 19,
+}
+
 #[repr(C)]
 pub struct SmartAmmo_WeaponData {
     pub vftable: *const c_void,
@@ -94,9 +121,9 @@ size_assert!(SIZE_WEAPON_DATA where WeaponPlayerData == 0xa8);
 #[repr(C)]
 pub struct CWeaponX {
     pub base: CBaseCombatWeapon,
-    pub m_weapState: i32,     // 0xfc0 ( Size: 4 )
-    pub m_allowedToUse: bool, // 0xfc4 ( Size: 1 )
-    pub m_discarded: bool,    // 0xfc5 ( Size: 1 )
+    pub m_weapState: WeaponState, // 0xfc0 ( Size: 4 )
+    pub m_allowedToUse: bool,     // 0xfc4 ( Size: 1 )
+    pub m_discarded: bool,        // 0xfc5 ( Size: 1 )
     pub gap_fc6: [u8; 2],
     pub m_forcedADS: i32,               // 0xfc8 ( Size: 4 )
     pub m_forceRelease: i32,            // 0xfcc ( Size: 4 )
