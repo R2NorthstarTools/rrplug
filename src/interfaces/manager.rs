@@ -22,13 +22,14 @@ unsafe extern "C" fn create_interface(
 ) -> *const c_void {
     let interfaces = REGISTERED_INTERFACES.lock();
 
-    unsafe { CStr::from_ptr(interface_name) }
-        .to_str()
-        .ok()
+    unsafe { interface_name.as_ref() }
+        .and_then(|interface_name| unsafe { CStr::from_ptr(interface_name) }.to_str().ok())
         .and_then(|name| interfaces.get(name))
         .map(|interface| interface.copy())
         .unwrap_or_else(|| {
-            unsafe { *error = 1 };
+            if let Some(error) = unsafe { error.as_mut() } {
+                *error = 1;
+            }
             std::ptr::null()
         })
 }
@@ -76,4 +77,62 @@ pub unsafe fn register_interface<T: Send + Sync + 'static + AsInterface>(
     );
 
     &interface.data
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate as rrplug;
+    struct Test;
+
+    #[rrplug::as_interface]
+    impl Test {
+        pub fn new() -> Self {
+            Self
+        }
+        pub fn foo(&self) {}
+    }
+
+    #[test]
+    fn interface_exists_null() {
+        unsafe {
+            let interface = register_interface("test", Test::new());
+
+            assert!(std::ptr::addr_eq(
+                create_interface(c"test".as_ptr(), std::ptr::null_mut()),
+                interface
+            ));
+        }
+    }
+
+    #[test]
+    fn interface_exists() {
+        unsafe {
+            let interface = register_interface("test2", Test::new());
+
+            let mut error = 0;
+
+            assert!(std::ptr::addr_eq(
+                create_interface(c"test2".as_ptr(), &mut error),
+                interface
+            ));
+            assert_eq!(error, 0);
+        }
+    }
+
+    #[test]
+    fn interface_does_not_exist_null() {
+        unsafe {
+            assert!(create_interface(c"test3".as_ptr(), std::ptr::null_mut()).is_null(),);
+        }
+    }
+
+    #[test]
+    fn interface_does_not_exist() {
+        unsafe {
+            let mut error = 0;
+            assert!(create_interface(c"test4".as_ptr(), &mut error).is_null());
+            assert_eq!(error, 1);
+        }
+    }
 }
