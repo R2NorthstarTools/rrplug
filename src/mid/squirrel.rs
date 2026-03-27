@@ -12,7 +12,7 @@ use once_cell::sync::OnceCell;
 
 use crate::{
     bindings::{
-        squirrelclasstypes::{SQFunction, ScriptContext},
+        squirrelclasstypes::{eSQReturnType, SQFuncRegistration, SQFunction, ScriptContext},
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
         squirrelfunctions::{
             ClientSQFunctions, ServerSQFunctions, SquirrelFunctions, SQUIRREL_CLIENT_FUNCS,
@@ -174,6 +174,90 @@ impl SQFunctionContext {
 pub unsafe fn sqvm_to_context(sqvm: NonNull<HSquirrelVM>) -> ScriptContext {
     ScriptContext::try_from(unsafe { (*(*sqvm.as_ref().sharedState).cSquirrelVM).vmContext })
         .expect("sqvm should have a valid vmcontext")
+}
+
+/// allows you to manually register native squirrel functions
+///
+/// # Panics
+///
+/// Panics if somehow your functions, types or return types have a null byte, therefore never
+///
+/// # Errors
+///
+/// This function will return an error if the function context and the sqvm context have a mismatch
+///
+/// # Safety
+///
+/// only safe to be called when the sqvm is fully init and that the call is happening from the game thread
+// TODO: refactor this into a proper error type
+pub unsafe fn manually_register_sq_functions(
+    csqvm: &mut CSquirrelVM,
+    func_info: &SQFuncInfo,
+) -> Result<(), String> {
+    let context: ScriptContext = csqvm
+        .vmContext
+        .try_into()
+        .expect("sqvm was not valid :((((");
+
+    if !func_info.vm.contains_context(context) {
+        return Err(format!("wrong CSquirrelVM for {context}"));
+    }
+
+    log::info!(
+        "Registering {context} function {} with types: {}",
+        func_info.sq_func_name,
+        func_info.types
+    );
+
+    let enum_return_type = match func_info
+        .return_type
+        .split_once('<')
+        .map(|(ty, _)| ty)
+        .unwrap_or(&func_info.return_type)
+    {
+        "bool" => eSQReturnType::Boolean,
+        "float" => eSQReturnType::Float,
+        "vector" => eSQReturnType::Vector,
+        "int" => eSQReturnType::Integer,
+        "entity" => eSQReturnType::Entity,
+        "string" => eSQReturnType::String,
+        "array" => eSQReturnType::Arrays,
+        "asset" => eSQReturnType::Asset,
+        "table" => eSQReturnType::Table,
+        "void" => eSQReturnType::Default,
+        "var" => eSQReturnType::Default,
+        _ => eSQReturnType::Default,
+    };
+
+    let sq_func_name = try_cstring(func_info.sq_func_name).unwrap();
+    let actual_func_name = try_cstring(func_info.cpp_func_name).unwrap();
+    let return_type = try_cstring(&func_info.return_type).unwrap();
+    let types: &str = &func_info.types;
+    let types = try_cstring(types).unwrap();
+
+    let mut reg = SQFuncRegistration {
+        squirrelFuncName: sq_func_name.as_ptr(),
+        cppFuncName: actual_func_name.as_ptr(),
+        helpText: c"default rrplug help message".as_ptr(),
+        returnTypeString: return_type.as_ptr(),
+        argTypes: types.as_ptr(),
+        unknown1: 0,
+        devLevel: 0,
+        shortNameMaybe: std::ptr::null(),
+        unknown2: 0,
+        returnType: enum_return_type,
+        externalBufferPointer: std::ptr::null_mut(),
+        externalBufferSize: 0,
+        unknown3: 0,
+        unknown4: 0,
+        funcPtr: func_info.function,
+    };
+
+    unsafe {
+        (SQFUNCTIONS.from_cssqvm(csqvm).register_squirrel_func)(csqvm, &mut reg, 1);
+    };
+
+    Ok(())
 }
 
 /// pushes a `Vec<T>` to the sqvm

@@ -168,71 +168,17 @@ macro_rules! entry {
                         .try_into()
                         .expect("sqvm was not valid :((((");
 
-                    let locked_register_functions = high::squirrel::FUNCTION_SQ_REGISTER.lock();
-
-                    let sq_functions = SQFUNCTIONS.from_cssqvm(sqvm);
-
-                    let sq_register_func = sq_functions.register_squirrel_func;
-
-                    for func_info in locked_register_functions
+                    for func_info in high::squirrel::FUNCTION_SQ_REGISTER
+                        .lock()
                         .iter()
                         .filter(|info| info.vm.contains_context(context))
                     {
-                        log::info!(
-                            "Registering {context} function {} with types: {}",
-                            func_info.sq_func_name,
-                            func_info.types
-                        );
-
-                        let esq_returntype =
-                            match func_info.return_type.split('<').collect::<Vec<&str>>()[0] {
-                                "bool" => squirrelclasstypes::eSQReturnType::Boolean,
-                                "float" => squirrelclasstypes::eSQReturnType::Float,
-                                "vector" => squirrelclasstypes::eSQReturnType::Vector,
-                                "int" => squirrelclasstypes::eSQReturnType::Integer,
-                                "entity" => squirrelclasstypes::eSQReturnType::Entity,
-                                "string" => squirrelclasstypes::eSQReturnType::String,
-                                "array" => squirrelclasstypes::eSQReturnType::Arrays,
-                                "asset" => squirrelclasstypes::eSQReturnType::Asset,
-                                "table" => squirrelclasstypes::eSQReturnType::Table,
-                                "void" => squirrelclasstypes::eSQReturnType::Default,
-                                "var" => squirrelclasstypes::eSQReturnType::Default,
-                                _ => squirrelclasstypes::eSQReturnType::Default,
-                            };
-
-                        // shouldn't be unwraping here but I will say : why did you name your function like this?
-                        let sq_func_name = CString::new(func_info.sq_func_name).unwrap();
-                        let cpp_func_name = CString::new(func_info.cpp_func_name).unwrap();
-                        let help_text = CString::new("what help").unwrap();
-                        let return_type: &str = &func_info.return_type;
-                        let returntype = CString::new(return_type).unwrap();
-                        let types: &str = &func_info.types;
-                        let types = CString::new(types).unwrap();
-
-                        let mut reg =
-                            std::mem::MaybeUninit::<squirrelclasstypes::SQFuncRegistration>::zeroed(
-                            );
-                        let struct_ptr = reg.as_mut_ptr();
-
                         unsafe {
-                            std::ptr::addr_of_mut!((*struct_ptr).squirrelFuncName)
-                                .write(sq_func_name.as_ptr());
-                            std::ptr::addr_of_mut!((*struct_ptr).cppFuncName)
-                                .write(cpp_func_name.as_ptr());
-                            std::ptr::addr_of_mut!((*struct_ptr).helpText)
-                                .write(help_text.as_ptr());
-                            std::ptr::addr_of_mut!((*struct_ptr).returnTypeString)
-                                .write(returntype.as_ptr());
-                            std::ptr::addr_of_mut!((*struct_ptr).returnType).write(esq_returntype);
-                            std::ptr::addr_of_mut!((*struct_ptr).argTypes).write(types.as_ptr());
-                            std::ptr::addr_of_mut!((*struct_ptr).funcPtr).write(func_info.function);
-                        };
-
-                        debug_assert!(!struct_ptr.is_null());
-                        debug_assert!(!sqvm.is_null());
-
-                        unsafe {
-                            sq_register_func(sqvm, struct_ptr, 1);
+                            if let Err(err) =
+                                mid::squirrel::manually_register_sq_functions(&mut *sqvm, func_info)
+                            {
+                                log::error!("{err}");
+                            }
                         }
                     }
 
