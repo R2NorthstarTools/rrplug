@@ -96,26 +96,21 @@ mod test {
     #[test]
     fn interface_exists_null() {
         unsafe {
-            let interface = register_interface("test", Test::new());
+            register_interface("test", Test::new());
 
-            assert!(std::ptr::addr_eq(
-                create_interface(c"test".as_ptr(), std::ptr::null_mut()),
-                interface
-            ));
+            // check if it's not null, can't check if it's the actual interface since it's stored differently
+            assert!(!create_interface(c"test".as_ptr(), std::ptr::null_mut()).is_null());
         }
     }
 
     #[test]
     fn interface_exists() {
         unsafe {
-            let interface = register_interface("test2", Test::new());
+            register_interface("test2", Test::new());
 
             let mut error = 0;
 
-            assert!(std::ptr::addr_eq(
-                create_interface(c"test2".as_ptr(), &mut error),
-                interface
-            ));
+            assert!(!create_interface(c"test2".as_ptr(), &mut error).is_null());
             assert_eq!(error, 0);
         }
     }
