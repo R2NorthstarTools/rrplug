@@ -1,6 +1,7 @@
 //! abstractions :)
 
 pub mod engine;
+pub mod filesystem;
 pub mod northstar;
 pub mod squirrel;
 pub mod squirrel_traits;

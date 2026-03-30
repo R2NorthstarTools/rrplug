@@ -1,19 +1,20 @@
-//! Errors produced by rrplug that can be retured to the user
+//! Errors produced by rrplug that can be returned to the user
 
-use std::ffi::NulError;
-
+use std::{ffi::NulError, path::Path};
 use thiserror::Error;
 
-/// Errors that may happen during the registration proccess of anything
+use crate::prelude::ScriptContext;
+
+/// Errors that may happen during the registration process of anything
 ///
-/// can be usually ignored since these erorrs would happen rarely and only when something goes wrong with northstar
+/// can be usually ignored since these errors would happen rarely and only when something goes wrong with northstar
 #[derive(Error, Debug)]
 pub enum RegisterError {
     /// invalid cstring
     #[error("some attribute contained a null char")]
     InvalidCString(#[from] NulError),
 
-    /// A function crutial to some systems was null (this is fatal I think)
+    /// A function crucial to some systems was null (this is fatal I think)
     #[error("A core function from c++ is null")]
     NoneFunction,
 
@@ -86,7 +87,7 @@ pub enum SQCompileError {
     #[error("provided code failed to compile")]
     CompileError,
 
-    /// buffer didn't execute corretly
+    /// buffer didn't execute correctly
     #[error("compiled buffer failed to execute")]
     BufferFailedToExecute,
 }
@@ -118,7 +119,7 @@ impl CStringPtrError {
     }
 }
 
-/// errros that can happen when using completion feature of concommands
+/// errors that can happen when using completion feature of concommands
 #[derive(Error, Debug)]
 pub enum CompletionError {
     /// happens when completion slots are exhausted
@@ -142,11 +143,11 @@ pub enum InterfaceGetterError<'a> {
     #[error(transparent)]
     InvalidFunctionCString(#[from] NulError),
 
-    /// when the dll doesn't have a create iterface
+    /// when the dll doesn't have a create interface
     #[error("dll {0} doesn't have a create interface function")]
     NullCreateInterface(usize),
 
-    /// an error from the win api yay
+    /// an error from the win api
     #[error(transparent)]
     WinApiError(#[from] windows::core::Error),
 
@@ -156,6 +157,48 @@ pub enum InterfaceGetterError<'a> {
 }
 
 impl InterfaceGetterError<'_> {
+    /// logs the error with the builtin logger
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}
+
+/// errors that happen when acquiring external interfaces from a pointer or dll name
+#[derive(Error, Debug)]
+pub enum SQFunctionRegistrationError {
+    /// happens when the sqfunction could not be registered
+    #[error("{0} not be registered")]
+    FailedRegistration(&'static str),
+
+    /// happens when the sqfunction gets attempted to be registered in the wrong wm context
+    #[error("{0} was attempted to be registered in the wrong context : expected {1} got {2}")]
+    WrongContext(&'static str, ScriptContext, &'static str),
+}
+
+impl SQFunctionRegistrationError {
+    /// logs the error with the builtin logger
+    pub fn log(&self) {
+        log::error!("{}", self)
+    }
+}
+
+/// errors that happen when acquiring external interfaces from a pointer or dll name
+#[derive(Error, Debug)]
+pub enum FsOpenError<'a> {
+    /// error for failed path conversions
+    #[error(transparent)]
+    PathToCstringFailed(#[from] NulError),
+
+    /// error for failed path conversions
+    #[error("{0} could not convert path to String")]
+    PathToStringFailed(&'a Path),
+
+    /// happens when the file wasn't found
+    #[error("{0} could not be found")]
+    NotFound(&'a Path),
+}
+
+impl FsOpenError<'_> {
     /// logs the error with the builtin logger
     pub fn log(&self) {
         log::error!("{}", self)

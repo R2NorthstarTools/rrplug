@@ -81,7 +81,38 @@ macro_rules! create_external_interface {
             )*
         }
     };
+    { FOR $struct_vis:vis $interface_name:ident + $counter:ident => {$($func_vis:vis fn $name:ident( $( $arg_name:ident : $arg:ty),*) -> $output:ty );*;}} => {
+        #[allow(dead_code)]
+        #[repr(i32)]
+        #[allow(non_snake_case, non_camel_case_types, non_upper_case_globals, dead_code, clippy::too_many_arguments)]
+        enum $counter {
+            $($name,)*
+        }
+
+        #[doc = "auto generated docs; idk how to make macros capture docs so no docs :("]
+        #[doc = "# Safety"]
+        #[doc = "idk"]
+        #[deny(unsafe_op_in_unsafe_fn)]
+        #[allow(non_snake_case, non_camel_case_types, non_upper_case_globals, dead_code, clippy::too_many_arguments)]
+        impl $interface_name {
+            $(
+                #[doc = "auto generated docs; idk how to make macros capture docs so no docs :("]
+                #[doc = "# Safety"]
+                #[doc = "idk"]
+                $func_vis unsafe fn $name( &self, $($arg_name: $arg,)* ) -> $output {
+
+                    use $crate::interfaces::external::SourceInterface;
+                    use std::ffi::c_void;
+                    #[allow(clippy::missing_transmute_annotations)]
+                    unsafe { (std::mem::transmute::<_,unsafe extern "C" fn(*const c_void, $($arg),*) -> $output>(self.get_func($counter::$name as usize)))(
+                        self as *const Self as *const c_void, $($arg_name),*
+                    ) }
+                }
+            )*
+        }
+    };
 }
+
 /// trait for interacting with external interfaces
 ///
 /// the `get_vtable` function has to be provided and everything else will just work

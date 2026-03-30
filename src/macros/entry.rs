@@ -36,8 +36,7 @@ macro_rules! entry {
             use super::$plugin;
 
             use high::engine::EngineData;
-            use mid::squirrel::SQFUNCTIONS;
-            use std::ffi::{CStr, CString};
+            use std::ffi::CStr;
             use $crate::bindings::{plugin_abi, squirrelclasstypes, squirreldatatypes};
             use $crate::exports::log;
             use $crate::exports::windows::{
@@ -233,6 +232,7 @@ macro_rules! entry {
                             &dll_ptr,
                             &mid::server::ENTITY_CLASS_VTABLE,
                         );
+                        mid::filesystem::try_init(&dll_ptr);
                     }
                     mid::squirrel::SQFUNCTIONS.fetch_functions(&dll_ptr);
 

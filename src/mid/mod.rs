@@ -1,6 +1,7 @@
 //! contains structs and functions with minimal abstraction
 
 pub mod engine;
+pub mod filesystem;
 pub mod northstar;
 pub mod reloading;
 pub mod server;

@@ -7,6 +7,7 @@ use class_types::{cbaseentity::CBaseEntity, cplayer::CPlayer};
 
 pub mod class_types;
 pub mod cvar;
+pub mod filesystem;
 pub mod plugin_abi;
 pub mod squirrelclasstypes;
 pub mod squirreldatatypes;

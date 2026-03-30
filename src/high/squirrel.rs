@@ -624,6 +624,11 @@ unsafe fn resume_thread(thread_sqvm: NonNull<HSquirrelVM>, sqfunctions: &Squirre
     }
 }
 
+// not possible rn
+// pub struct DefaultValue<T, const default: T> {
+//     inner: T,
+// }
+
 /// logs the type at the arg it's replacing
 pub struct PrintType;
 

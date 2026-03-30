@@ -6,20 +6,25 @@
 
 #![allow(clippy::not_unsafe_ptr_arg_deref)] // maybe remove later
 
-use std::{cell::RefCell, ffi::CStr, mem::MaybeUninit, ptr::NonNull, sync::atomic::AtomicU32};
+use std::{
+    cell::RefCell, ffi::CStr, mem::MaybeUninit, path::PathBuf, ptr::NonNull,
+    sync::atomic::AtomicU32,
+};
 
 use once_cell::sync::OnceCell;
 
 use crate::{
     bindings::{
-        squirrelclasstypes::{eSQReturnType, SQFuncRegistration, SQFunction, ScriptContext},
+        squirrelclasstypes::{
+            eSQReturnType, SQFuncRegistration, SQFunction, ScriptContext, SQRESULT,
+        },
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
         squirrelfunctions::{
             ClientSQFunctions, ServerSQFunctions, SquirrelFunctions, SQUIRREL_CLIENT_FUNCS,
             SQUIRREL_SERVER_FUNCS,
         },
     },
-    errors::CallError,
+    errors::{CallError, SQFunctionRegistrationError},
     high::{
         engine::EngineGlobal,
         squirrel::SQHandle,
@@ -173,7 +178,7 @@ impl SQFunctionContext {
 #[inline]
 pub unsafe fn sqvm_to_context(sqvm: NonNull<HSquirrelVM>) -> ScriptContext {
     ScriptContext::try_from(unsafe { (*(*sqvm.as_ref().sharedState).cSquirrelVM).vmContext })
-        .expect("sqvm should have a valid vmcontext")
+        .expect("sqvm should have a valid vm context")
 }
 
 /// allows you to manually register native squirrel functions
@@ -184,23 +189,31 @@ pub unsafe fn sqvm_to_context(sqvm: NonNull<HSquirrelVM>) -> ScriptContext {
 ///
 /// # Errors
 ///
-/// This function will return an error if the function context and the sqvm context have a mismatch
+/// This function will return an error if the function context and the sqvm context have a mismatch or if it couldn't get registered for some reason
 ///
 /// # Safety
 ///
 /// only safe to be called when the sqvm is fully init and that the call is happening from the game thread
-// TODO: refactor this into a proper error type
 pub unsafe fn manually_register_sq_functions(
     csqvm: &mut CSquirrelVM,
     func_info: &SQFuncInfo,
-) -> Result<(), String> {
+) -> Result<(), SQFunctionRegistrationError> {
     let context: ScriptContext = csqvm
         .vmContext
         .try_into()
         .expect("sqvm was not valid :((((");
 
     if !func_info.vm.contains_context(context) {
-        return Err(format!("wrong CSquirrelVM for {context}"));
+        return Err(SQFunctionRegistrationError::WrongContext(
+            func_info.cpp_func_name,
+            context,
+            func_info
+                .vm
+                .iter_names()
+                .next()
+                .map(|(name, _)| name)
+                .unwrap_or("NULL"),
+        ));
     }
 
     log::info!(
@@ -253,9 +266,15 @@ pub unsafe fn manually_register_sq_functions(
         funcPtr: func_info.function,
     };
 
-    unsafe {
-        (SQFUNCTIONS.from_cssqvm(csqvm).register_squirrel_func)(csqvm, &mut reg, 1);
-    };
+    // TODO: figure when it fails
+    // if unsafe { (SQFUNCTIONS.from_cssqvm(csqvm).register_squirrel_func)(csqvm, &mut reg, 1) }
+    //     != SQRESULT::SQRESULT_ERROR as i64
+    // {
+    //     return Err(SQFunctionRegistrationError::FailedRegistration(
+    //         func_info.cpp_func_name,
+    //     ));
+    // }
+    unsafe { (SQFUNCTIONS.from_cssqvm(csqvm).register_squirrel_func)(csqvm, &mut reg, 1) };
 
     Ok(())
 }
@@ -304,7 +323,7 @@ pub fn push_sq_string(
 ) {
     let cstring = try_cstring(string.as_ref())
         .unwrap_or_else(|_| to_cstring(&string.as_ref().replace('\0', "")));
-    // its impossble for it to crash since we replace null with space if it does it must be reported
+    // its impossible for it to crash since we replace null with space if it does it must be reported
     unsafe { (sqfunctions.sq_pushstring)(sqvm.as_ptr(), cstring.as_ptr(), -1) };
     // why -1?
 }
@@ -469,8 +488,49 @@ pub fn get_sq_function_object<'a>(
     if result != 0 {
         Err(CallError::FunctionNotFound(
             function_name.to_string_lossy().into(),
-        )) // totaly safe :clueless:
+        )) // totally safe :clueless:
     } else {
-        Ok(unsafe { SQHandle::new_unchecked(obj.assume_init()) }) // this is always corret since sq_getfunction can only return SQClosure
+        Ok(unsafe { SQHandle::new_unchecked(obj.assume_init()) }) // this is always correct since sq_getfunction can only return SQClosure
     }
+}
+
+/// returns the file path in the virtual filesystem from where the call originated
+///
+/// # Errors
+///
+/// if the source of the file is null returns None
+pub fn get_calling_file(
+    mut sqvm: NonNull<HSquirrelVM>,
+    sq_functions: &SquirrelFunctions,
+) -> Option<PathBuf> {
+    // if 1 >= unsafe { sqvm.as_ref()._callstacksize } {
+    //     return None;
+    // }
+
+    let stack_info = unsafe {
+        let mut stack_info = MaybeUninit::uninit();
+        (sq_functions.sq_stackinfos)(
+            sqvm.as_mut(),
+            1,
+            stack_info.as_mut_ptr(),
+            sqvm.as_ref()._callstacksize,
+        );
+        stack_info.assume_init()
+    };
+
+    if stack_info._sourceName.is_null() {
+        return None;
+    }
+
+    let path = PathBuf::from("scripts")
+        .join("vscripts")
+        .join(PathBuf::from(
+            unsafe { CStr::from_ptr(stack_info._sourceName) }
+                .to_string_lossy()
+                .to_string()
+                .replace('/', "\\")
+                .to_lowercase(),
+        ));
+    // Some(path.normalize_lexically().unwrap_or(path))
+    Some(path)
 }
