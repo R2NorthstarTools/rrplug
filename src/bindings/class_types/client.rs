@@ -1,8 +1,8 @@
-use std::ffi::{c_char, c_void};
+use std::ffi::{ c_char, c_void };
 
-use crate::{field_assert, size_assert};
+use crate::{ field_assert, size_assert };
 
-const PERSISTENCE_MAX_SIZE: usize = 0xDDCD;
+const PERSISTENCE_MAX_SIZE: usize = 0xddcd;
 
 #[allow(non_camel_case_types, non_snake_case)]
 #[repr(C)]
@@ -11,8 +11,17 @@ pub struct CClient {
     pub vftable2: *const c_void,
     pub m_nUserID: u32,
     pub m_nHandle: u16,
-    pub m_szServerName: [c_char; 255],
-    pub m_szClientName: [c_char; 255],
+    pub m_szServerName: [c_char; 256],
+    pub m_szClientName: [c_char; 256],
+    pub pad_0210: [c_char; 2],
+    pub m_nCommandTick: i32,
+    pub m_bUsePersistence: bool,
+    pub pad_0221: [c_char; 7],
+    pub m_flInitialConnectTime: f32,
+    pub m_flLastConnectTime: f32,
+    pub pad_022C: [c_char; 36],
+    pub m_iTeamNum: i32,
+    pub pad_0254: [c_char; 4],
     pub m_ConVars: *mut c_void, // TODO: add keyvalues
     pub pad_0368: [c_char; 8],
     pub m_pServer: *mut c_void, // TODO: add server
@@ -37,7 +46,7 @@ pub struct CClient {
     pub m_PersistenceBuffer: [c_char; PERSISTENCE_MAX_SIZE],
     pub pad: [c_char; 4665],
     pub m_UID: [c_char; 32],
-    pub pad0: [c_char; 0x1E208],
+    pub pad0: [c_char; 0x1e208],
 }
 
 size_assert!(SIZE_CLIENT where CClient == 0x2D728);
@@ -55,14 +64,14 @@ field_assert!(M_UID where CClient, m_UID == 0xF500);
 pub enum SignonState {
     #[default]
     NONE = 0, // no state yet; about to connect
-    CHALLENGE = 1,   // client challenging server; all OOB packets
-    CONNECTED = 2,   // client is connected to server; netchans ready
-    NEW = 3,         // just got serverinfo and string tables
-    PRESPAWN = 4,    // received signon buffers
+    CHALLENGE = 1, // client challenging server; all OOB packets
+    CONNECTED = 2, // client is connected to server; netchans ready
+    NEW = 3, // just got serverinfo and string tables
+    PRESPAWN = 4, // received signon buffers
     GETTINGDATA = 5, // respawn-defined signonstate, assumedly this is for persistence
-    SPAWN = 6,       // ready to receive entity packets
-    FIRSTSNAP = 7,   // another respawn-defined one
-    FULL = 8,        // we are fully connected; first non-delta packet received
+    SPAWN = 6, // ready to receive entity packets
+    FIRSTSNAP = 7, // another respawn-defined one
+    FULL = 8, // we are fully connected; first non-delta packet received
     CHANGELEVEL = 9, // server is changing level; please wait
 }
 
