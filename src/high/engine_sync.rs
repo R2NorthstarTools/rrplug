@@ -1,6 +1,6 @@
 //! contains stuff for sending jobs to the engine thread asynchronously
 //!
-//! requries the `engine_sync` feature
+//! requires the `engine_sync` feature
 
 use once_cell::sync::OnceCell;
 use parking_lot::Mutex;

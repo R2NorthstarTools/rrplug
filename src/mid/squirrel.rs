@@ -116,10 +116,10 @@ impl SqFunctions {
 /// function type which is used in `register_sq_functions` to get [`SQFuncInfo`]
 pub type FuncSQFuncInfo = fn() -> SQFuncInfo;
 
-/// holds infomation about a sq function for it to be registered corretly
+/// holds information about a native sqfunction for it to be registered correctly
 ///
 /// it creates a native closure btw but sqfunction is also a valid name for it.
-/// sqfunction is used in a lot of places with diffrent meanings `¯\_(ツ)_/¯`
+/// sqfunction is used in a lot of places with different meanings `¯\_(ツ)_/¯`
 #[derive(Debug, PartialEq, Eq)]
 #[allow(unpredictable_function_pointer_comparisons)]
 pub struct SQFuncInfo {

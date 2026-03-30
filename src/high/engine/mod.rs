@@ -39,7 +39,7 @@ impl EngineToken {
     ///
     /// can lead to crashes or ub since most functions are not thread safe
     ///
-    /// this is usually the most sensible solution altought it does at least require you to think from where you call stuff
+    /// this is usually the most sensible solution although it does at least require you to think from where you call stuff
     pub const unsafe fn new_unchecked() -> Self {
         Self(PhantomData)
     }
@@ -81,7 +81,7 @@ impl<T: Copy> EngineGlobal<T> {
 
 /// Use this struct to register convars and concommands
 ///
-/// only usefull when the convars or concommands features are enabled
+/// only useful when the convars or concommands features are enabled
 pub struct EngineData {
     pub(crate) concommands: &'static RegisterConCommands,
     pub(crate) convar: &'static CvarGlobals,
@@ -94,7 +94,7 @@ unsafe impl Sync for EngineData {}
 impl EngineData {
     /// # Safety
     ///
-    /// hopefuly rrplug has correct offsets
+    /// hopefully rrplug has correct offsets
     pub unsafe fn new(cvar: &'static RawCVar) -> Self {
         Self {
             concommands: REGISTER_CONCOMNMADS.wait(),

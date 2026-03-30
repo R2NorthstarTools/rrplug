@@ -359,16 +359,16 @@ impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> PushToSquirrelVm
     }
 }
 
-/// Used to refrence [`UserData`] stored on the sqvm
+/// Used to reference [`UserData`] stored on the sqvm
 ///
 /// the data cannot be moved out of since it's reference counted in the sqvm
 ///
 /// # SAFETY
 ///
-/// [`UserDataRef`] **MUST** remain within the same stackframe (aka get dropped before the squirrel function returns it was created in)
+/// [`UserDataRef`] **MUST** remain within the same stack frame (aka get dropped before the squirrel function returns it was created in)
 /// otherwise bad things will happen since the underlying [`UserData`] might get dropped
 ///
-/// This should be inforced by `!Move` and `!Sync` constraints so this is just a warning
+/// This should be enforced by `!Move` and `!Sync` constraints so this is just a warning
 ///
 /// # Example
 ///
