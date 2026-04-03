@@ -31,10 +31,12 @@ impl FileSystemSys {
         &self.0
     }
 
+    /// returns the first [[IFileSystem]] vtable
     pub const fn vtable(&self) -> &IFileSystemVTable {
         unsafe { self.0.vtable.as_ref().unwrap_unchecked() }
     }
 
+    /// returns the second [[IFileSystem]] vtable
     pub const fn vtable2(&self) -> &IFileSystemVTable2 {
         unsafe { self.0.vtable2.as_ref().unwrap_unchecked() }
     }

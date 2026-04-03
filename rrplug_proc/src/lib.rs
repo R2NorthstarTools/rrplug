@@ -25,7 +25,7 @@ use parsing::{filter_args, get_arg_ident, input_mapping, Args};
 /// proc marco for generating compatible functions with the sqvm.
 ///
 ///  ## abstractions
-/// the macro uses arguments types and return types to tranlates them into a sqfunction deffintion
+/// the macro uses arguments types and return types to translates them into a sqfunction definition
 /// `GetFromSquirrelVm` and `PushToSquirrelVm` define logic for how
 ///
 /// ## attributes
@@ -203,9 +203,9 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 
             rrplug::mid::squirrel::SQFuncInfo {
                 cpp_func_name: #func_name,
-                sq_func_name: #export_name,
-                types: types,
-                return_type: <#out as SQVMName>::get_sqvm_name(),
+                sq_func_name: Box::from(#export_name),
+                types: Box::from(types),
+                return_type: Box::from(<#out as SQVMName>::get_sqvm_name()),
                 vm: #script_vm,
                 function: Some( #sq_functions_func ),
             }
@@ -217,7 +217,7 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 /// proc marco for generating compatible concommand callbacks
 ///
-/// this macro wraps your function in another function and tries to provide the argurments your requested
+/// this macro wraps your function in another function and tries to provide the arguments your requested
 ///
 /// # how to use it
 /// the 2 possible function signatures are
@@ -272,7 +272,7 @@ pub fn concommand(_attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// uses rrplug's `CommandCompletion` and `CurrentCommand` to abstract unsafer interactions with the completion buffer
 ///
-/// the target function has to simply accept `CommandCompletion` and `CurrentCommand` as agurements for the macro to know where to pass them
+/// the target function has to simply accept `CommandCompletion` and `CurrentCommand` as arguments for the macro to know where to pass them
 ///
 /// refer to rrplug's `CommandCompletion` and `register_concommand_with_completion` for more info and examples
 #[proc_macro_attribute]

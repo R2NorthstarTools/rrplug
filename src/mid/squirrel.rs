@@ -1,6 +1,6 @@
 //! thin wrappers around squirrel functions
 //!
-//! some can produce exepections which cannot be caught
+//! some can produce exceptions which cannot be caught
 //!
 //! good reference for some functions : [objecthandling](https://r2northstar.readthedocs.io/en/latest/squirrel/cpp_api/objecthandling.htmls)
 
@@ -131,16 +131,16 @@ pub struct SQFuncInfo {
     /// the name used in source code
     pub cpp_func_name: &'static str,
     /// name of the defined
-    pub sq_func_name: &'static str,
+    pub sq_func_name: Box<str>,
     /// the arguments of the function in squirrel form
     ///
     /// # Example
     /// ```
     /// let types = "string name, int id";
     /// ```
-    pub types: String,
+    pub types: Box<str>,
     /// the return value of the function in squirrel form
-    pub return_type: String,
+    pub return_type: Box<str>,
     /// the which vm should be used to register the function on
     pub vm: SQFunctionContext,
     /// the actual function pointer
@@ -242,7 +242,7 @@ pub unsafe fn manually_register_sq_functions(
         _ => eSQReturnType::Default,
     };
 
-    let sq_func_name = try_cstring(func_info.sq_func_name).unwrap();
+    let sq_func_name = try_cstring(&func_info.sq_func_name).unwrap();
     let actual_func_name = try_cstring(func_info.cpp_func_name).unwrap();
     let return_type = try_cstring(&func_info.return_type).unwrap();
     let types: &str = &func_info.types;
