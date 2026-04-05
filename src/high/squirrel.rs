@@ -326,7 +326,7 @@ impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> SQVMName
     for UserData<T, OVERWRITE, VALUE>
 {
     fn get_sqvm_name() -> String {
-        "userdata".to_string()
+        "var".to_string()
     }
 }
 
@@ -428,7 +428,7 @@ impl<const OVERWRITE: bool, const VALUE: u64, T: 'static> SQVMName
     for UserDataRef<'_, T, OVERWRITE, VALUE>
 {
     fn get_sqvm_name() -> String {
-        "userdata".to_string()
+        "var".to_string()
     }
 }
 

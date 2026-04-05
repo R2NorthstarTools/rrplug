@@ -197,8 +197,6 @@ pub fn sqfunction(attr: TokenStream, item: TokenStream) -> TokenStream {
                     types.push(' ');
                 }
                 types.push_str(&<#input_type_names as SQVMName>::get_sqvm_name());
-                types.push(' ');
-                types.push_str(stringify!(#input_var_names));
             )*
 
             rrplug::mid::squirrel::SQFuncInfo {

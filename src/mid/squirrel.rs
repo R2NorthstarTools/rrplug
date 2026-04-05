@@ -15,9 +15,7 @@ use once_cell::sync::OnceCell;
 
 use crate::{
     bindings::{
-        squirrelclasstypes::{
-            eSQReturnType, SQFuncRegistration, SQFunction, ScriptContext, SQRESULT,
-        },
+        squirrelclasstypes::{eSQReturnType, SQFuncRegistration, SQFunction, ScriptContext},
         squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
         squirrelfunctions::{
             ClientSQFunctions, ServerSQFunctions, SquirrelFunctions, SQUIRREL_CLIENT_FUNCS,
@@ -217,9 +215,10 @@ pub unsafe fn manually_register_sq_functions(
     }
 
     log::info!(
-        "Registering {context} function {} with types: {}",
+        "Registering {context} function {} with types: ({}) -> ({})",
         func_info.sq_func_name,
-        func_info.types
+        func_info.types,
+        func_info.return_type
     );
 
     let enum_return_type = match func_info
@@ -245,8 +244,7 @@ pub unsafe fn manually_register_sq_functions(
     let sq_func_name = try_cstring(&func_info.sq_func_name).unwrap();
     let actual_func_name = try_cstring(func_info.cpp_func_name).unwrap();
     let return_type = try_cstring(&func_info.return_type).unwrap();
-    let types: &str = &func_info.types;
-    let types = try_cstring(types).unwrap();
+    let types = try_cstring(&func_info.types).unwrap();
 
     let mut reg = SQFuncRegistration {
         squirrelFuncName: sq_func_name.as_ptr(),
@@ -503,9 +501,10 @@ pub fn get_calling_file(
     mut sqvm: NonNull<HSquirrelVM>,
     sq_functions: &SquirrelFunctions,
 ) -> Option<PathBuf> {
-    // if 1 >= unsafe { sqvm.as_ref()._callstacksize } {
-    //     return None;
-    // }
+    // TODO: if this is correct
+    if 1 > unsafe { sqvm.as_ref()._callstacksize } {
+        return None;
+    }
 
     let stack_info = unsafe {
         let mut stack_info = MaybeUninit::uninit();
