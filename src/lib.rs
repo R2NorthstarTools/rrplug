@@ -122,7 +122,7 @@ mod test {
         let sqfuncdef = SQFuncInfo {
             cpp_func_name: stringify!(test_sqfunction),
             sq_func_name: Box::from("test"),
-            types: "string test1, int test2, int test3, void functionref(string) test4".into(),
+            types: "string, int, int, void functionref(string)".into(),
             return_type: Box::from(<Vec<TestStruct> as SQVMName>::get_sqvm_name()),
             vm: SQFunctionContext::SERVER,
             function: Some(sq_func_test_sqfunction),
