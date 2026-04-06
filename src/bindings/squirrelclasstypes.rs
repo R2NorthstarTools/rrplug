@@ -415,3 +415,9 @@ pub type sq_threadwakeupType = unsafe extern "C" fn(
     *const ::std::os::raw::c_void,
     *mut HSquirrelVM,
 ) -> SQRESULT;
+pub type sq_objectVectorResize = unsafe extern "C" fn(
+    sqvm: *mut SQArray,
+    new_size: ::std::os::raw::c_uint,
+    fill: *const SQObject,
+);
+pub type sq_poptop = unsafe extern "C" fn(sqvm: *mut HSquirrelVM);

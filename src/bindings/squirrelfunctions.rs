@@ -57,6 +57,10 @@ offset_functions! {
 
         sq_suspendthread = sq_suspendthreadType where offset(0x434f0);
         sq_threadwakeup = sq_threadwakeupType where offset(0x8780);
+
+        sq_object_vector_resize = sq_objectVectorResize where offset(0x0bef0);
+
+        sq_poptop = sq_poptop where offset(0x7000);
     }
 }
 
@@ -116,6 +120,10 @@ offset_functions! {
 
         sq_suspendthread = sq_suspendthreadType where offset(0x43550);
         sq_threadwakeup = sq_threadwakeupType where offset(0x87b0);
+
+        sq_object_vector_resize = sq_objectVectorResize where offset(0x0bf40);
+
+        sq_poptop = sq_poptop where offset(0x7030);
     }
 }
 
@@ -163,6 +171,8 @@ pub struct SquirrelFunctions {
     pub sq_sealstructslot: sq_sealstructslotType,
     pub sq_suspendthread: sq_suspendthreadType,
     pub sq_threadwakeup: sq_threadwakeupType,
+    pub sq_object_vector_resize: sq_objectVectorResize,
+    pub sq_poptop: sq_poptop,
 }
 
 impl From<&ClientSQFunctions> for SquirrelFunctions {
@@ -209,6 +219,8 @@ impl From<&ClientSQFunctions> for SquirrelFunctions {
             sq_sealstructslot: val.sq_sealstructslot,
             sq_suspendthread: val.sq_suspendthread,
             sq_threadwakeup: val.sq_threadwakeup,
+            sq_object_vector_resize: val.sq_object_vector_resize,
+            sq_poptop: val.sq_poptop,
         }
     }
 }
@@ -257,6 +269,8 @@ impl From<&ServerSQFunctions> for SquirrelFunctions {
             sq_sealstructslot: val.sq_sealstructslot,
             sq_suspendthread: val.sq_suspendthread,
             sq_threadwakeup: val.sq_threadwakeup,
+            sq_object_vector_resize: val.sq_object_vector_resize,
+            sq_poptop: val.sq_poptop,
         }
     }
 }
