@@ -1,11 +1,8 @@
-pub mod c_player;
-pub mod cbaseanimating;
-pub mod cbaseanimatingoverlay;
-pub mod cbasecombatcharacter;
-pub mod cbasecombatweapon;
-pub mod cbaseentity;
-pub mod client;
-pub mod cplayer;
-pub mod cplayerdecoy;
-pub mod cweaponx;
-pub mod globalvars;
+// pub use super::server::*;
+// pub use super::client::*;
+
+#![deprecated]
+#[deprecated]
+pub use super::client::*;
+#[deprecated]
+pub use super::server::*;

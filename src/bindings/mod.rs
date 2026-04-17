@@ -12,6 +12,8 @@ pub mod plugin_abi;
 pub mod squirrelclasstypes;
 pub mod squirreldatatypes;
 pub mod squirrelfunctions;
+pub mod server;
+pub mod client;
 
 #[repr(C)]
 pub struct OffsetStructField<T, const U: usize> {
