@@ -101,7 +101,7 @@ pub mod root {
         );
     }
     #[repr(C)]
-    #[derive(Copy, Clone)]
+    #[derive(Debug, Copy, Clone)]
     pub struct Color32 {
         pub r: u8,
         pub g: u8,

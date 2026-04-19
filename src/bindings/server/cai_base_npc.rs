@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case)]
 use std::{
     ops::{Deref, DerefMut},
-    os::raw::c_void,
+    os::raw::{c_char, c_void},
 };
 
 use crate::{
@@ -234,13 +234,13 @@ pub struct CAI_BaseNPC {
     pub gap_1657: [u8; 1],
     pub m_specialRangeAttackCount: i32, // +0x1658 size: 0x4 (0x1 * 0x4) type 5
     pub gap_165c: [u8; 4],
-    pub m_aiSettings: *mut char, // +0x1660 size: 0x8 (0x1 * 0x8) type 2
-    pub m_aiSettingsIndex: i32,  // +0x1668 size: 0x4 (0x1 * 0x4) type 5
-    pub m_subclass: i32,         // +0x166c size: 0x4 (0x1 * 0x4) type 5
+    pub m_aiSettings: *mut c_char, // +0x1660 size: 0x8 (0x1 * 0x8) type 2
+    pub m_aiSettingsIndex: i32,    // +0x1668 size: 0x4 (0x1 * 0x4) type 5
+    pub m_subclass: i32,           // +0x166c size: 0x4 (0x1 * 0x4) type 5
     pub m_pSenses: *mut CAI_Senses, // +0x1670 size: 0x8 (0x1 * 0x8) type 10
     pub m_pLockedBestSound: CSound, // +0x1678 size: 0x28 (0x1 * 0x28) type 10
-    pub m_aimDir: Vector3,       // +0x16a0 size: 0xc (0x1 * 0xc) type 3
-    pub m_aimDirValid: bool,     // +0x16ac size: 0x1 (0x1 * 0x1) type 6
+    pub m_aimDir: Vector3,         // +0x16a0 size: 0xc (0x1 * 0xc) type 3
+    pub m_aimDirValid: bool,       // +0x16ac size: 0x1 (0x1 * 0x1) type 6
     pub gap_16ad: [u8; 3],
     pub m_weaponBlockedTimer: f32, // +0x16b0 size: 0x4 (0x1 * 0x4) type 1
     pub m_weaponBlockedTimeOut: f32, // +0x16b4 size: 0x4 (0x1 * 0x4) type 1
@@ -295,8 +295,8 @@ pub struct CAI_BaseNPC {
     pub m_scriptAnimStartPolyRef: i32,        // +0x17f4 size: 0x4 (0x1 * 0x4) type 5
     pub m_enemyChangeScriptCallback: [u8; 16], // +0x17f8 size: 0x10 (0x1 * 0x10) type 11
     pub m_scriptThread: [u8; 8],              // +0x1808 size: 0x8 (0x1 * 0x8) type 11
-    pub m_scriptFuncName: *mut char,          // +0x1810 size: 0x8 (0x1 * 0x8) type 2
-    pub m_deathScriptFuncName: *mut char,     // +0x1818 size: 0x8 (0x1 * 0x8) type 2
+    pub m_scriptFuncName: *mut c_char,        // +0x1810 size: 0x8 (0x1 * 0x8) type 2
+    pub m_deathScriptFuncName: *mut c_char,   // +0x1818 size: 0x8 (0x1 * 0x8) type 2
     pub m_pEnemies: *mut CAI_Enemies,         // +0x1820 size: 0x8 (0x1 * 0x8) type 10
     pub m_afMemory: i32,                      // +0x1828 size: 0x4 (0x1 * 0x4) type 5
     pub m_hEnemyOccluder: EHandle,            // +0x182c size: 0x4 (0x1 * 0x4) type 13
@@ -321,7 +321,7 @@ pub struct CAI_BaseNPC {
     pub m_ShotRegulator: CAI_ShotRegulator, // +0x1878 size: 0x30 (0x1 * 0x30) type 10
     pub m_syncedMelee: AISyncedMeleeState,  // +0x18a8 size: 0x60 (0x1 * 0x60) type 10
     pub m_pSquad: *mut c_void,              // +0x1908 size: 0x8 (0x1 * 0x8) type 31
-    pub m_SquadName: *mut char,             // +0x1910 size: 0x8 (0x1 * 0x8) type 2
+    pub m_SquadName: *mut c_char,           // +0x1910 size: 0x8 (0x1 * 0x8) type 2
     pub m_iMySquadSlot: i32,                // +0x1918 size: 0x4 (0x1 * 0x4) type 5
     pub m_squadAssignment: i32,             // +0x191c size: 0x4 (0x1 * 0x4) type 5
     pub m_squadAssignedRange: f32,          // +0x1920 size: 0x4 (0x1 * 0x4) type 1
@@ -367,23 +367,23 @@ pub struct CAI_BaseNPC {
     pub m_minEnemyDist: f32,       // +0x19ec size: 0x4 (0x1 * 0x4) type 1
     pub m_disengageEnemyDist: f32, // +0x19f0 size: 0x4 (0x1 * 0x4) type 1
     pub gap_19f4: [u8; 4],
-    pub m_spawnEquipment_0_: *mut char, // +0x19f8 size: 0x8 (0x1 * 0x8) type 2
-    pub m_spawnEquipment_1_: *mut char, // +0x1a00 size: 0x8 (0x1 * 0x8) type 2
+    pub m_spawnEquipment_0_: *mut c_char, // +0x19f8 size: 0x8 (0x1 * 0x8) type 2
+    pub m_spawnEquipment_1_: *mut c_char, // +0x1a00 size: 0x8 (0x1 * 0x8) type 2
     pub m_grenadeWeapon: *mut CBaseEntity, // +0x1a08 size: 0x8 (0x1 * 0x8) type 12
-    pub m_grenadeWeaponName: *mut char, // +0x1a10 size: 0x8 (0x1 * 0x8) type 2
+    pub m_grenadeWeaponName: *mut c_char, // +0x1a10 size: 0x8 (0x1 * 0x8) type 2
     pub m_lastValidGrenadeThrowOrigin: Vector3, // +0x1a18 size: 0xc (0x1 * 0xc) type 3
-    pub m_throwGrenadeAllowedTime: f32, // +0x1a24 size: 0x4 (0x1 * 0x4) type 16
+    pub m_throwGrenadeAllowedTime: f32,   // +0x1a24 size: 0x4 (0x1 * 0x4) type 16
     pub m_rangeAttackTwitchAllowedTime: f32, // +0x1a28 size: 0x4 (0x1 * 0x4) type 16
-    pub m_smartAmmoLockTime: f32,       // +0x1a2c size: 0x4 (0x1 * 0x4) type 16
-    pub m_smartAmmoLocks: i32,          // +0x1a30 size: 0x4 (0x1 * 0x4) type 5
-    pub m_smartAmmoWeapon: EHandle,     // +0x1a34 size: 0x4 (0x1 * 0x4) type 13
-    pub m_meleeWeapon: EHandle,         // +0x1a38 size: 0x4 (0x1 * 0x4) type 13
-    pub m_reactFriendlyChance: i32,     // +0x1a3c size: 0x4 (0x1 * 0x4) type 5
-    pub m_reactBulletChance: i32,       // +0x1a40 size: 0x4 (0x1 * 0x4) type 5
-    pub m_reactChance: i32,             // +0x1a44 size: 0x4 (0x1 * 0x4) type 5
-    pub m_lastReactTime: f32,           // +0x1a48 size: 0x4 (0x1 * 0x4) type 1
+    pub m_smartAmmoLockTime: f32,         // +0x1a2c size: 0x4 (0x1 * 0x4) type 16
+    pub m_smartAmmoLocks: i32,            // +0x1a30 size: 0x4 (0x1 * 0x4) type 5
+    pub m_smartAmmoWeapon: EHandle,       // +0x1a34 size: 0x4 (0x1 * 0x4) type 13
+    pub m_meleeWeapon: EHandle,           // +0x1a38 size: 0x4 (0x1 * 0x4) type 13
+    pub m_reactFriendlyChance: i32,       // +0x1a3c size: 0x4 (0x1 * 0x4) type 5
+    pub m_reactBulletChance: i32,         // +0x1a40 size: 0x4 (0x1 * 0x4) type 5
+    pub m_reactChance: i32,               // +0x1a44 size: 0x4 (0x1 * 0x4) type 5
+    pub m_lastReactTime: f32,             // +0x1a48 size: 0x4 (0x1 * 0x4) type 1
     pub m_dangerousAreaReactionTime: f32, // +0x1a4c size: 0x4 (0x1 * 0x4) type 1
-    pub m_MovementCollisionGroup: i32,  // +0x1a50 size: 0x4 (0x1 * 0x4) type 5
+    pub m_MovementCollisionGroup: i32,    // +0x1a50 size: 0x4 (0x1 * 0x4) type 5
     pub m_moveDeflectionSearchRadius: f32, // +0x1a54 size: 0x4 (0x1 * 0x4) type 1
     pub m_moveDeflectionDebounceExpireTime: f32, // +0x1a58 size: 0x4 (0x1 * 0x4) type 16
     pub gap_1a5c: [u8; 4],

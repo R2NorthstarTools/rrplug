@@ -1,5 +1,8 @@
 #![allow(non_camel_case_types, non_snake_case)]
-use std::ops::{Deref, DerefMut};
+use std::{
+    ops::{Deref, DerefMut},
+    os::raw::c_char,
+};
 
 use crate::{bindings::server::cbaseentity::CBaseEntity, field_assert, size_assert};
 
@@ -10,10 +13,10 @@ pub struct CAI_DynamicLinkController {
     pub m_ControlledLinks: [u8; 32], // +0x9e0 size: 0x20 (0x1 * 0x20) type 0
     pub m_nLinkState: i32,           // +0xa00 size: 0x4 (0x1 * 0x4) type 5
     pub gap_a04: [u8; 4],
-    pub m_strAllowUse: *mut char,  // +0xa08 size: 0x8 (0x1 * 0x8) type 2
-    pub m_nPriority: i32,          // +0xa10 size: 0x4 (0x1 * 0x4) type 5
-    pub m_bInvertAllow: bool,      // +0xa14 size: 0x1 (0x1 * 0x1) type 6
-    pub m_bUseAirLinkRadius: bool, // +0xa15 size: 0x1 (0x1 * 0x1) type 6
+    pub m_strAllowUse: *mut c_char, // +0xa08 size: 0x8 (0x1 * 0x8) type 2
+    pub m_nPriority: i32,           // +0xa10 size: 0x4 (0x1 * 0x4) type 5
+    pub m_bInvertAllow: bool,       // +0xa14 size: 0x1 (0x1 * 0x1) type 6
+    pub m_bUseAirLinkRadius: bool,  // +0xa15 size: 0x1 (0x1 * 0x1) type 6
 }
 
 size_assert!(CAI_DYNAMICLINKCONTROLLER where CAI_DynamicLinkController == 0xa18);

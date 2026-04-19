@@ -226,6 +226,8 @@ macro_rules! field_assert {
         fn $check_name() {
             assert_eq!(::std::mem::offset_of!($struct, $field), $size);
         }
+        // static $check_name: () =
+        //     _ = ["offset test"][::std::mem::offset_of!($struct, $field) - $size];
     };
 }
 

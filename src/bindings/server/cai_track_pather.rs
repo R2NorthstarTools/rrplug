@@ -24,7 +24,7 @@ pub struct CAI_TrackPather {
     pub m_strCurrentPathName: *mut c_char, // +0x20d8 size: 0x8 (0x1 * 0x8) type 2
     pub m_strDestPathName: *mut c_char, // +0x20e0 size: 0x8 (0x1 * 0x8) type 2
     pub m_strLastPathName: *mut c_char, // +0x20e8 size: 0x8 (0x1 * 0x8) type 2
-    pub m_strTargetNearestPathName: *mut char, // +0x20f0 size: 0x8 (0x1 * 0x8) type 2
+    pub m_strTargetNearestPathName: *mut c_char, // +0x20f0 size: 0x8 (0x1 * 0x8) type 2
     pub m_vecLastGoalCheckPosition: Vector3, // +0x20f8 size: 0xc (0x1 * 0xc) type 15
     pub m_flEnemyPathUpdateTime: f32,  // +0x2104 size: 0x4 (0x1 * 0x4) type 16
     pub m_bForcedMove: bool,           // +0x2108 size: 0x1 (0x1 * 0x1) type 6

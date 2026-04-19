@@ -20,15 +20,15 @@ pub struct HintNodeData {
     pub gap_16: [u8; 2],
     pub nNodeID: i32, // +0x18 size: 0x4 (0x1 * 0x4) type 5
     pub gap_1c: [u8; 4],
-    pub strGroup: *mut c_char,      // +0x20 size: 0x8 (0x1 * 0x8) type 2
-    pub iszGenericType: *mut char,  // +0x28 size: 0x8 (0x1 * 0x8) type 2
-    pub iszActivityName: *mut char, // +0x30 size: 0x8 (0x1 * 0x8) type 2
-    pub nTargetWCNodeID: i32,       // +0x38 size: 0x4 (0x1 * 0x4) type 5
-    pub fIgnoreFacing: i32,         // +0x3c size: 0x4 (0x1 * 0x4) type 5
-    pub minState: i32,              // +0x40 size: 0x4 (0x1 * 0x4) type 5
-    pub maxState: i32,              // +0x44 size: 0x4 (0x1 * 0x4) type 5
-    pub nRadius: i32,               // +0x48 size: 0x4 (0x1 * 0x4) type 5
-    pub nWCNodeID: i32,             // +0x4c size: 0x4 (0x1 * 0x4) type 5
+    pub strGroup: *mut c_char,        // +0x20 size: 0x8 (0x1 * 0x8) type 2
+    pub iszGenericType: *mut c_char,  // +0x28 size: 0x8 (0x1 * 0x8) type 2
+    pub iszActivityName: *mut c_char, // +0x30 size: 0x8 (0x1 * 0x8) type 2
+    pub nTargetWCNodeID: i32,         // +0x38 size: 0x4 (0x1 * 0x4) type 5
+    pub fIgnoreFacing: i32,           // +0x3c size: 0x4 (0x1 * 0x4) type 5
+    pub minState: i32,                // +0x40 size: 0x4 (0x1 * 0x4) type 5
+    pub maxState: i32,                // +0x44 size: 0x4 (0x1 * 0x4) type 5
+    pub nRadius: i32,                 // +0x48 size: 0x4 (0x1 * 0x4) type 5
+    pub nWCNodeID: i32,               // +0x4c size: 0x4 (0x1 * 0x4) type 5
 }
 
 size_assert!(HINTNODEDATA where HintNodeData == 0x50);

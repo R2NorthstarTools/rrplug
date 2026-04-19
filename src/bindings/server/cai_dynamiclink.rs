@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types, non_snake_case)]
 use std::{
     ops::{Deref, DerefMut},
-    os::raw::c_void,
+    os::raw::{c_char, c_void},
 };
 
 use crate::{bindings::server::cbaseentity::CBaseEntity, field_assert, size_assert};
@@ -17,13 +17,13 @@ pub struct CAI_DynamicLink {
     pub m_nDestID: i32,                  // +0x9f4 size: 0x4 (0x1 * 0x4) type 5
     pub m_nLinkState: i32,               // +0x9f8 size: 0x4 (0x1 * 0x4) type 5
     pub gap_9fc: [u8; 4],
-    pub m_strAllowUse: *mut char, // +0xa00 size: 0x8 (0x1 * 0x8) type 2
-    pub m_bInvertAllow: bool,     // +0xa08 size: 0x1 (0x1 * 0x1) type 6
-    pub m_bPreciseMovement: bool, // +0xa09 size: 0x1 (0x1 * 0x1) type 6
-    pub m_bFixedUpIds: bool,      // +0xa0a size: 0x1 (0x1 * 0x1) type 6
-    pub m_bNotSaved: bool,        // +0xa0b size: 0x1 (0x1 * 0x1) type 6
-    pub m_nLinkType: i32,         // +0xa0c size: 0x4 (0x1 * 0x4) type 5
-    pub m_nPriority: i32,         // +0xa10 size: 0x4 (0x1 * 0x4) type 5
+    pub m_strAllowUse: *mut c_char, // +0xa00 size: 0x8 (0x1 * 0x8) type 2
+    pub m_bInvertAllow: bool,       // +0xa08 size: 0x1 (0x1 * 0x1) type 6
+    pub m_bPreciseMovement: bool,   // +0xa09 size: 0x1 (0x1 * 0x1) type 6
+    pub m_bFixedUpIds: bool,        // +0xa0a size: 0x1 (0x1 * 0x1) type 6
+    pub m_bNotSaved: bool,          // +0xa0b size: 0x1 (0x1 * 0x1) type 6
+    pub m_nLinkType: i32,           // +0xa0c size: 0x4 (0x1 * 0x4) type 5
+    pub m_nPriority: i32,           // +0xa10 size: 0x4 (0x1 * 0x4) type 5
 }
 
 size_assert!(CAI_DYNAMICLINK where CAI_DynamicLink == 0xa18);
