@@ -5,15 +5,17 @@ use std::{
 };
 
 use crate::{
-    bindings::{class_types::cbasecombatcharacter::CBaseCombatCharacter, cvar::convar::Color},
-    high::vector::{matrix3x4_t, Quaternion, Vector3},
+    bindings::{
+        cvar::convar::Color,
+        server::cbasecombatcharacter::CBaseCombatCharacter,
+        server::{cbaseentity::CBaseEntity, EHandle},
+    },
+    high::vector::{Matrix3x4, Quaternion, Vector3},
     size_assert,
 };
 
-pub type EHandle = i32;
-type CBaseEntity = *mut c_void;
-
 #[repr(C)]
+#[derive(Debug)]
 pub struct fogparams_t {
     pub gap: [c_char; 8],
     pub botAlt: f32,        // 0x8 ( Size = 4 )
@@ -38,6 +40,7 @@ pub struct fogparams_t {
 size_assert!(FOG_SIZE where fogparams_t == 80);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct sky3dparams_t {
     pub gap: [c_char; 8],
     pub scale: i32,        // 0x8 ( Size = 4 )
@@ -49,6 +52,7 @@ pub struct sky3dparams_t {
 size_assert!(SKY_SIZE where sky3dparams_t == 104);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct fogplayerparamsstate_t {
     pub gap: [c_char; 8],
     pub enable: bool, // 0x8 ( Size = 1 )
@@ -74,6 +78,7 @@ pub struct fogplayerparamsstate_t {
 size_assert!(FOG_SIZE_PLAYER where fogplayerparamsstate_t == 88);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct fogplayerparams_t {
     pub gap: [c_char; 8],
     pub m_hCtrl: EHandle,                 // 0x8 ( Size = 4 )
@@ -86,6 +91,7 @@ pub struct fogplayerparams_t {
 size_assert!(FOG_PARAMS_SIZE where fogplayerparams_t == 368);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct audioparams_t {
     pub gap_0: [c_char; 8],
     pub localSound: [Vector3; 8], // 0x8 ( Size = 96 )
@@ -97,6 +103,7 @@ pub struct audioparams_t {
 size_assert!(AUDIO_SIZE where audioparams_t == 120);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CPlayerState {
     pub vftable: *const c_void,
     pub currentClass: i32,   // 0x8 ( Size = 4 )
@@ -122,10 +129,12 @@ pub struct CPlayerState {
 size_assert!(PLAYER_STATE_SIZE where CPlayerState == 128);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct Rodeo_PlayerData {
     pub vftable: *const c_void,
     pub stage: i32,     // 0x8 ( Size = 4 )
     pub canRodeo: bool, // 0xc ( Size = 1 )
+
     pub gap_d: [c_char; 3],
     pub rodeoCountParity: i32,              // 0x10 ( Size = 4 )
     pub startTime: f32,                     // 0x14 ( Size = 4 )
@@ -139,12 +148,13 @@ pub struct Rodeo_PlayerData {
     pub rodeoStabilizeStrength: f32,        // 0x34 ( Size = 4 )
     pub rodeoStabilizeViewFirstFrame: bool, // 0x38 ( Size = 1 )
     pub gap_39: [c_char; 3],
-    pub lastPlayerToWorld: matrix3x4_t,      // 0x3c ( Size = 48 )
+    pub lastPlayerToWorld: Matrix3x4,        // 0x3c ( Size = 48 )
     pub initialCameraCorrection: Quaternion, // 0x6c ( Size = 16 )
 }
 size_assert!(SIZE_RODEO where Rodeo_PlayerData == 128);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct ClassModValues {
     pub health: f32,                      // 0x0 ( Size = 4 )
     pub healthShield: f32,                // 0x4 ( Size = 4 )
@@ -185,6 +195,7 @@ pub struct ClassModValues {
 size_assert!(SIZE_CLASS_MOD where ClassModValues == 116);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct PerPosClassModValues {
     pub speed_: f32,       // 0x0 ( Size = 4 )
     pub sprintSpeed_: f32, // 0x4 ( Size = 4 )
@@ -192,6 +203,7 @@ pub struct PerPosClassModValues {
 size_assert!(SIZE_PER_CLASS where PerPosClassModValues == 8);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct ThirdPersonViewData {
     pub vftable: *const c_void,
     pub m_thirdPersonEntViewOffset: Vector3, // 0x8 ( Size = 12 )
@@ -221,6 +233,7 @@ pub struct ThirdPersonViewData {
 size_assert!(SIZE_THRID where ThirdPersonViewData == 96);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct GrappleData {
     pub vftable: *const c_void,
     pub m_grappleVel: Vector3,           // 0x8 ( Size = 12 )
@@ -242,6 +255,7 @@ pub struct GrappleData {
 size_assert!(SIZE_GRAPPLE where GrappleData == 104);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct PlayerZiplineData {
     pub vftable: *const c_void,
     pub m_ziplineReenableWeapons: bool, // 0x8 ( Size = 1 )
@@ -258,6 +272,7 @@ pub struct PlayerZiplineData {
 size_assert!(SIZE_PLAYER_ZIP where PlayerZiplineData == 80);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct Player_OperatorData {
     pub vftable: *const c_void,
     pub diving: bool,        // 0x8 ( Size = 1 )
@@ -300,6 +315,7 @@ pub struct Player_OperatorData {
 size_assert!(SIZE_PLAYER_OPERATOR where Player_OperatorData == 128);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct Player_ViewOffsetEntityData {
     pub vftable: *const c_void,
     pub viewOffsetEntityHandle: EHandle, // 0x8 ( Size = 4 )
@@ -310,6 +326,7 @@ pub struct Player_ViewOffsetEntityData {
 size_assert!(PLAYER_VIEW_SIZE where Player_ViewOffsetEntityData == 24);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct Player_AnimViewEntityData {
     pub vftable: *const c_void,
     pub animViewEntityHandle: EHandle,           // 0x8 ( Size = 4 )
@@ -334,6 +351,7 @@ pub struct Player_AnimViewEntityData {
 size_assert!(SIZE_PLAYER_ANIM where Player_AnimViewEntityData == 128);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CurrentData_Player {
     pub vftable: *const c_void,
     pub m_flHullHeight: f32,          // 0x8 ( Size = 4 )
@@ -344,6 +362,7 @@ pub struct CurrentData_Player {
 size_assert!(SIZE_CURRENT where CurrentData_Player == 32);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CurrentData_LocalPlayer {
     pub vftable: *const c_void,
     pub m_viewConeAngleMin: Vector3,        // 0x8 ( Size = 12 )
@@ -357,6 +376,7 @@ pub struct CurrentData_LocalPlayer {
 size_assert!(SIZE_CURRENT_DATA where CurrentData_LocalPlayer == 96);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct ScriptOriginatedDamageInfo {
     pub m_scriptDamageType: i32,       // 0x0 ( Size = 4 )
     pub m_damageSourceIdentifier: i32, // 0x4 ( Size = 4 )
@@ -365,6 +385,7 @@ pub struct ScriptOriginatedDamageInfo {
 size_assert!(SIZE_SCRIPT_ORI where ScriptOriginatedDamageInfo == 12);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CTakeDamageInfo {
     pub m_vecDamageForce: Vector3,                // 0x0 ( Size = 12 )
     pub m_vecDamagePosition: Vector3,             // 0xc ( Size = 12 )
@@ -395,6 +416,7 @@ pub struct CTakeDamageInfo {
 size_assert!(SIZE_DAMAGE where CTakeDamageInfo == 120);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct PlayerMelee_PlayerData {
     pub vftable: *const c_void,
     pub attackActive: bool,                // 0x8 ( Size = 1 )
@@ -410,6 +432,7 @@ pub struct PlayerMelee_PlayerData {
 size_assert!(SIZE_MELEE where PlayerMelee_PlayerData == 40);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CPlayerShared {
     pub vftable: *const c_void,
     pub m_nPlayerCond: i32,          // 0x8 ( Size = 4 )
@@ -424,6 +447,7 @@ pub struct CPlayerShared {
 size_assert!(SIZE_SHARED where CPlayerShared == 160);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct StatusEffectTimedData {
     pub vftable: *const c_void,
     pub seComboVars: i32, // 0x8 ( Size = 4 )
@@ -433,6 +457,7 @@ pub struct StatusEffectTimedData {
 size_assert!(SIZE_STATUS_EFFECT where StatusEffectTimedData == 24);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct StatusEffectEndlessData {
     pub vftable: *const c_void,
     pub seComboVars: i32, // 0x8 ( Size = 4 )
@@ -440,6 +465,7 @@ pub struct StatusEffectEndlessData {
 size_assert!(SIZE_ENDLESS where StatusEffectEndlessData == 16);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct PushHistoryEntry {
     pub time: f32,       // 0x0 ( Size = 4 )
     pub pushed: Vector3, // 0x4 ( Size = 12 )
@@ -447,6 +473,7 @@ pub struct PushHistoryEntry {
 size_assert!(SIZE_PUSH_HISTORY where PushHistoryEntry == 16);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct PredictableServerEvent {
     pub r#type: i32,               // 0x0 ( Size = 4 )
     pub deadlineTime: f32,         // 0x4 ( Size = 4 )
@@ -455,6 +482,7 @@ pub struct PredictableServerEvent {
 size_assert!(SIZE_PREDICTABLE_EVENT where PredictableServerEvent == 24);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CPlayerLocalData {
     pub vftable: *const c_void,
     pub m_iHideHUD: i32,             // 0x8 ( Size = 4 )
@@ -573,6 +601,7 @@ size_assert!(SIZE_LOCAL_DATA where CPlayerLocalData == 1064);
 
 #[allow(non_snake_case)]
 #[repr(C)]
+#[derive(Debug)]
 pub struct CPlayer {
     pub base: CBaseCombatCharacter,
     pub m_szNetname: [c_char; 256], // 0x1498 ( Size = 256 )

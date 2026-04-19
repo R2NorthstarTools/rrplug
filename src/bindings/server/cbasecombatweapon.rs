@@ -1,11 +1,12 @@
 #![allow(non_camel_case_types, non_snake_case)]
 use std::ops::{Deref, DerefMut};
 
-use super::{cbaseanimating::CBaseAnimating, cplayer::EHandle};
+use super::{cbaseanimating::CBaseAnimating, EHandle};
 
 use crate::size_assert;
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CBaseCombatWeapon {
     pub base: CBaseAnimating,
     pub m_weaponOwner: EHandle,         // +0xeb8 size: 0x4 (0x1 * 0x4) 13

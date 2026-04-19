@@ -3,17 +3,18 @@
 use std::fmt::{Debug, Display};
 
 #[cfg(doc)]
-use class_types::{cbaseentity::CBaseEntity, cplayer::CPlayer};
+use server::{cbaseentity::CBaseEntity, cplayer::CPlayer};
 
+#[doc(hidden)]
 pub mod class_types;
+pub mod client;
 pub mod cvar;
 pub mod filesystem;
 pub mod plugin_abi;
+pub mod server;
 pub mod squirrelclasstypes;
 pub mod squirreldatatypes;
 pub mod squirrelfunctions;
-pub mod server;
-pub mod client;
 
 #[repr(C)]
 pub struct OffsetStructField<T, const U: usize> {

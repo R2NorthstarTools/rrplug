@@ -1,11 +1,9 @@
 #![allow(non_camel_case_types, non_snake_case)]
 use std::ops::{Deref, DerefMut};
 
-use super::cplayer::EHandle;
+use super::{cbaseanimating::CBaseAnimating, EHandle};
 
-use crate::{
-    bindings::class_types::cbaseanimating::CBaseAnimating, field_assert, prelude::*, size_assert,
-};
+use crate::{field_assert, prelude::*, size_assert};
 
 #[repr(C)]
 pub struct CPlayerDecoy {

@@ -136,7 +136,7 @@ macro_rules! impl_vmethods {
 ///
 /// offset_functions! {
 ///     ENGINE_FUNCTIONS + EngineFunctions for WhichDll::Engine => {
-///         client_array = *const rrplug::bindings::class_types::client::CClient where offset(0x12A53F90);
+///         client_array = *const rrplug::bindings::server::client::CClient where offset(0x12A53F90);
 ///     }
 /// }
 ///
@@ -241,13 +241,13 @@ mod test {
 
     offset_functions! {
         ENGINE_FUNCTIONS + EngineFunctions for WhichDll::Engine => {
-            client_array = *const crate::bindings::class_types::client::CClient where offset(0x12A53F90);
+            client_array = *const crate::bindings::server::client::CClient where offset(0x12A53F90);
         }
     }
 
     offset_functions! {
         SOME_FUNCTIONS + SomeFunctions for WhichDll::Other("some.dll") => {
-            client_array = *const crate::bindings::class_types::client::CClient where offset(0xdeadbeef);
+            client_array = *const crate::bindings::server::client::CClient where offset(0xdeadbeef);
         }
     }
 }

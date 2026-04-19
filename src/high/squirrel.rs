@@ -668,7 +668,7 @@ impl SQVMName for PrintType {
 /// ```
 /// # use rrplug::prelude::*;
 /// # use rrplug::high::squirrel::call_sq_function;
-/// # use rrplug::bindings::class_types::cplayer::CPlayer;
+/// # use rrplug::bindings::server::cplayer::CPlayer;
 /// #[rrplug::sqfunction(VM="Server")]
 /// fn simple_example(name: String, player: Option<&mut CPlayer>) -> Result<(),String> {
 ///     let _player = player.ok_or("Not a Player!".to_string())?;

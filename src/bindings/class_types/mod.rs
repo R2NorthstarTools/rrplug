@@ -3,6 +3,8 @@
 
 #![deprecated]
 #[deprecated]
+#[doc(hidden)]
 pub use super::client::*;
 #[deprecated]
+#[doc(hidden)]
 pub use super::server::*;

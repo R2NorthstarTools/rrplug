@@ -384,7 +384,7 @@ pub type sq_getentityfrominstanceType =
         sqvm: *mut CSquirrelVM,
         pInstance: *mut SQObject,
         ppEntityConstant: *mut *mut ::std::os::raw::c_char,
-    ) -> *mut super::class_types::cplayer::CPlayer;
+    ) -> *mut super::server::cbaseentity::CBaseEntity;
 pub type sq_GetEntityConstantType = unsafe extern "C" fn() -> *mut *mut ::std::os::raw::c_char;
 pub type sq_getfunctionType = unsafe extern "C" fn(
     sqvm: *mut HSquirrelVM,

@@ -7,7 +7,7 @@ use std::{mem::MaybeUninit, ptr::NonNull};
 
 use crate::{
     bindings::{
-        class_types::{cbaseentity::CBaseEntity, cplayer::CPlayer},
+        server::{cbaseentity::CBaseEntity, cplayer::CPlayer},
         squirrelclasstypes::SQRESULT,
         squirreldatatypes::{
             SQArray, SQBool, SQClosure, SQFloat, SQFunctionProto, SQInteger, SQNativeClosure,

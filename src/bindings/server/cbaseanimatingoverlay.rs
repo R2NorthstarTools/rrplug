@@ -11,6 +11,7 @@ use crate::size_assert;
 type CBaseEntity = *mut u8;
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CAnimationLayer {
     pub m_bSequenceFinished: bool, // 0x0 ( Size = 1 )
     pub gap_1: [c_char; 3],
@@ -28,6 +29,7 @@ pub struct CAnimationLayer {
 size_assert!(SIZE_ANIMATION_LAYER where CAnimationLayer == 48);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CBaseAnimatingOverlay {
     pub base: CBaseAnimating,
     pub m_maxOverlays: i32, // 0xeb8 ( Size = 4 )

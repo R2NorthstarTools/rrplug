@@ -4,7 +4,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use super::{cbasecombatweapon::CBaseCombatWeapon, cbaseentity::CBaseEntity, cplayer::EHandle};
+use super::{cbasecombatweapon::CBaseCombatWeapon, cbaseentity::CBaseEntity, EHandle};
 
 use crate::size_assert;
 

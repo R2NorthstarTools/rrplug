@@ -5,15 +5,14 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+use super::{cbaseentity::CBaseEntity, EHandle};
 use crate::{
-    bindings::class_types::cplayer::EHandle,
-    high::vector::{matrix3x4_t, Quaternion, Vector3},
+    high::vector::{Matrix3x4, Quaternion, Vector3},
     size_assert,
 };
 
-use super::cbaseentity::CBaseEntity;
-
 #[repr(C)]
+#[derive(Debug)]
 pub struct AnimRelativeData {
     pub vftable: *const c_void,
     pub m_animInitialPos: Vector3,             // 0x8 ( Size = 12 )
@@ -34,6 +33,7 @@ pub struct AnimRelativeData {
 size_assert!(SIZE_ANIM where AnimRelativeData == 128);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct PredictedAnimEventData {
     pub vftable: *const c_void,
     pub m_predictedAnimEventTimes: [f32; 8], // 0x8 ( Size = 32 )
@@ -47,6 +47,7 @@ pub struct PredictedAnimEventData {
 size_assert!(SIZE_PREDICATED_ANIM where PredictedAnimEventData == 96);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CBaseAnimating {
     pub base: CBaseEntity,
     pub m_bCanUseFastPathFromServer: bool, // 0x9e0 ( Size = 1 )
@@ -114,7 +115,7 @@ pub struct CBaseAnimating {
     pub m_recordedAnimCachedFrameIndex: i32,  // 0xc9c ( Size = 4 )
     pub m_recordedAnimPlaybackRate: f32,      // 0xca0 ( Size = 4 )
     pub m_recordedAnimPlaybackTime: f32,      // 0xca4 ( Size = 4 )
-    pub m_recordedAnimTransform: matrix3x4_t, // 0xca8 ( Size = 48 )
+    pub m_recordedAnimTransform: Matrix3x4,   // 0xca8 ( Size = 48 )
     pub m_recordedAnimPlaybackEnt: EHandle,   // 0xcd8 ( Size = 4 )
     pub m_recordedAnimBlendTime: f32,         // 0xcdc ( Size = 4 )
     pub m_recordedAnimBlendOffset: Vector3,   // 0xce0 ( Size = 12 )

@@ -270,17 +270,33 @@ impl Div for QAngle {
 }
 
 #[repr(C)]
+#[derive(Debug, Copy, Clone)]
 /// A Quaternion yes
 pub struct Quaternion {
-    x: f32,
-    y: f32,
-    z: f32,
-    w: f32,
+    /// x
+    pub x: f32,
+    /// y
+    pub y: f32,
+    /// z
+    pub z: f32,
+    /// w
+    pub w: f32,
 }
 
+/// A matrix type
 #[repr(C)]
-#[allow(non_camel_case_types, non_snake_case)]
-/// hmm
-pub struct matrix3x4_t {
-    m_flMatVal: [[f32; 4]; 3],
+#[derive(Debug, Copy, Clone)]
+pub struct Matrix3x4 {
+    /// the matrix wow
+    pub mat_val: [[f32; 4]; 3],
+}
+
+/// 2d vector type
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct Vector2 {
+    /// x
+    pub x: f32,
+    /// y
+    pub y: f32,
 }

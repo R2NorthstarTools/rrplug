@@ -1,18 +1,16 @@
 #![allow(non_camel_case_types, non_snake_case)]
 use std::ffi::{c_char, c_void};
 
-use super::{
-    cplayer::{CPlayer, EHandle},
-    cweaponx::CWeaponX,
-};
+use super::{cplayer::CPlayer, cplayerdecoy::CPlayerDecoy, cweaponx::CWeaponX, EHandle};
 use crate::{
-    bindings::{class_types::cplayerdecoy::CPlayerDecoy, cvar::convar::Color, DynamicCast},
+    bindings::{cvar::convar::Color, DynamicCast},
     impl_vmethods,
     prelude::Vector3,
     size_assert,
 };
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct IServerNetworkable {
     vftable: *const c_void,
 }
@@ -20,6 +18,7 @@ pub struct IServerNetworkable {
 type edict_t = u16;
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CServerNetworkProperty {
     pub base: IServerNetworkable,
     pub m_pOuter: *mut CBaseEntity,
@@ -31,6 +30,7 @@ pub struct CServerNetworkProperty {
 size_assert!(SIZE_NET_PROP where CServerNetworkProperty == 40);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CCollisionProperty {
     pub vftable: *const c_void,
     pub m_pOuter: *mut CBaseEntity, // 0x8 ( Size = 8 )
@@ -54,6 +54,7 @@ pub struct CCollisionProperty {
 size_assert!(SIZE_COLLISON_PROP where CCollisionProperty == 112);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CBaseEntity {
     pub vftable: *const c_void,
     pub m_RefEHandle: EHandle, // 0x8 ( Size = 4 ) // handle

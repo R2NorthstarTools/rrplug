@@ -108,6 +108,7 @@ pub mod root {
         pub b: u8,
         pub a: u8,
     }
+    #[allow(clippy::identity_op)]
     const _: () = {
         ["Size of Color32"][::std::mem::size_of::<Color32>() - 4usize];
         ["Alignment of Color32"][::std::mem::align_of::<Color32>() - 1usize];
@@ -180,7 +181,7 @@ pub mod root {
         );
     }
     #[repr(C)]
-    #[derive(Copy, Clone)]
+    #[derive(Debug, Copy, Clone)]
     pub struct Color {
         pub _color: [::std::os::raw::c_uchar; 4usize],
     }

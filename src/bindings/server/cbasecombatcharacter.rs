@@ -4,10 +4,11 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use super::{cbaseanimatingoverlay::CBaseAnimatingOverlay, cplayer::EHandle};
+use super::{cbaseanimatingoverlay::CBaseAnimatingOverlay, EHandle};
 use crate::{high::vector::Vector3, size_assert};
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct WeaponDropInfo {
     pub weaponPosition: Vector3,      // 0x0 ( Size = 12 )
     pub prevDropFrameCounter: c_char, // 0xc ( Size = 1 )
@@ -19,6 +20,7 @@ pub struct WeaponDropInfo {
 size_assert!(SIZE_DROP where WeaponDropInfo == 32);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct WeaponInventory {
     pub vftable: *const c_void,
     pub weapons: [EHandle; 4],        // 0x8 ( Size = 16 )
@@ -28,6 +30,7 @@ pub struct WeaponInventory {
 size_assert!(SIZE_WEAPON where WeaponInventory == 56);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CTether {
     pub vftable: *const c_void,
     pub pos: Vector3,       // 0x8 ( Size = 12 )
@@ -39,6 +42,7 @@ pub struct CTether {
 size_assert!(SIZE_TETHER where CTether == 40);
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct CBaseCombatCharacter {
     pub base: CBaseAnimatingOverlay,
     pub m_bPreventWeaponPickup: bool, // 0x1210 ( Size = 1 )
