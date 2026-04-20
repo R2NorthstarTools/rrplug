@@ -16,9 +16,9 @@ pub struct CSoundEnt {
 }
 
 size_assert!(CSOUNDENT where CSoundEnt == 0x1de8);
-field_assert!(M_IFREESOUND where CSoundEnt, m_iFreeSound == 0x9d8);
-field_assert!(M_IACTIVESOUND where CSoundEnt, m_iActiveSound == 0x9dc);
-field_assert!(M_SOUNDPOOL where CSoundEnt, m_SoundPool == 0x9e0);
+field_assert!(+ M_IFREESOUND where CSoundEnt, m_iFreeSound == 0x9d8);
+field_assert!(+ M_IACTIVESOUND where CSoundEnt, m_iActiveSound == 0x9dc);
+field_assert!(+ M_SOUNDPOOL where CSoundEnt, m_SoundPool == 0x9e0);
 
 impl DerefMut for CSoundEnt {
     fn deref_mut(&mut self) -> &mut Self::Target {

@@ -21,10 +21,10 @@ pub struct CNPC_Marvin {
 }
 
 size_assert!(CNPC_MARVIN where CNPC_Marvin == 0x24c0);
-field_assert!(M_ASSAULTBEHAVIOR where CNPC_Marvin, m_AssaultBehavior == 0x21e8);
-field_assert!(M_FOLLOWBEHAVIOR where CNPC_Marvin, m_FollowBehavior == 0x22d0);
-field_assert!(M_SEARCHBEHAVIOR where CNPC_Marvin, m_SearchBehavior == 0x2418);
-field_assert!(M_PATROLBEHAVIOR where CNPC_Marvin, m_PatrolBehavior == 0x2468);
+field_assert!(+ M_ASSAULTBEHAVIOR where CNPC_Marvin, m_AssaultBehavior == 0x21e8);
+field_assert!(+ M_FOLLOWBEHAVIOR where CNPC_Marvin, m_FollowBehavior == 0x22d0);
+field_assert!(+ M_SEARCHBEHAVIOR where CNPC_Marvin, m_SearchBehavior == 0x2418);
+field_assert!(+ M_PATROLBEHAVIOR where CNPC_Marvin, m_PatrolBehavior == 0x2468);
 
 impl DerefMut for CNPC_Marvin {
     fn deref_mut(&mut self) -> &mut Self::Target {

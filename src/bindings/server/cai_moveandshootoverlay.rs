@@ -14,10 +14,10 @@ pub struct CAI_MoveAndShootOverlay {
 }
 
 size_assert!(CAI_MOVEANDSHOOTOVERLAY where CAI_MoveAndShootOverlay == 0x20);
-field_assert!(FORCEDMOVEMENT where CAI_MoveAndShootOverlay, m_forcedMovement == 0x8);
-field_assert!(FORCEDMOVEMENTEXPIRETIME where CAI_MoveAndShootOverlay, m_forcedMovementExpireTime == 0xc);
-field_assert!(ISMOVINGANDSHOOTING where CAI_MoveAndShootOverlay, m_isMovingAndShooting == 0x10);
-field_assert!(DISABLEMOVEANDSHOOT where CAI_MoveAndShootOverlay, m_disableMoveAndShoot == 0x11);
+field_assert!(+ FORCEDMOVEMENT where CAI_MoveAndShootOverlay, m_forcedMovement == 0x8);
+field_assert!(+ FORCEDMOVEMENTEXPIRETIME where CAI_MoveAndShootOverlay, m_forcedMovementExpireTime == 0xc);
+field_assert!(+ ISMOVINGANDSHOOTING where CAI_MoveAndShootOverlay, m_isMovingAndShooting == 0x10);
+field_assert!(+ DISABLEMOVEANDSHOOT where CAI_MoveAndShootOverlay, m_disableMoveAndShoot == 0x11);
 
 impl DerefMut for CAI_MoveAndShootOverlay {
     fn deref_mut(&mut self) -> &mut Self::Target {

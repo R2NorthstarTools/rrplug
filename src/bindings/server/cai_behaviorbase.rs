@@ -21,14 +21,14 @@ pub struct CAI_BehaviorBase {
     pub m_behaviorType: i32, // +0x4c size: 0x4 (0x1 * 0x4) type 5
 }
 
-size_assert!(CAI_BehaviorBase  where  CAI_BehaviorBase == 0x50);
-field_assert!(IAI_BehaviorBridge  where  CAI_BehaviorBase, IAI_BehaviorBridge == 0x8);
-field_assert!(m_ScheduleChannels  where  CAI_BehaviorBase, m_ScheduleChannels == 0x10);
-field_assert!(m_fOverrode  where  CAI_BehaviorBase, m_fOverrode == 0x30);
-field_assert!(m_pBackBridge  where  CAI_BehaviorBase, m_pBackBridge == 0x38);
-field_assert!(m_bAllocated  where  CAI_BehaviorBase, m_bAllocated == 0x40);
-field_assert!(m_bBehaviorEnabled  where  CAI_BehaviorBase, m_bBehaviorEnabled == 0x41);
-field_assert!(m_behaviorType  where  CAI_BehaviorBase, m_behaviorType == 0x44);
+size_assert!(CAI_BEHAVIORBASE where  CAI_BehaviorBase == 0x50);
+field_assert!(+ IAI_BEHAVIORBRIDGE where  CAI_BehaviorBase, IAI_BehaviorBridge == 0x8);
+field_assert!(+ M_SCHEDULECHANNELS where  CAI_BehaviorBase, m_ScheduleChannels == 0x10);
+field_assert!(+ M_FOVERRODE where  CAI_BehaviorBase, m_fOverrode == 0x30);
+field_assert!(+ M_PBACKBRIDGE where  CAI_BehaviorBase, m_pBackBridge == 0x38);
+field_assert!(+ M_BALLOCATED where  CAI_BehaviorBase, m_bAllocated == 0x40);
+field_assert!(+ M_BBEHAVIORENABLED where  CAI_BehaviorBase, m_bBehaviorEnabled == 0x41);
+field_assert!(+ M_BEHAVIORTYPE where  CAI_BehaviorBase, m_behaviorType == 0x44);
 
 impl DerefMut for CAI_BehaviorBase {
     fn deref_mut(&mut self) -> &mut Self::Target {

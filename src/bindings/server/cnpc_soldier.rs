@@ -12,8 +12,8 @@ pub struct CNPC_Soldier {
 }
 
 size_assert!(CNPC_SOLDIER where CNPC_Soldier == 0x2508);
-field_assert!(SIZE_LASTRUNAWAYCHECKTIME where CNPC_Soldier, m_lastRunAwayCheckTime == 0x24f8);
-field_assert!(SIZE_BURSTSBEFORERUNAWAY where CNPC_Soldier, m_burstsBeforeRunAway == 0x24fc);
+field_assert!(+ SIZE_LASTRUNAWAYCHECKTIME where CNPC_Soldier, m_lastRunAwayCheckTime == 0x24f8);
+field_assert!(+ SIZE_BURSTSBEFORERUNAWAY where CNPC_Soldier, m_burstsBeforeRunAway == 0x24fc);
 
 impl DerefMut for CNPC_Soldier {
     fn deref_mut(&mut self) -> &mut Self::Target {

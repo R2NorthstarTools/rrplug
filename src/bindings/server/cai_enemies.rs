@@ -21,13 +21,13 @@ pub struct CAI_Enemies {
 }
 
 size_assert!(CAI_ENEMIES where CAI_Enemies == 0x70);
-field_assert!(SIZE_PLAYERENEMYCLASS where CAI_Enemies, m_playerEnemyClass == 0x8);
-field_assert!(SIZE_MAP where CAI_Enemies, m_Map == 0x10);
-field_assert!(SIZE_FLFREEKNOWLEDGEDURATION where CAI_Enemies, m_flFreeKnowledgeDuration == 0x40);
-field_assert!(SIZE_FLENEMYDISCARDTIME where CAI_Enemies, m_flEnemyDiscardTime == 0x44);
-field_assert!(SIZE_VECDEFAULTLKP where CAI_Enemies, m_vecDefaultLKP == 0x48);
-field_assert!(SIZE_VECDEFAULTLSP where CAI_Enemies, m_vecDefaultLSP == 0x54);
-field_assert!(SIZE_SERIAL where CAI_Enemies, m_serial == 0x60);
+field_assert!(+ SIZE_PLAYERENEMYCLASS where CAI_Enemies, m_playerEnemyClass == 0x8);
+field_assert!(+ SIZE_MAP where CAI_Enemies, m_Map == 0x10);
+field_assert!(+ SIZE_FLFREEKNOWLEDGEDURATION where CAI_Enemies, m_flFreeKnowledgeDuration == 0x40);
+field_assert!(+ SIZE_FLENEMYDISCARDTIME where CAI_Enemies, m_flEnemyDiscardTime == 0x44);
+field_assert!(+ SIZE_VECDEFAULTLKP where CAI_Enemies, m_vecDefaultLKP == 0x48);
+field_assert!(+ SIZE_VECDEFAULTLSP where CAI_Enemies, m_vecDefaultLSP == 0x54);
+field_assert!(+ SIZE_SERIAL where CAI_Enemies, m_serial == 0x60);
 
 impl DerefMut for CAI_Enemies {
     fn deref_mut(&mut self) -> &mut Self::Target {

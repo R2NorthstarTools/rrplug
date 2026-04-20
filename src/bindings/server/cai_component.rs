@@ -12,4 +12,4 @@ pub struct CAI_Component {
 }
 
 size_assert!(A where CAI_Component == 0x10);
-field_assert!(B where CAI_Component, m_pOuter == 0x0);
+field_assert!(+ B where CAI_Component, m_pOuter == 0x0);

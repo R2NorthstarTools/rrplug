@@ -12,8 +12,8 @@ pub struct CAI_SkitNode {
 }
 
 size_assert!(CAI_SKITNODE where CAI_SkitNode == 0x9e8);
-field_assert!(M_DISTANCEFROMREF where CAI_SkitNode, m_distanceFromRef == 0x9d8);
-field_assert!(M_RESERVED where CAI_SkitNode, m_reserved == 0x9dc);
+field_assert!(+ M_DISTANCEFROMREF where CAI_SkitNode, m_distanceFromRef == 0x9d8);
+field_assert!(+ M_RESERVED where CAI_SkitNode, m_reserved == 0x9dc);
 
 impl DerefMut for CAI_SkitNode {
     fn deref_mut(&mut self) -> &mut Self::Target {

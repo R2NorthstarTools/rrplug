@@ -20,12 +20,12 @@ struct CNPC_Bullseye {
 }
 
 size_assert!(SIZE_Bullseye where CNPC_Bullseye == 0x2110);
-field_assert!(WHERE_HPAINPARTNER where CNPC_Bullseye, m_hPainPartner == 0x20a8);
-field_assert!(WHERE_ONTARGETED where CNPC_Bullseye, m_OnTargeted == 0x20b0);
-field_assert!(WHERE_ONRELEASED where CNPC_Bullseye, m_OnReleased == 0x20d8);
-field_assert!(WHERE_FLMINDISTVALIDENEMY where CNPC_Bullseye, m_flMinDistValidEnemy == 0x2100);
-field_assert!(WHERE_BPERFECTACCURACY where CNPC_Bullseye, m_bPerfectAccuracy == 0x2104);
-field_assert!(WHERE_BALWAYSTRANSMITTOCLIENT where CNPC_Bullseye, m_bAlwaysTransmitToClient == 0x2105);
+field_assert!(+ WHERE_HPAINPARTNER where CNPC_Bullseye, m_hPainPartner == 0x20a8);
+field_assert!(+ WHERE_ONTARGETED where CNPC_Bullseye, m_OnTargeted == 0x20b0);
+field_assert!(+ WHERE_ONRELEASED where CNPC_Bullseye, m_OnReleased == 0x20d8);
+field_assert!(+ WHERE_FLMINDISTVALIDENEMY where CNPC_Bullseye, m_flMinDistValidEnemy == 0x2100);
+field_assert!(+ WHERE_BPERFECTACCURACY where CNPC_Bullseye, m_bPerfectAccuracy == 0x2104);
+field_assert!(+ WHERE_BALWAYSTRANSMITTOCLIENT where CNPC_Bullseye, m_bAlwaysTransmitToClient == 0x2105);
 
 impl DerefMut for CNPC_Bullseye {
     fn deref_mut(&mut self) -> &mut Self::Target {

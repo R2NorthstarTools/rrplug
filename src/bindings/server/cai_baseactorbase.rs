@@ -11,7 +11,7 @@ pub struct CAI_BaseActorBase {
 }
 
 size_assert!(SIZE where CAI_BaseActorBase == 0x20b8);
-field_assert!(SIZE2_FISH where CAI_BaseActorBase, m_bCalledBehaviorSelectSchedule == 0x20a8);
+field_assert!(+ SIZE2_FISH where CAI_BaseActorBase, m_bCalledBehaviorSelectSchedule == 0x20a8);
 
 impl DerefMut for CAI_BaseActorBase {
     fn deref_mut(&mut self) -> &mut Self::Target {

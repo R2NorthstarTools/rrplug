@@ -6,6 +6,8 @@ use crate::{
     field_assert, size_assert,
 };
 
+#[repr(C)]
+#[derive(Debug)]
 pub struct CNPC_Drone {
     pub base: CAI_BaseFlyingBot,
     pub m_bAttackTarget: bool, // +0x2458 size: 0x1 (0x1 * 0x1) type 6
@@ -15,9 +17,9 @@ pub struct CNPC_Drone {
 }
 
 size_assert!(CNPC_DRONE where CNPC_Drone == 0x2468);
-field_assert!(WHRE_BATTACKTARGET where CNPC_Drone, m_bAttackTarget == 0x2450);
-field_assert!(WHRE_BEAMSPREAD where CNPC_Drone, m_beamSpread == 0x2454);
-field_assert!(WHRE_SCANTARGET where CNPC_Drone, m_scanTarget == 0x2458);
+field_assert!(+ WHRE_BATTACKTARGET where CNPC_Drone, m_bAttackTarget == 0x2450);
+field_assert!(+ WHRE_BEAMSPREAD where CNPC_Drone, m_beamSpread == 0x2454);
+field_assert!(+ WHRE_SCANTARGET where CNPC_Drone, m_scanTarget == 0x2458);
 
 impl DerefMut for CNPC_Drone {
     fn deref_mut(&mut self) -> &mut Self::Target {

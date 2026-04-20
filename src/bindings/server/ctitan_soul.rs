@@ -49,24 +49,24 @@ pub struct CTitanSoul {
 }
 
 size_assert!(SIZE_CTITANSOUL where CTitanSoul == 0xbd0 );
-field_assert!(SIZE_TITANSOULSCRIPTNETDATA where CTitanSoul, m_titanSoulScriptNetData == 0x9d8);
-field_assert!(SIZE_DEFENSIVEPLACEMENT where CTitanSoul, m_defensivePlacement == 0x9dc);
-field_assert!(SIZE_LASTRODEOHITTIME where CTitanSoul, m_lastRodeoHitTime == 0xa04);
-field_assert!(SIZE_STANCE where CTitanSoul, m_stance == 0xa08);
-field_assert!(SIZE_PLAYERSETTINGSNUM where CTitanSoul, m_playerSettingsNum == 0xa0c);
-field_assert!(SIZE_DOOMED where CTitanSoul, m_doomed == 0xa10);
-field_assert!(SIZE_INVALIDHEALTHBARENT where CTitanSoul, m_invalidHealthBarEnt == 0xa11);
-field_assert!(SIZE_BEJECTING where CTitanSoul, m_bEjecting == 0xa12);
-field_assert!(SIZE_ISVALIDRODEOTARGET where CTitanSoul, m_isValidRodeoTarget == 0xa13);
-field_assert!(SIZE_NEXTCORECHARGEAVAILABLE where CTitanSoul, m_nextCoreChargeAvailable == 0xa14);
-field_assert!(SIZE_CORECHARGEEXPIRETIME where CTitanSoul, m_coreChargeExpireTime == 0xa18);
-field_assert!(SIZE_CORECHARGESTARTTIME where CTitanSoul, m_coreChargeStartTime == 0xa1c);
-field_assert!(SIZE_COREUSEDURATION where CTitanSoul, m_coreUseDuration == 0xa20);
-field_assert!(SIZE_DAMAGECOMBOLATESTUPDATETIME where CTitanSoul, m_damageComboLatestUpdateTime == 0xa24);
-field_assert!(SIZE_DAMAGECOMBOSTARTHEALTH where CTitanSoul, m_damageComboStartHealth == 0xa28);
-field_assert!(SIZE_STATUSEFFECTSTIMEDTITANSOULNV where CTitanSoul, m_statusEffectsTimedTitanSoulNV == 0xa30);
-field_assert!(SIZE_STATUSEFFECTSENDLESSTITANSOULNV where CTitanSoul, m_statusEffectsEndlessTitanSoulNV == 0xb20);
-field_assert!(SIZE_TITAN where CTitanSoul, m_titan == 0xbc0);
+field_assert!(+ SIZE_TITANSOULSCRIPTNETDATA where CTitanSoul, m_titanSoulScriptNetData == 0x9d8);
+field_assert!(+ SIZE_DEFENSIVEPLACEMENT where CTitanSoul, m_defensivePlacement == 0x9dc);
+field_assert!(+ SIZE_LASTRODEOHITTIME where CTitanSoul, m_lastRodeoHitTime == 0xa04);
+field_assert!(+ SIZE_STANCE where CTitanSoul, m_stance == 0xa08);
+field_assert!(+ SIZE_PLAYERSETTINGSNUM where CTitanSoul, m_playerSettingsNum == 0xa0c);
+field_assert!(+ SIZE_DOOMED where CTitanSoul, m_doomed == 0xa10);
+field_assert!(+ SIZE_INVALIDHEALTHBARENT where CTitanSoul, m_invalidHealthBarEnt == 0xa11);
+field_assert!(+ SIZE_BEJECTING where CTitanSoul, m_bEjecting == 0xa12);
+field_assert!(+ SIZE_ISVALIDRODEOTARGET where CTitanSoul, m_isValidRodeoTarget == 0xa13);
+field_assert!(+ SIZE_NEXTCORECHARGEAVAILABLE where CTitanSoul, m_nextCoreChargeAvailable == 0xa14);
+field_assert!(+ SIZE_CORECHARGEEXPIRETIME where CTitanSoul, m_coreChargeExpireTime == 0xa18);
+field_assert!(+ SIZE_CORECHARGESTARTTIME where CTitanSoul, m_coreChargeStartTime == 0xa1c);
+field_assert!(+ SIZE_COREUSEDURATION where CTitanSoul, m_coreUseDuration == 0xa20);
+field_assert!(+ SIZE_DAMAGECOMBOLATESTUPDATETIME where CTitanSoul, m_damageComboLatestUpdateTime == 0xa24);
+field_assert!(+ SIZE_DAMAGECOMBOSTARTHEALTH where CTitanSoul, m_damageComboStartHealth == 0xa28);
+field_assert!(+ SIZE_STATUSEFFECTSTIMEDTITANSOULNV where CTitanSoul, m_statusEffectsTimedTitanSoulNV == 0xa30);
+field_assert!(+ SIZE_STATUSEFFECTSENDLESSTITANSOULNV where CTitanSoul, m_statusEffectsEndlessTitanSoulNV == 0xb20);
+field_assert!(+ SIZE_TITAN where CTitanSoul, m_titan == 0xbc0);
 
 impl DerefMut for CTitanSoul {
     fn deref_mut(&mut self) -> &mut Self::Target {

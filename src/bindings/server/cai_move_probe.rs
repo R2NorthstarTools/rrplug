@@ -26,12 +26,12 @@ pub struct CAI_MoveProbe {
 }
 
 size_assert!(CAI_MOVEPROBE where CAI_MoveProbe == 0x38);
-field_assert!(SIZE_BIGNORETRANSIENTENTITIES where CAI_MoveProbe, m_bIgnoreTransientEntities == 0x8);
-field_assert!(SIZE_VECFLOORPOINT where CAI_MoveProbe, m_vecFloorPoint == 0xc);
-field_assert!(SIZE_FLOORPOINTTIME where CAI_MoveProbe, m_floorPointTime == 0x18);
-field_assert!(SIZE_FLOORPOINTSTANDABLE where CAI_MoveProbe, m_floorPointStandable == 0x1c);
-field_assert!(SIZE_PTRACELISTDATA where CAI_MoveProbe, m_pTraceListData == 0x20);
-field_assert!(SIZE_HLASTPROBEBLOCKINGENT where CAI_MoveProbe, m_hLastProbeBlockingEnt == 0x28);
+field_assert!(+ SIZE_BIGNORETRANSIENTENTITIES where CAI_MoveProbe, m_bIgnoreTransientEntities == 0x8);
+field_assert!(+ SIZE_VECFLOORPOINT where CAI_MoveProbe, m_vecFloorPoint == 0xc);
+field_assert!(+ SIZE_FLOORPOINTTIME where CAI_MoveProbe, m_floorPointTime == 0x18);
+field_assert!(+ SIZE_FLOORPOINTSTANDABLE where CAI_MoveProbe, m_floorPointStandable == 0x1c);
+field_assert!(+ SIZE_PTRACELISTDATA where CAI_MoveProbe, m_pTraceListData == 0x20);
+field_assert!(+ SIZE_HLASTPROBEBLOCKINGENT where CAI_MoveProbe, m_hLastProbeBlockingEnt == 0x28);
 
 impl DerefMut for CAI_MoveProbe {
     fn deref_mut(&mut self) -> &mut Self::Target {

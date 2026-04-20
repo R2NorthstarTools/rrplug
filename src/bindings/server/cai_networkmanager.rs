@@ -24,15 +24,15 @@ pub struct CAI_NetworkManager {
 }
 
 size_assert!(CAI_NETWORKMANAGER where CAI_NetworkManager == 0xa50);
-field_assert!(M_PEDITOPS where CAI_NetworkManager, m_pEditOps == 0x9d8);
-field_assert!(M_PNETWORK where CAI_NetworkManager, m_pNetwork == 0x9e0);
-field_assert!(M_FINITALIZED where CAI_NetworkManager, m_fInitalized == 0x9e8);
-field_assert!(M_BDONTSAVEGRAPH where CAI_NetworkManager, m_bDontSaveGraph == 0x9e9);
-field_assert!(M_AINVERSION where CAI_NetworkManager, m_ainVersion == 0x9ec);
-field_assert!(M_AINMAPFILESCRC where CAI_NetworkManager, m_ainMapFilesCRC == 0x9f0);
-field_assert!(M_RUNTIMECREATEDAINMAPFILESCRC where CAI_NetworkManager, m_runtimeCreatedAINMapFilesCRC == 0x9f4);
-field_assert!(M_CALCULATEDRUNTIMEAINMAPFILESCRC where CAI_NetworkManager, m_calculatedRuntimeAINMapFilesCRC == 0x9f8);
-field_assert!(M_THREADEDBUILD where CAI_NetworkManager, m_ThreadedBuild == 0xa00);
+field_assert!(+ M_PEDITOPS where CAI_NetworkManager, m_pEditOps == 0x9d8);
+field_assert!(+ M_PNETWORK where CAI_NetworkManager, m_pNetwork == 0x9e0);
+field_assert!(+ M_FINITALIZED where CAI_NetworkManager, m_fInitalized == 0x9e8);
+field_assert!(+ M_BDONTSAVEGRAPH where CAI_NetworkManager, m_bDontSaveGraph == 0x9e9);
+field_assert!(+ M_AINVERSION where CAI_NetworkManager, m_ainVersion == 0x9ec);
+field_assert!(+ M_AINMAPFILESCRC where CAI_NetworkManager, m_ainMapFilesCRC == 0x9f0);
+field_assert!(+ M_RUNTIMECREATEDAINMAPFILESCRC where CAI_NetworkManager, m_runtimeCreatedAINMapFilesCRC == 0x9f4);
+field_assert!(+ M_CALCULATEDRUNTIMEAINMAPFILESCRC where CAI_NetworkManager, m_calculatedRuntimeAINMapFilesCRC == 0x9f8);
+field_assert!(+ M_THREADEDBUILD where CAI_NetworkManager, m_ThreadedBuild == 0xa00);
 
 impl DerefMut for CAI_NetworkManager {
     fn deref_mut(&mut self) -> &mut Self::Target {

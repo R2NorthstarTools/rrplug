@@ -27,19 +27,19 @@ pub struct CAI_DynamicLink {
 }
 
 size_assert!(CAI_DYNAMICLINK where CAI_DynamicLink == 0xa18);
-field_assert!(PNEXTDYNAMICLINK where CAI_DynamicLink, m_pNextDynamicLink == 0x9d8);
-field_assert!(NSRCEDITID where CAI_DynamicLink, m_nSrcEditID == 0x9e0);
-field_assert!(NDESTEDITID where CAI_DynamicLink, m_nDestEditID == 0x9e4);
-field_assert!(NSRCID where CAI_DynamicLink, m_nSrcID == 0x9e8);
-field_assert!(NDESTID where CAI_DynamicLink, m_nDestID == 0x9ec);
-field_assert!(NLINKSTATE where CAI_DynamicLink, m_nLinkState == 0x9f0);
-field_assert!(STRALLOWUSE where CAI_DynamicLink, m_strAllowUse == 0x9f8);
-field_assert!(BINVERTALLOW where CAI_DynamicLink, m_bInvertAllow == 0xa00);
-field_assert!(BPRECISEMOVEMENT where CAI_DynamicLink, m_bPreciseMovement == 0xa01);
-field_assert!(BFIXEDUPIDS where CAI_DynamicLink, m_bFixedUpIds == 0xa02);
-field_assert!(BNOTSAVED where CAI_DynamicLink, m_bNotSaved == 0xa03);
-field_assert!(NLINKTYPE where CAI_DynamicLink, m_nLinkType == 0xa04);
-field_assert!(NPRIORITY where CAI_DynamicLink, m_nPriority == 0xa08);
+field_assert!(+ PNEXTDYNAMICLINK where CAI_DynamicLink, m_pNextDynamicLink == 0x9d8);
+field_assert!(+ NSRCEDITID where CAI_DynamicLink, m_nSrcEditID == 0x9e0);
+field_assert!(+ NDESTEDITID where CAI_DynamicLink, m_nDestEditID == 0x9e4);
+field_assert!(+ NSRCID where CAI_DynamicLink, m_nSrcID == 0x9e8);
+field_assert!(+ NDESTID where CAI_DynamicLink, m_nDestID == 0x9ec);
+field_assert!(+ NLINKSTATE where CAI_DynamicLink, m_nLinkState == 0x9f0);
+field_assert!(+ STRALLOWUSE where CAI_DynamicLink, m_strAllowUse == 0x9f8);
+field_assert!(+ BINVERTALLOW where CAI_DynamicLink, m_bInvertAllow == 0xa00);
+field_assert!(+ BPRECISEMOVEMENT where CAI_DynamicLink, m_bPreciseMovement == 0xa01);
+field_assert!(+ BFIXEDUPIDS where CAI_DynamicLink, m_bFixedUpIds == 0xa02);
+field_assert!(+ BNOTSAVED where CAI_DynamicLink, m_bNotSaved == 0xa03);
+field_assert!(+ NLINKTYPE where CAI_DynamicLink, m_nLinkType == 0xa04);
+field_assert!(+ NPRIORITY where CAI_DynamicLink, m_nPriority == 0xa08);
 
 impl DerefMut for CAI_DynamicLink {
     fn deref_mut(&mut self) -> &mut Self::Target {

@@ -34,25 +34,25 @@ pub struct CNPC_SentryTurret {
 }
 
 size_assert!(CNPC_SENTRYTURRET where CNPC_SentryTurret == 0x2178);
-field_assert!(M_TURRETSTATE where CNPC_SentryTurret, m_turretState == 0x20a8);
-field_assert!(M_KILLCOUNT where CNPC_SentryTurret, m_killCount == 0x20ac);
-field_assert!(M_TITANKILLCOUNT where CNPC_SentryTurret, m_titanKillCount == 0x20b0);
-field_assert!(M_EYEATTACH where CNPC_SentryTurret, m_eyeAttach == 0x20b4);
-field_assert!(M_CONTROLPANEL where CNPC_SentryTurret, m_controlPanel == 0x20b8);
-field_assert!(M_BACTIVE where CNPC_SentryTurret, m_bActive == 0x20bc);
-field_assert!(M_BENABLED where CNPC_SentryTurret, m_bEnabled == 0x20bd);
-field_assert!(M_BPITCHSOUND where CNPC_SentryTurret, m_bPitchSound == 0x20be);
-field_assert!(M_BYAWSOUND where CNPC_SentryTurret, m_bYawSound == 0x20bf);
-field_assert!(M_FIRSTMUZZLEATTACHMENT where CNPC_SentryTurret, m_firstMuzzleAttachment == 0x20c0);
-field_assert!(M_NUMMUZZLES where CNPC_SentryTurret, m_numMuzzles == 0x20c4);
-field_assert!(M_CURRENTMUZZLE where CNPC_SentryTurret, m_currentMuzzle == 0x20c8);
-field_assert!(M_VECGOALANGLES where CNPC_SentryTurret, m_vecGoalAngles == 0x20cc);
-field_assert!(M_VECLASTENEMYANGLES where CNPC_SentryTurret, m_vecLastEnemyAngles == 0x20d8);
-field_assert!(M_VECLASTDIR where CNPC_SentryTurret, m_vecLastDir == 0x20e4);
-field_assert!(M_ONDEPLOY where CNPC_SentryTurret, m_OnDeploy == 0x20f0);
-field_assert!(M_ONRETIRE where CNPC_SentryTurret, m_OnRetire == 0x2118);
-field_assert!(M_ONTURRETSTATECHANGE where CNPC_SentryTurret, m_OnTurretStateChange == 0x2140);
-field_assert!(M_MAXYAW where CNPC_SentryTurret, m_MaxYaw == 0x2168);
+field_assert!(+ M_TURRETSTATE where CNPC_SentryTurret, m_turretState == 0x20a8);
+field_assert!(+ M_KILLCOUNT where CNPC_SentryTurret, m_killCount == 0x20ac);
+field_assert!(+ M_TITANKILLCOUNT where CNPC_SentryTurret, m_titanKillCount == 0x20b0);
+field_assert!(+ M_EYEATTACH where CNPC_SentryTurret, m_eyeAttach == 0x20b4);
+field_assert!(+ M_CONTROLPANEL where CNPC_SentryTurret, m_controlPanel == 0x20b8);
+field_assert!(+ M_BACTIVE where CNPC_SentryTurret, m_bActive == 0x20bc);
+field_assert!(+ M_BENABLED where CNPC_SentryTurret, m_bEnabled == 0x20bd);
+field_assert!(+ M_BPITCHSOUND where CNPC_SentryTurret, m_bPitchSound == 0x20be);
+field_assert!(+ M_BYAWSOUND where CNPC_SentryTurret, m_bYawSound == 0x20bf);
+field_assert!(+ M_FIRSTMUZZLEATTACHMENT where CNPC_SentryTurret, m_firstMuzzleAttachment == 0x20c0);
+field_assert!(+ M_NUMMUZZLES where CNPC_SentryTurret, m_numMuzzles == 0x20c4);
+field_assert!(+ M_CURRENTMUZZLE where CNPC_SentryTurret, m_currentMuzzle == 0x20c8);
+field_assert!(+ M_VECGOALANGLES where CNPC_SentryTurret, m_vecGoalAngles == 0x20cc);
+field_assert!(+ M_VECLASTENEMYANGLES where CNPC_SentryTurret, m_vecLastEnemyAngles == 0x20d8);
+field_assert!(+ M_VECLASTDIR where CNPC_SentryTurret, m_vecLastDir == 0x20e4);
+field_assert!(+ M_ONDEPLOY where CNPC_SentryTurret, m_OnDeploy == 0x20f0);
+field_assert!(+ M_ONRETIRE where CNPC_SentryTurret, m_OnRetire == 0x2118);
+field_assert!(+ M_ONTURRETSTATECHANGE where CNPC_SentryTurret, m_OnTurretStateChange == 0x2140);
+field_assert!(+ M_MAXYAW where CNPC_SentryTurret, m_MaxYaw == 0x2168);
 
 impl DerefMut for CNPC_SentryTurret {
     fn deref_mut(&mut self) -> &mut Self::Target {

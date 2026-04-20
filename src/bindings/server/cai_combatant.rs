@@ -37,23 +37,23 @@ pub struct CAI_Combatant {
 }
 
 size_assert!(CAI_COMBATANT  where CAI_Combatant == 0x2500);
-field_assert!(SIZE_FLNEXTPAINSOUNDTIME  where CAI_Combatant, m_flNextPainSoundTime == 0x21e8);
-field_assert!(SIZE_FLNEXTALERTSOUNDTIME  where CAI_Combatant, m_flNextAlertSoundTime == 0x21ec);
-field_assert!(SIZE_FLNEXTLOSTSOUNDTIME  where CAI_Combatant, m_flNextLostSoundTime == 0x21f0);
-field_assert!(SIZE_FLALERTPATROLTIME  where CAI_Combatant, m_flAlertPatrolTime == 0x21f4);
-field_assert!(SIZE_FLNEXTPIEOFFTIME  where CAI_Combatant, m_flNextPieOffTime == 0x21f8);
-field_assert!(SIZE_ASSAULTBEHAVIOR  where CAI_Combatant, m_AssaultBehavior == 0x2200);
-field_assert!(SIZE_FOLLOWBEHAVIOR  where CAI_Combatant, m_FollowBehavior == 0x22e8);
-field_assert!(SIZE_SEARCHBEHAVIOR  where CAI_Combatant, m_SearchBehavior == 0x2430);
-field_assert!(SIZE_PATROLBEHAVIOR  where CAI_Combatant, m_PatrolBehavior == 0x2480);
-field_assert!(SIZE_SNIPINGSTATE  where CAI_Combatant, m_snipingState == 0x24d0);
-field_assert!(SIZE_SNIPINGRETRY  where CAI_Combatant, m_snipingRetry == 0x24d4);
-field_assert!(SIZE_SNIPERSHOTS  where CAI_Combatant, m_sniperShots == 0x24d8);
-field_assert!(SIZE_MAXSNIPINGRETRY  where CAI_Combatant, m_maxSnipingRetry == 0x24dc);
-field_assert!(SIZE_MAXSNIPERSHOTS  where CAI_Combatant, m_maxSniperShots == 0x24e0);
-field_assert!(SIZE_VECALTFIRETARGET  where CAI_Combatant, m_vecAltFireTarget == 0x24e4);
-field_assert!(SIZE_ITACTICALVARIANT  where CAI_Combatant, m_iTacticalVariant == 0x24f0);
-field_assert!(SIZE_IPATHFINDINGVARIANT  where CAI_Combatant, m_iPathfindingVariant == 0x24f4);
+field_assert!(+ SIZE_FLNEXTPAINSOUNDTIME  where CAI_Combatant, m_flNextPainSoundTime == 0x21e8);
+field_assert!(+ SIZE_FLNEXTALERTSOUNDTIME  where CAI_Combatant, m_flNextAlertSoundTime == 0x21ec);
+field_assert!(+ SIZE_FLNEXTLOSTSOUNDTIME  where CAI_Combatant, m_flNextLostSoundTime == 0x21f0);
+field_assert!(+ SIZE_FLALERTPATROLTIME  where CAI_Combatant, m_flAlertPatrolTime == 0x21f4);
+field_assert!(+ SIZE_FLNEXTPIEOFFTIME  where CAI_Combatant, m_flNextPieOffTime == 0x21f8);
+field_assert!(+ SIZE_ASSAULTBEHAVIOR  where CAI_Combatant, m_AssaultBehavior == 0x2200);
+field_assert!(+ SIZE_FOLLOWBEHAVIOR  where CAI_Combatant, m_FollowBehavior == 0x22e8);
+field_assert!(+ SIZE_SEARCHBEHAVIOR  where CAI_Combatant, m_SearchBehavior == 0x2430);
+field_assert!(+ SIZE_PATROLBEHAVIOR  where CAI_Combatant, m_PatrolBehavior == 0x2480);
+field_assert!(+ SIZE_SNIPINGSTATE  where CAI_Combatant, m_snipingState == 0x24d0);
+field_assert!(+ SIZE_SNIPINGRETRY  where CAI_Combatant, m_snipingRetry == 0x24d4);
+field_assert!(+ SIZE_SNIPERSHOTS  where CAI_Combatant, m_sniperShots == 0x24d8);
+field_assert!(+ SIZE_MAXSNIPINGRETRY  where CAI_Combatant, m_maxSnipingRetry == 0x24dc);
+field_assert!(+ SIZE_MAXSNIPERSHOTS  where CAI_Combatant, m_maxSniperShots == 0x24e0);
+field_assert!(+ SIZE_VECALTFIRETARGET  where CAI_Combatant, m_vecAltFireTarget == 0x24e4);
+field_assert!(+ SIZE_ITACTICALVARIANT  where CAI_Combatant, m_iTacticalVariant == 0x24f0);
+field_assert!(+ SIZE_IPATHFINDINGVARIANT  where CAI_Combatant, m_iPathfindingVariant == 0x24f4);
 
 impl DerefMut for CAI_Combatant {
     fn deref_mut(&mut self) -> &mut Self::Target {

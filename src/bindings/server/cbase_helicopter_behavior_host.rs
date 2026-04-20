@@ -11,7 +11,7 @@ pub struct CBaseHelicopterBehaviorHost {
 }
 
 size_assert!(A where CBaseHelicopterBehaviorHost == 0x2198);
-field_assert!(B where CBaseHelicopterBehaviorHost, m_bCalledBehaviorSelectSchedule == 0x2188);
+field_assert!(+ B where CBaseHelicopterBehaviorHost, m_bCalledBehaviorSelectSchedule == 0x2188);
 
 impl DerefMut for CBaseHelicopterBehaviorHost {
     fn deref_mut(&mut self) -> &mut Self::Target {

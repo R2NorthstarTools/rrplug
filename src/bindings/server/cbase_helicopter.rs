@@ -39,25 +39,25 @@ pub struct CBaseHelicopter {
 }
 
 size_assert!(CBASEHELICOPTER where CBaseHelicopter == 0x24e0);
-field_assert!(M_FLFORCE where CBaseHelicopter, m_flForce == 0x2190);
-field_assert!(M_VECANGACCELERATION where CBaseHelicopter, m_vecAngAcceleration == 0x2194);
-field_assert!(M_FMAXANGACCELERATION where CBaseHelicopter, m_fMaxAngAcceleration == 0x21a0);
-field_assert!(M_VMAXANGVELOCITY where CBaseHelicopter, m_vMaxAngVelocity == 0x21a4);
-field_assert!(M_VECDESIREDFACEDIR where CBaseHelicopter, m_vecDesiredFaceDir == 0x21b0);
-field_assert!(M_DISTTONEXT where CBaseHelicopter, m_distToNext == 0x21bc);
-field_assert!(M_FLLASTSEEN where CBaseHelicopter, m_flLastSeen == 0x21c0);
-field_assert!(M_FLPREVSEEN where CBaseHelicopter, m_flPrevSeen == 0x21c4);
-field_assert!(M_VECTARGETPOSITION where CBaseHelicopter, m_vecTargetPosition == 0x21c8);
-field_assert!(M_FLGOALSPEED where CBaseHelicopter, m_flGoalSpeed == 0x21d4);
-field_assert!(M_FLRANDOMOFFSETTIME where CBaseHelicopter, m_flRandomOffsetTime == 0x21d8);
-field_assert!(M_VECRANDOMOFFSET where CBaseHelicopter, m_vecRandomOffset == 0x21dc);
-field_assert!(M_FACINGENTITY where CBaseHelicopter, m_facingEntity == 0x21e8);
-field_assert!(M_ASSAULTBEHAVIOR where CBaseHelicopter, m_AssaultBehavior == 0x21f0);
-field_assert!(M_FOLLOWBEHAVIOR where CBaseHelicopter, m_FollowBehavior == 0x22d8);
-field_assert!(M_SEARCHBEHAVIOR where CBaseHelicopter, m_SearchBehavior == 0x2420);
-field_assert!(M_PATROLBEHAVIOR where CBaseHelicopter, m_PatrolBehavior == 0x2470);
-field_assert!(M_CULLBOXMINS where CBaseHelicopter, m_cullBoxMins == 0x24c0);
-field_assert!(M_CULLBOXMAXS where CBaseHelicopter, m_cullBoxMaxs == 0x24cc);
+field_assert!(+ M_FLFORCE where CBaseHelicopter, m_flForce == 0x2190);
+field_assert!(+ M_VECANGACCELERATION where CBaseHelicopter, m_vecAngAcceleration == 0x2194);
+field_assert!(+ M_FMAXANGACCELERATION where CBaseHelicopter, m_fMaxAngAcceleration == 0x21a0);
+field_assert!(+ M_VMAXANGVELOCITY where CBaseHelicopter, m_vMaxAngVelocity == 0x21a4);
+field_assert!(+ M_VECDESIREDFACEDIR where CBaseHelicopter, m_vecDesiredFaceDir == 0x21b0);
+field_assert!(+ M_DISTTONEXT where CBaseHelicopter, m_distToNext == 0x21bc);
+field_assert!(+ M_FLLASTSEEN where CBaseHelicopter, m_flLastSeen == 0x21c0);
+field_assert!(+ M_FLPREVSEEN where CBaseHelicopter, m_flPrevSeen == 0x21c4);
+field_assert!(+ M_VECTARGETPOSITION where CBaseHelicopter, m_vecTargetPosition == 0x21c8);
+field_assert!(+ M_FLGOALSPEED where CBaseHelicopter, m_flGoalSpeed == 0x21d4);
+field_assert!(+ M_FLRANDOMOFFSETTIME where CBaseHelicopter, m_flRandomOffsetTime == 0x21d8);
+field_assert!(+ M_VECRANDOMOFFSET where CBaseHelicopter, m_vecRandomOffset == 0x21dc);
+field_assert!(+ M_FACINGENTITY where CBaseHelicopter, m_facingEntity == 0x21e8);
+field_assert!(+ M_ASSAULTBEHAVIOR where CBaseHelicopter, m_AssaultBehavior == 0x21f0);
+field_assert!(+ M_FOLLOWBEHAVIOR where CBaseHelicopter, m_FollowBehavior == 0x22d8);
+field_assert!(+ M_SEARCHBEHAVIOR where CBaseHelicopter, m_SearchBehavior == 0x2420);
+field_assert!(+ M_PATROLBEHAVIOR where CBaseHelicopter, m_PatrolBehavior == 0x2470);
+field_assert!(+ M_CULLBOXMINS where CBaseHelicopter, m_cullBoxMins == 0x24c0);
+field_assert!(+ M_CULLBOXMAXS where CBaseHelicopter, m_cullBoxMaxs == 0x24cc);
 
 impl DerefMut for CBaseHelicopter {
     fn deref_mut(&mut self) -> &mut Self::Target {

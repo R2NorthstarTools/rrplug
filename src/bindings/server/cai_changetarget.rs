@@ -14,7 +14,7 @@ pub struct CAI_ChangeTarget {
 }
 
 size_assert!(A where CAI_ChangeTarget == 0x9e8);
-field_assert!(B where CAI_ChangeTarget, m_iszNewTarget == 0x9d8);
+field_assert!(+ B where CAI_ChangeTarget, m_iszNewTarget == 0x9d8);
 
 impl DerefMut for CAI_ChangeTarget {
     fn deref_mut(&mut self) -> &mut Self::Target {

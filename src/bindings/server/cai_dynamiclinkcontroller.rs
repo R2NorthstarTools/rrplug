@@ -20,12 +20,12 @@ pub struct CAI_DynamicLinkController {
 }
 
 size_assert!(CAI_DYNAMICLINKCONTROLLER where CAI_DynamicLinkController == 0xa18);
-field_assert!(SIZE_CONTROLLEDLINKS where CAI_DynamicLinkController, m_ControlledLinks == 0x9d8);
-field_assert!(SIZE_NLINKSTATE where CAI_DynamicLinkController, m_nLinkState == 0x9f8);
-field_assert!(SIZE_STRALLOWUSE where CAI_DynamicLinkController, m_strAllowUse == 0xa00);
-field_assert!(SIZE_NPRIORITY where CAI_DynamicLinkController, m_nPriority == 0xa08);
-field_assert!(SIZE_BINVERTALLOW where CAI_DynamicLinkController, m_bInvertAllow == 0xa0c);
-field_assert!(SIZE_BUSEAIRLINKRADIUS where CAI_DynamicLinkController, m_bUseAirLinkRadius == 0xa0d);
+field_assert!(+ SIZE_CONTROLLEDLINKS where CAI_DynamicLinkController, m_ControlledLinks == 0x9d8);
+field_assert!(+ SIZE_NLINKSTATE where CAI_DynamicLinkController, m_nLinkState == 0x9f8);
+field_assert!(+ SIZE_STRALLOWUSE where CAI_DynamicLinkController, m_strAllowUse == 0xa00);
+field_assert!(+ SIZE_NPRIORITY where CAI_DynamicLinkController, m_nPriority == 0xa08);
+field_assert!(+ SIZE_BINVERTALLOW where CAI_DynamicLinkController, m_bInvertAllow == 0xa0c);
+field_assert!(+ SIZE_BUSEAIRLINKRADIUS where CAI_DynamicLinkController, m_bUseAirLinkRadius == 0xa0d);
 
 impl DerefMut for CAI_DynamicLinkController {
     fn deref_mut(&mut self) -> &mut Self::Target {

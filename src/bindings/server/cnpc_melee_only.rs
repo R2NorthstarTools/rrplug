@@ -18,8 +18,8 @@ pub struct CNPC_MeleeOnly {
 }
 
 size_assert!(CNPC_MELEEONLY where CNPC_MeleeOnly == 0x2420);
-field_assert!(M_ASSAULTBEHAVIOR where CNPC_MeleeOnly, m_AssaultBehavior == 0x21e8);
-field_assert!(M_FOLLOWBEHAVIOR where CNPC_MeleeOnly, m_FollowBehavior == 0x22d0);
+field_assert!(+ M_ASSAULTBEHAVIOR where CNPC_MeleeOnly, m_AssaultBehavior == 0x21e8);
+field_assert!(+ M_FOLLOWBEHAVIOR where CNPC_MeleeOnly, m_FollowBehavior == 0x22d0);
 
 impl DerefMut for CNPC_MeleeOnly {
     fn deref_mut(&mut self) -> &mut Self::Target {

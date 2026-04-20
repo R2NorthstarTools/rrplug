@@ -32,22 +32,22 @@ pub struct CAI_Pathfinder {
 }
 
 size_assert!(CAI_PATHFINDER where CAI_Pathfinder == 0x180);
-field_assert!(M_TRIDEBUGOVERLAY where CAI_Pathfinder, m_TriDebugOverlay == 0x8);
-field_assert!(M_FLLIMITDISTFACTOR where CAI_Pathfinder, m_flLimitDistFactor == 0x10);
-field_assert!(M_FLLASTSTALELINKCHECKTIME where CAI_Pathfinder, m_flLastStaleLinkCheckTime == 0x14);
-field_assert!(M_BIGNORESTALELINKS where CAI_Pathfinder, m_bIgnoreStaleLinks == 0x18);
-field_assert!(M_PNETWORK where CAI_Pathfinder, m_pNetwork == 0x20);
-field_assert!(M_NAVQUERY where CAI_Pathfinder, m_navQuery == 0x28);
-field_assert!(M_NAVFILTER where CAI_Pathfinder, m_navFilter == 0x88);
-field_assert!(M_USECLUSTEREXCLUSIONS where CAI_Pathfinder, m_useClusterExclusions == 0x110);
-field_assert!(M_CLUSTERPATHMAXDETOURBASE where CAI_Pathfinder, m_clusterPathMaxDetourBase == 0x114);
-field_assert!(M_CLUSTERPATHMAXDETOURMULTIPLIER where CAI_Pathfinder, m_clusterPathMaxDetourMultiplier == 0x118);
-field_assert!(M_EXCLUDEDCLUSTERNODES where CAI_Pathfinder, m_excludedClusterNodes == 0x120);
-field_assert!(M_EXCLUDEDCLUSTERLINKS where CAI_Pathfinder, m_excludedClusterLinks == 0x140);
-field_assert!(M_PCLUSTERPATH where CAI_Pathfinder, m_pClusterPath == 0x160);
-field_assert!(M_PCLUSTERNOEXCLUSIONPATH where CAI_Pathfinder, m_pClusterNoExclusionPath == 0x168);
-field_assert!(M_BUILDFLAGS where CAI_Pathfinder, m_buildFlags == 0x170);
-field_assert!(M_FAILREASON where CAI_Pathfinder, m_failReason == 0x174);
+field_assert!(+ M_TRIDEBUGOVERLAY where CAI_Pathfinder, m_TriDebugOverlay == 0x8);
+field_assert!(+ M_FLLIMITDISTFACTOR where CAI_Pathfinder, m_flLimitDistFactor == 0x10);
+field_assert!(+ M_FLLASTSTALELINKCHECKTIME where CAI_Pathfinder, m_flLastStaleLinkCheckTime == 0x14);
+field_assert!(+ M_BIGNORESTALELINKS where CAI_Pathfinder, m_bIgnoreStaleLinks == 0x18);
+field_assert!(+ M_PNETWORK where CAI_Pathfinder, m_pNetwork == 0x20);
+field_assert!(+ M_NAVQUERY where CAI_Pathfinder, m_navQuery == 0x28);
+field_assert!(+ M_NAVFILTER where CAI_Pathfinder, m_navFilter == 0x88);
+field_assert!(+ M_USECLUSTEREXCLUSIONS where CAI_Pathfinder, m_useClusterExclusions == 0x110);
+field_assert!(+ M_CLUSTERPATHMAXDETOURBASE where CAI_Pathfinder, m_clusterPathMaxDetourBase == 0x114);
+field_assert!(+ M_CLUSTERPATHMAXDETOURMULTIPLIER where CAI_Pathfinder, m_clusterPathMaxDetourMultiplier == 0x118);
+field_assert!(+ M_EXCLUDEDCLUSTERNODES where CAI_Pathfinder, m_excludedClusterNodes == 0x120);
+field_assert!(+ M_EXCLUDEDCLUSTERLINKS where CAI_Pathfinder, m_excludedClusterLinks == 0x140);
+field_assert!(+ M_PCLUSTERPATH where CAI_Pathfinder, m_pClusterPath == 0x160);
+field_assert!(+ M_PCLUSTERNOEXCLUSIONPATH where CAI_Pathfinder, m_pClusterNoExclusionPath == 0x168);
+field_assert!(+ M_BUILDFLAGS where CAI_Pathfinder, m_buildFlags == 0x170);
+field_assert!(+ M_FAILREASON where CAI_Pathfinder, m_failReason == 0x174);
 
 impl DerefMut for CAI_Pathfinder {
     fn deref_mut(&mut self) -> &mut Self::Target {

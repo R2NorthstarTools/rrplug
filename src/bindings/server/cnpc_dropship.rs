@@ -23,15 +23,15 @@ pub struct CNPC_Dropship {
 }
 
 size_assert!(CNPC_DROPSHIP where CNPC_Dropship == 0x2508);
-field_assert!(M_FLTIMETAKEOFF where CNPC_Dropship, m_flTimeTakeOff == 0x24d8);
-field_assert!(M_FLTIMENEXTATTACK where CNPC_Dropship, m_flTimeNextAttack == 0x24dc);
-field_assert!(M_FLLASTTIME where CNPC_Dropship, m_flLastTime == 0x24e0);
-field_assert!(M_IDROPSTATE where CNPC_Dropship, m_iDropState == 0x24e4);
-field_assert!(M_ILANDSTATE where CNPC_Dropship, m_iLandState == 0x24e8);
-field_assert!(M_EXISTPITCH where CNPC_Dropship, m_existPitch == 0x24ec);
-field_assert!(M_EXISTROLL where CNPC_Dropship, m_existRoll == 0x24f0);
-field_assert!(M_BJETWAKEFXENABLED where CNPC_Dropship, m_bJetWakeFXEnabled == 0x24f4);
-field_assert!(M_HLANDTARGET where CNPC_Dropship, m_hLandTarget == 0x24f8);
+field_assert!(+ M_FLTIMETAKEOFF where CNPC_Dropship, m_flTimeTakeOff == 0x24d8);
+field_assert!(+ M_FLTIMENEXTATTACK where CNPC_Dropship, m_flTimeNextAttack == 0x24dc);
+field_assert!(+ M_FLLASTTIME where CNPC_Dropship, m_flLastTime == 0x24e0);
+field_assert!(+ M_IDROPSTATE where CNPC_Dropship, m_iDropState == 0x24e4);
+field_assert!(+ M_ILANDSTATE where CNPC_Dropship, m_iLandState == 0x24e8);
+field_assert!(+ M_EXISTPITCH where CNPC_Dropship, m_existPitch == 0x24ec);
+field_assert!(+ M_EXISTROLL where CNPC_Dropship, m_existRoll == 0x24f0);
+field_assert!(+ M_BJETWAKEFXENABLED where CNPC_Dropship, m_bJetWakeFXEnabled == 0x24f4);
+field_assert!(+ M_HLANDTARGET where CNPC_Dropship, m_hLandTarget == 0x24f8);
 
 impl DerefMut for CNPC_Dropship {
     fn deref_mut(&mut self) -> &mut Self::Target {

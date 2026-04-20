@@ -11,7 +11,7 @@ pub struct CAI_TestHull {
 }
 
 size_assert!(A where CAI_TestHull == 0x20b8);
-field_assert!(B where CAI_TestHull, bInUse == 0x20a8);
+field_assert!(+ B where CAI_TestHull, bInUse == 0x20a8);
 
 impl DerefMut for CAI_TestHull {
     fn deref_mut(&mut self) -> &mut Self::Target {

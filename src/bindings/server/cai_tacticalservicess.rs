@@ -26,15 +26,15 @@ pub struct CAI_TacticalServices {
 }
 
 size_assert!(CAI_TACTICALSERVICES where CAI_TacticalServices == 0x50);
-field_assert!(LOSSEARCHDATAINDEX where CAI_TacticalServices, m_LOSSearchDataIndex == 0x8);
-field_assert!(STRAFEACTIVITY where CAI_TacticalServices, m_strafeActivity == 0xc);
-field_assert!(FIRSTITERATIONOFFINDLOS where CAI_TacticalServices, m_firstIterationOfFindLos == 0x10);
-field_assert!(PNETWORK where CAI_TacticalServices, m_pNetwork == 0x18);
-field_assert!(PPATHFINDER where CAI_TacticalServices, m_pPathfinder == 0x20);
-field_assert!(PREVLOSCHECKSUCCESS where CAI_TacticalServices, m_prevLOSCheckSuccess == 0x28);
-field_assert!(PREVLOSCHECKTIME where CAI_TacticalServices, m_prevLOSCheckTime == 0x2c);
-field_assert!(PREVTHREATPOS where CAI_TacticalServices, m_prevThreatPos == 0x30);
-field_assert!(PREVSEARCHPOS where CAI_TacticalServices, m_prevSearchPos == 0x3c);
+field_assert!(+ LOSSEARCHDATAINDEX where CAI_TacticalServices, m_LOSSearchDataIndex == 0x8);
+field_assert!(+ STRAFEACTIVITY where CAI_TacticalServices, m_strafeActivity == 0xc);
+field_assert!(+ FIRSTITERATIONOFFINDLOS where CAI_TacticalServices, m_firstIterationOfFindLos == 0x10);
+field_assert!(+ PNETWORK where CAI_TacticalServices, m_pNetwork == 0x18);
+field_assert!(+ PPATHFINDER where CAI_TacticalServices, m_pPathfinder == 0x20);
+field_assert!(+ PREVLOSCHECKSUCCESS where CAI_TacticalServices, m_prevLOSCheckSuccess == 0x28);
+field_assert!(+ PREVLOSCHECKTIME where CAI_TacticalServices, m_prevLOSCheckTime == 0x2c);
+field_assert!(+ PREVTHREATPOS where CAI_TacticalServices, m_prevThreatPos == 0x30);
+field_assert!(+ PREVSEARCHPOS where CAI_TacticalServices, m_prevSearchPos == 0x3c);
 
 impl DerefMut for CAI_TacticalServices {
     fn deref_mut(&mut self) -> &mut Self::Target {

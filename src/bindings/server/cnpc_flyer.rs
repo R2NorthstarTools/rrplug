@@ -11,7 +11,7 @@ pub struct CNPC_Flyer {
 }
 
 size_assert!(CNPC_FLYER where CNPC_Flyer == 0x2460);
-field_assert!( ONGROUND where CNPC_Flyer, m_onGround == 0x2450);
+field_assert!(+ ONGROUND where CNPC_Flyer, m_onGround == 0x2450);
 
 impl DerefMut for CNPC_Flyer {
     fn deref_mut(&mut self) -> &mut Self::Target {

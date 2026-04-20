@@ -51,22 +51,22 @@ pub struct CAI_Motor {
 }
 
 size_assert!(CAI_MOTOR where CAI_Motor == 0x100);
-field_assert!(CAI_PROXYMOVEMENTSINK where CAI_Motor, CAI_ProxyMovementSink == 0x8);
-field_assert!(STEERDIRECTION where CAI_Motor, m_steerDirection == 0x18);
-field_assert!(STRAIGHTPATHCACHED where CAI_Motor, m_straightPathCached == 0x24);
-field_assert!(PUSHEDVEL where CAI_Motor, m_pushedVel == 0x84);
-field_assert!(FLMOVEINTERVAL where CAI_Motor, m_flMoveInterval == 0x90);
-field_assert!(IDEALYAW where CAI_Motor, m_IdealYaw == 0x94);
-field_assert!(FMOVEYAW where CAI_Motor, m_fMoveYaw == 0x98);
-field_assert!(VECVELOCITY where CAI_Motor, m_vecVelocity == 0x9c);
-field_assert!(VECANGULARVELOCITY where CAI_Motor, m_vecAngularVelocity == 0xa8);
-field_assert!(BMOVING where CAI_Motor, m_bMoving == 0xb4);
-field_assert!(MOVESPEEDSCALE where CAI_Motor, m_moveSpeedScale == 0xb8);
-field_assert!(MOVESPEEDSCALESCRIPT where CAI_Motor, m_moveSpeedScaleScript == 0xbc);
-field_assert!(NDISMOUNTSEQUENCE where CAI_Motor, m_nDismountSequence == 0xc0);
-field_assert!(VECDISMOUNT where CAI_Motor, m_vecDismount == 0xc4);
-field_assert!(FACINGQUEUE where CAI_Motor, m_facingQueue == 0xd0);
-field_assert!(PMOVEPROBE where CAI_Motor, m_pMoveProbe == 0xf0);
+field_assert!(+ CAI_PROXYMOVEMENTSINK where CAI_Motor, CAI_ProxyMovementSink == 0x8);
+field_assert!(+ STEERDIRECTION where CAI_Motor, m_steerDirection == 0x18);
+field_assert!(+ STRAIGHTPATHCACHED where CAI_Motor, m_straightPathCached == 0x24);
+field_assert!(+ PUSHEDVEL where CAI_Motor, m_pushedVel == 0x84);
+field_assert!(+ FLMOVEINTERVAL where CAI_Motor, m_flMoveInterval == 0x90);
+field_assert!(+ IDEALYAW where CAI_Motor, m_IdealYaw == 0x94);
+field_assert!(+ FMOVEYAW where CAI_Motor, m_fMoveYaw == 0x98);
+field_assert!(+ VECVELOCITY where CAI_Motor, m_vecVelocity == 0x9c);
+field_assert!(+ VECANGULARVELOCITY where CAI_Motor, m_vecAngularVelocity == 0xa8);
+field_assert!(+ BMOVING where CAI_Motor, m_bMoving == 0xb4);
+field_assert!(+ MOVESPEEDSCALE where CAI_Motor, m_moveSpeedScale == 0xb8);
+field_assert!(+ MOVESPEEDSCALESCRIPT where CAI_Motor, m_moveSpeedScaleScript == 0xbc);
+field_assert!(+ NDISMOUNTSEQUENCE where CAI_Motor, m_nDismountSequence == 0xc0);
+field_assert!(+ VECDISMOUNT where CAI_Motor, m_vecDismount == 0xc4);
+field_assert!(+ FACINGQUEUE where CAI_Motor, m_facingQueue == 0xd0);
+field_assert!(+ PMOVEPROBE where CAI_Motor, m_pMoveProbe == 0xf0);
 
 impl DerefMut for CAI_Motor {
     fn deref_mut(&mut self) -> &mut Self::Target {

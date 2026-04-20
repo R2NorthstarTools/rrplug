@@ -34,20 +34,20 @@ pub struct CAI_BaseFlyingBot {
 }
 
 size_assert!(CAI_BASEFLYINGBOT where  CAI_BaseFlyingBot == 0x2458);
-field_assert!(SIZE_VCURRENTVELOCITY where  CAI_BaseFlyingBot, m_vCurrentVelocity == 0x20b0);
-field_assert!(SIZE_VCURRENTANGULARVELOCITY where  CAI_BaseFlyingBot, m_vCurrentAngularVelocity == 0x20bc);
-field_assert!(SIZE_VCURRENTBANKING where  CAI_BaseFlyingBot, m_vCurrentBanking == 0x20c8);
-field_assert!(SIZE_VNOISEMOD where  CAI_BaseFlyingBot, m_vNoiseMod == 0x20d4);
-field_assert!(SIZE_FHEADYAW where  CAI_BaseFlyingBot, m_fHeadYaw == 0x20e0);
-field_assert!(SIZE_FNEXTYAWCHANGESOUNDTIME where  CAI_BaseFlyingBot, m_fNextYawChangeSoundTime == 0x20e4);
-field_assert!(SIZE_VLASTPATROLDIR where  CAI_BaseFlyingBot, m_vLastPatrolDir == 0x20e8);
-field_assert!(SIZE_VECDESIREDVEL where  CAI_BaseFlyingBot, m_vecDesiredVel == 0x20f4);
-field_assert!(SIZE_FLACCELTIME where  CAI_BaseFlyingBot, m_flAccelTime == 0x2100);
-field_assert!(SIZE_KILLEDINFO where  CAI_BaseFlyingBot, m_KilledInfo == 0x2104);
-field_assert!(SIZE_ASSAULTBEHAVIOR where  CAI_BaseFlyingBot, m_AssaultBehavior == 0x2180);
-field_assert!(SIZE_FOLLOWBEHAVIOR where  CAI_BaseFlyingBot, m_FollowBehavior == 0x2268);
-field_assert!(SIZE_SEARCHBEHAVIOR where  CAI_BaseFlyingBot, m_SearchBehavior == 0x23b0);
-field_assert!(SIZE_PATROLBEHAVIOR where  CAI_BaseFlyingBot, m_PatrolBehavior == 0x2400);
+field_assert!(+ SIZE_VCURRENTVELOCITY where  CAI_BaseFlyingBot, m_vCurrentVelocity == 0x20b0);
+field_assert!(+ SIZE_VCURRENTANGULARVELOCITY where  CAI_BaseFlyingBot, m_vCurrentAngularVelocity == 0x20bc);
+field_assert!(+ SIZE_VCURRENTBANKING where  CAI_BaseFlyingBot, m_vCurrentBanking == 0x20c8);
+field_assert!(+ SIZE_VNOISEMOD where  CAI_BaseFlyingBot, m_vNoiseMod == 0x20d4);
+field_assert!(+ SIZE_FHEADYAW where  CAI_BaseFlyingBot, m_fHeadYaw == 0x20e0);
+field_assert!(+ SIZE_FNEXTYAWCHANGESOUNDTIME where  CAI_BaseFlyingBot, m_fNextYawChangeSoundTime == 0x20e4);
+field_assert!(+ SIZE_VLASTPATROLDIR where  CAI_BaseFlyingBot, m_vLastPatrolDir == 0x20e8);
+field_assert!(+ SIZE_VECDESIREDVEL where  CAI_BaseFlyingBot, m_vecDesiredVel == 0x20f4);
+field_assert!(+ SIZE_FLACCELTIME where  CAI_BaseFlyingBot, m_flAccelTime == 0x2100);
+field_assert!(+ SIZE_KILLEDINFO where  CAI_BaseFlyingBot, m_KilledInfo == 0x2104);
+field_assert!(+ SIZE_ASSAULTBEHAVIOR where  CAI_BaseFlyingBot, m_AssaultBehavior == 0x2180);
+field_assert!(+ SIZE_FOLLOWBEHAVIOR where  CAI_BaseFlyingBot, m_FollowBehavior == 0x2268);
+field_assert!(+ SIZE_SEARCHBEHAVIOR where  CAI_BaseFlyingBot, m_SearchBehavior == 0x23b0);
+field_assert!(+ SIZE_PATROLBEHAVIOR where  CAI_BaseFlyingBot, m_PatrolBehavior == 0x2400);
 
 impl DerefMut for CAI_BaseFlyingBot {
     fn deref_mut(&mut self) -> &mut Self::Target {

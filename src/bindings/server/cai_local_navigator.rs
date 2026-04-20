@@ -21,12 +21,12 @@ pub struct CAI_LocalNavigator {
 }
 
 size_assert!(CAI_LOCALNAVIGATOR where CAI_LocalNavigator == 0x118);
-field_assert!(CAI_PROXYMOVEMENTSINK where CAI_LocalNavigator, CAI_ProxyMovementSink == 0x8);
-field_assert!(SIZE_BLASTWASCLEAR where CAI_LocalNavigator, m_bLastWasClear == 0x18);
-field_assert!(SIZE_LASTMOVEGOAL where CAI_LocalNavigator, m_LastMoveGoal == 0x20);
-field_assert!(SIZE_FULLDIRECTTIMER where CAI_LocalNavigator, m_FullDirectTimer == 0xf8);
-field_assert!(SIZE_PPLANESOLVER where CAI_LocalNavigator, m_pPlaneSolver == 0x100);
-field_assert!(SIZE_PMOVEPROBE where CAI_LocalNavigator, m_pMoveProbe == 0x108);
+field_assert!(+ CAI_PROXYMOVEMENTSINK where CAI_LocalNavigator, CAI_ProxyMovementSink == 0x8);
+field_assert!(+ SIZE_BLASTWASCLEAR where CAI_LocalNavigator, m_bLastWasClear == 0x18);
+field_assert!(+ SIZE_LASTMOVEGOAL where CAI_LocalNavigator, m_LastMoveGoal == 0x20);
+field_assert!(+ SIZE_FULLDIRECTTIMER where CAI_LocalNavigator, m_FullDirectTimer == 0xf8);
+field_assert!(+ SIZE_PPLANESOLVER where CAI_LocalNavigator, m_pPlaneSolver == 0x100);
+field_assert!(+ SIZE_PMOVEPROBE where CAI_LocalNavigator, m_pMoveProbe == 0x108);
 
 impl DerefMut for CAI_LocalNavigator {
     fn deref_mut(&mut self) -> &mut Self::Target {

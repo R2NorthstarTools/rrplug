@@ -41,31 +41,31 @@ pub struct CAI_Senses {
 }
 
 size_assert!(CAI_SENSES where CAI_Senses == 0x360);
-field_assert!(M_SEENENEMIESCOUNT where CAI_Senses, m_seenEnemiesCount == 0x8);
-field_assert!(M_CLOSESTHIGHPRIORITY where CAI_Senses, m_ClosestHighPriority == 0xc);
-field_assert!(M_CLOSESTENEMYNPC where CAI_Senses, m_ClosestEnemyNPC == 0x10);
-field_assert!(M_LOOKDISTOVERRIDE where CAI_Senses, m_lookDistOverride == 0x14);
-field_assert!(M_LASTLOOKDIST where CAI_Senses, m_LastLookDist == 0x18);
-field_assert!(M_TIMELASTLOOK where CAI_Senses, m_TimeLastLook == 0x1c);
-field_assert!(M_HEARINGSENSITIVITY where CAI_Senses, m_hearingSensitivity == 0x20);
-field_assert!(M_IAUDIBLELIST where CAI_Senses, m_iAudibleList == 0x24);
-field_assert!(M_NEXTAUDIBLESOUND where CAI_Senses, m_NextAudibleSound == 0x28);
-field_assert!(M_REACTTOSOUND where CAI_Senses, m_reactToSound == 0x228);
-field_assert!(M_SIGHTPROGRESS where CAI_Senses, m_sightProgress == 0x250);
-field_assert!(M_SEENHIGHPRIORITY where CAI_Senses, m_SeenHighPriority == 0x270);
-field_assert!(M_SEENNPCS where CAI_Senses, m_SeenNPCs == 0x290);
-field_assert!(M_SEENMISC where CAI_Senses, m_SeenMisc == 0x2b0);
-field_assert!(M_TEAMSPOTTED where CAI_Senses, m_TeamSpotted == 0x2d0);
-field_assert!(M_SEENCORPSEINDEX where CAI_Senses, m_SeenCorpseIndex == 0x2f0);
-field_assert!(M_BGATHERINGSEENENTITIES where CAI_Senses, m_bGatheringSeenEntities == 0x2f4);
-field_assert!(M_CURRENTSEENARRAY where CAI_Senses, m_currentSeenArray == 0x2f8);
-field_assert!(M_SEENARRAYS where CAI_Senses, m_SeenArrays == 0x300);
-field_assert!(M_TIMELASTLOOKHIGHPRIORITY where CAI_Senses, m_TimeLastLookHighPriority == 0x318);
-field_assert!(M_TIMELASTLOOKNPCS where CAI_Senses, m_TimeLastLookNPCs == 0x31c);
-field_assert!(M_TIMELASTLOOKMISC where CAI_Senses, m_TimeLastLookMisc == 0x320);
-field_assert!(M_TIMELASTLOOKCORPSE where CAI_Senses, m_TimeLastLookCorpse == 0x324);
-field_assert!(M_ISENSINGFLAGS where CAI_Senses, m_iSensingFlags == 0x328);
-field_assert!(M_MUTEX where CAI_Senses, m_mutex == 0x330);
+field_assert!(+ M_SEENENEMIESCOUNT where CAI_Senses, m_seenEnemiesCount == 0x8);
+field_assert!(+ M_CLOSESTHIGHPRIORITY where CAI_Senses, m_ClosestHighPriority == 0xc);
+field_assert!(+ M_CLOSESTENEMYNPC where CAI_Senses, m_ClosestEnemyNPC == 0x10);
+field_assert!(+ M_LOOKDISTOVERRIDE where CAI_Senses, m_lookDistOverride == 0x14);
+field_assert!(+ M_LASTLOOKDIST where CAI_Senses, m_LastLookDist == 0x18);
+field_assert!(+ M_TIMELASTLOOK where CAI_Senses, m_TimeLastLook == 0x1c);
+field_assert!(+ M_HEARINGSENSITIVITY where CAI_Senses, m_hearingSensitivity == 0x20);
+field_assert!(+ M_IAUDIBLELIST where CAI_Senses, m_iAudibleList == 0x24);
+field_assert!(+ M_NEXTAUDIBLESOUND where CAI_Senses, m_NextAudibleSound == 0x28);
+field_assert!(+ M_REACTTOSOUND where CAI_Senses, m_reactToSound == 0x228);
+field_assert!(+ M_SIGHTPROGRESS where CAI_Senses, m_sightProgress == 0x250);
+field_assert!(+ M_SEENHIGHPRIORITY where CAI_Senses, m_SeenHighPriority == 0x270);
+field_assert!(+ M_SEENNPCS where CAI_Senses, m_SeenNPCs == 0x290);
+field_assert!(+ M_SEENMISC where CAI_Senses, m_SeenMisc == 0x2b0);
+field_assert!(+ M_TEAMSPOTTED where CAI_Senses, m_TeamSpotted == 0x2d0);
+field_assert!(+ M_SEENCORPSEINDEX where CAI_Senses, m_SeenCorpseIndex == 0x2f0);
+field_assert!(+ M_BGATHERINGSEENENTITIES where CAI_Senses, m_bGatheringSeenEntities == 0x2f4);
+field_assert!(+ M_CURRENTSEENARRAY where CAI_Senses, m_currentSeenArray == 0x2f8);
+field_assert!(+ M_SEENARRAYS where CAI_Senses, m_SeenArrays == 0x300);
+field_assert!(+ M_TIMELASTLOOKHIGHPRIORITY where CAI_Senses, m_TimeLastLookHighPriority == 0x318);
+field_assert!(+ M_TIMELASTLOOKNPCS where CAI_Senses, m_TimeLastLookNPCs == 0x31c);
+field_assert!(+ M_TIMELASTLOOKMISC where CAI_Senses, m_TimeLastLookMisc == 0x320);
+field_assert!(+ M_TIMELASTLOOKCORPSE where CAI_Senses, m_TimeLastLookCorpse == 0x324);
+field_assert!(+ M_ISENSINGFLAGS where CAI_Senses, m_iSensingFlags == 0x328);
+field_assert!(+ M_MUTEX where CAI_Senses, m_mutex == 0x330);
 
 impl DerefMut for CAI_Senses {
     fn deref_mut(&mut self) -> &mut Self::Target {

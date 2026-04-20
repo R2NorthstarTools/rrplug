@@ -84,29 +84,29 @@ pub struct CAI_FollowBehavior {
 }
 
 size_assert!(CAI_FOLLOWBEHAVIOR  where CAI_FollowBehavior == 0x148);
-field_assert!(SIZE_HFOLLOWTARGET  where CAI_FollowBehavior, m_hFollowTarget == 0x48);
-field_assert!(SIZE_FOLLOWNAVGOAL  where CAI_FollowBehavior, m_FollowNavGoal == 0x4c);
-field_assert!(SIZE_FLTIMEUPDATEDFOLLOWPOSITION  where CAI_FollowBehavior, m_flTimeUpdatedFollowPosition == 0x74);
-field_assert!(SIZE_FLTIMEFOLLOWTARGETVISIBLE  where CAI_FollowBehavior, m_flTimeFollowTargetVisible == 0x78);
-field_assert!(SIZE_TARGETMONITOR  where CAI_FollowBehavior, m_TargetMonitor == 0x7c);
-field_assert!(SIZE_BTARGETUNREACHABLE  where CAI_FollowBehavior, m_bTargetUnreachable == 0x94);
-field_assert!(SIZE_BOFFSETPOSNOTVALID  where CAI_FollowBehavior, m_bOffsetPosNotValid == 0x95);
-field_assert!(SIZE_BNAVBLOCKEDSKIPFOLLOWBEHAVIOR  where CAI_FollowBehavior, m_bNavBlockedSkipFollowBehavior == 0x96);
-field_assert!(SIZE_VFOLLOWMOVEANCHOR  where CAI_FollowBehavior, m_vFollowMoveAnchor == 0x98);
-field_assert!(SIZE_SUCCESSFULFOLLOWTARGETMONITORSERIALNUMBER  where CAI_FollowBehavior, m_successfulFollowTargetMonitorSerialNumber == 0xa4);
-field_assert!(SIZE_SUCCESSFULFOLLOWMONITORMYPOSITION  where CAI_FollowBehavior, m_successfulFollowMonitorMyPosition == 0xa8);
-field_assert!(SIZE_FLORIGINALENEMYDISCARDTIME  where CAI_FollowBehavior, m_flOriginalEnemyDiscardTime == 0xc0);
-field_assert!(SIZE_RETRYCOVERTIME  where CAI_FollowBehavior, m_retryCoverTime == 0xc4);
-field_assert!(SIZE_FOLLOWDELAY  where CAI_FollowBehavior, m_FollowDelay == 0xc8);
-field_assert!(SIZE_REPATHONFOLLOWTIMER  where CAI_FollowBehavior, m_RepathOnFollowTimer == 0xd8);
-field_assert!(SIZE_CURRENTFOLLOWACTIVITY  where CAI_FollowBehavior, m_CurrentFollowActivity == 0xdc);
-field_assert!(SIZE_TIMEBLOCKUSEWAITPOINT  where CAI_FollowBehavior, m_TimeBlockUseWaitPoint == 0xe0);
-field_assert!(SIZE_TIMECHECKFORWAITPOINT  where CAI_FollowBehavior, m_TimeCheckForWaitPoint == 0xec);
-field_assert!(SIZE_PINTERRUPTWAITPOINT  where CAI_FollowBehavior, m_pInterruptWaitPoint == 0xf8);
-field_assert!(SIZE_TIMEBEFORESPREADFACING  where CAI_FollowBehavior, m_TimeBeforeSpreadFacing == 0x100);
-field_assert!(SIZE_TIMENEXTSPREADFACING  where CAI_FollowBehavior, m_TimeNextSpreadFacing == 0x10c);
-field_assert!(SIZE_HFOLLOWMANAGERINFO  where CAI_FollowBehavior, m_hFollowManagerInfo == 0x118);
-field_assert!(SIZE_FOLLOWPARAMS  where CAI_FollowBehavior, m_followParams == 0x128);
+field_assert!(+ SIZE_HFOLLOWTARGET  where CAI_FollowBehavior, m_hFollowTarget == 0x48);
+field_assert!(+ SIZE_FOLLOWNAVGOAL  where CAI_FollowBehavior, m_FollowNavGoal == 0x4c);
+field_assert!(+ SIZE_FLTIMEUPDATEDFOLLOWPOSITION  where CAI_FollowBehavior, m_flTimeUpdatedFollowPosition == 0x74);
+field_assert!(+ SIZE_FLTIMEFOLLOWTARGETVISIBLE  where CAI_FollowBehavior, m_flTimeFollowTargetVisible == 0x78);
+field_assert!(+ SIZE_TARGETMONITOR  where CAI_FollowBehavior, m_TargetMonitor == 0x7c);
+field_assert!(+ SIZE_BTARGETUNREACHABLE  where CAI_FollowBehavior, m_bTargetUnreachable == 0x94);
+field_assert!(+ SIZE_BOFFSETPOSNOTVALID  where CAI_FollowBehavior, m_bOffsetPosNotValid == 0x95);
+field_assert!(+ SIZE_BNAVBLOCKEDSKIPFOLLOWBEHAVIOR  where CAI_FollowBehavior, m_bNavBlockedSkipFollowBehavior == 0x96);
+field_assert!(+ SIZE_VFOLLOWMOVEANCHOR  where CAI_FollowBehavior, m_vFollowMoveAnchor == 0x98);
+field_assert!(+ SIZE_SUCCESSFULFOLLOWTARGETMONITORSERIALNUMBER  where CAI_FollowBehavior, m_successfulFollowTargetMonitorSerialNumber == 0xa4);
+field_assert!(+ SIZE_SUCCESSFULFOLLOWMONITORMYPOSITION  where CAI_FollowBehavior, m_successfulFollowMonitorMyPosition == 0xa8);
+field_assert!(+ SIZE_FLORIGINALENEMYDISCARDTIME  where CAI_FollowBehavior, m_flOriginalEnemyDiscardTime == 0xc0);
+field_assert!(+ SIZE_RETRYCOVERTIME  where CAI_FollowBehavior, m_retryCoverTime == 0xc4);
+field_assert!(+ SIZE_FOLLOWDELAY  where CAI_FollowBehavior, m_FollowDelay == 0xc8);
+field_assert!(+ SIZE_REPATHONFOLLOWTIMER  where CAI_FollowBehavior, m_RepathOnFollowTimer == 0xd8);
+field_assert!(+ SIZE_CURRENTFOLLOWACTIVITY  where CAI_FollowBehavior, m_CurrentFollowActivity == 0xdc);
+field_assert!(+ SIZE_TIMEBLOCKUSEWAITPOINT  where CAI_FollowBehavior, m_TimeBlockUseWaitPoint == 0xe0);
+field_assert!(+ SIZE_TIMECHECKFORWAITPOINT  where CAI_FollowBehavior, m_TimeCheckForWaitPoint == 0xec);
+field_assert!(+ SIZE_PINTERRUPTWAITPOINT  where CAI_FollowBehavior, m_pInterruptWaitPoint == 0xf8);
+field_assert!(+ SIZE_TIMEBEFORESPREADFACING  where CAI_FollowBehavior, m_TimeBeforeSpreadFacing == 0x100);
+field_assert!(+ SIZE_TIMENEXTSPREADFACING  where CAI_FollowBehavior, m_TimeNextSpreadFacing == 0x10c);
+field_assert!(+ SIZE_HFOLLOWMANAGERINFO  where CAI_FollowBehavior, m_hFollowManagerInfo == 0x118);
+field_assert!(+ SIZE_FOLLOWPARAMS  where CAI_FollowBehavior, m_followParams == 0x128);
 
 impl DerefMut for CAI_FollowBehavior {
     fn deref_mut(&mut self) -> &mut Self::Target {

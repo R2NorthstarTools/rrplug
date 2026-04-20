@@ -15,9 +15,9 @@ pub struct CAI_RadialLinkController {
 }
 
 size_assert!(CAI_RADIALLINKCONTROLLER where CAI_RadialLinkController == 0x9f8);
-field_assert!(M_FLRADIUS where CAI_RadialLinkController, m_flRadius == 0x9d8);
-field_assert!(M_VECATRESTORIGIN where CAI_RadialLinkController, m_vecAtRestOrigin == 0x9dc);
-field_assert!(M_BATREST where CAI_RadialLinkController, m_bAtRest == 0x9e8);
+field_assert!(+ M_FLRADIUS where CAI_RadialLinkController, m_flRadius == 0x9d8);
+field_assert!(+ M_VECATRESTORIGIN where CAI_RadialLinkController, m_vecAtRestOrigin == 0x9dc);
+field_assert!(+ M_BATREST where CAI_RadialLinkController, m_bAtRest == 0x9e8);
 
 impl DerefMut for CAI_RadialLinkController {
     fn deref_mut(&mut self) -> &mut Self::Target {

@@ -215,19 +215,38 @@ macro_rules! size_assert {
     };
 }
 
-/// macro to test the size of struct fieldss
+/// macro to test the size of struct fields
 #[macro_export]
 macro_rules! field_assert {
     // TODO: remove the unique name once https://doc.rust-lang.org/std/macro.concat_idents.html is stable
     ($check_name:ident where $struct:ident, $field:ident == $size:literal ) => {
-        #[allow(non_snake_case, non_upper_case_globals, dead_code)]
+        #[allow(non_snake_case, non_upper_case_globals, dead_code, unused)]
         #[doc(hidden)]
+        #[cfg(test)]
         #[test]
         fn $check_name() {
             assert_eq!(::std::mem::offset_of!($struct, $field), $size);
         }
-        // static $check_name: () =
-        //     _ = ["offset test"][::std::mem::offset_of!($struct, $field) - $size];
+        #[cfg(not(test))]
+        #[allow(non_snake_case, non_upper_case_globals, dead_code, unused)]
+        static $check_name: () = _ = if ::std::mem::offset_of!($struct, $field) - $size != 0 {
+            panic!("{}", stringify!($struct, $field));
+        };
+    };
+    // offsets by 8usize since some struct fields checks were offset by the size of a vtable
+    (+ $check_name:ident where $struct:ident, $field:ident == $size:literal ) => {
+        #[allow(non_snake_case, non_upper_case_globals, dead_code)]
+        #[doc(hidden)]
+        #[cfg(test)]
+        #[test]
+        fn $check_name() {
+            assert_eq!(::std::mem::offset_of!($struct, $field), $size);
+        }
+        #[cfg(not(test))]
+        #[allow(non_snake_case, non_upper_case_globals, dead_code, unused)]
+        static $check_name: () = _ = if ::std::mem::offset_of!($struct, $field) - ($size + 8) != 0 {
+            panic!("{}", stringify!($struct, $field));
+        };
     };
 }
 

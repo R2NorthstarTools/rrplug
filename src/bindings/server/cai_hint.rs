@@ -70,21 +70,21 @@ pub struct CAI_Hint {
 }
 
 size_assert!(CAI_HINT where CAI_Hint == 0xa78);
-field_assert!(NODEDATA where CAI_Hint, m_NodeData == 0x9d8);
-field_assert!(HINTMOVINGGROUNDENT where CAI_Hint, m_hintMovingGroundEnt == 0xa28);
-field_assert!(HINTGROUNDENT where CAI_Hint, m_hintGroundEnt == 0xa2c);
-field_assert!(HHINTOWNER where CAI_Hint, m_hHintOwner == 0xa30);
-field_assert!(FLNEXTUSETIME where CAI_Hint, m_flNextUseTime == 0xa34);
-field_assert!(NODEFOV where CAI_Hint, m_nodeFOV == 0xa38);
-field_assert!(NODEFOVCOS where CAI_Hint, m_nodeFOVcos == 0xa3c);
-field_assert!(VECFORWARD where CAI_Hint, m_vecForward == 0xa40);
-field_assert!(NPCIDEALYAWALIGN where CAI_Hint, m_npcIdealYawAlign == 0xa4c);
-field_assert!(ADVANCEFROMCOVERSCALAR where CAI_Hint, m_advanceFromCoverScalar == 0xa50);
-field_assert!(HINTDISABLED where CAI_Hint, m_hintDisabled == 0xa54);
-field_assert!(AINDATA where CAI_Hint, ainData == 0xa56);
-field_assert!(POLYATTACHEDTO where CAI_Hint, polyAttachedTo == 0xa58);
-field_assert!(HINTONSAMEPOLY_NEXT where CAI_Hint, hintOnSamePoly_next == 0xa60);
-field_assert!(HINTONSAMEPOLY_PREV where CAI_Hint, hintOnSamePoly_prev == 0xa68);
+field_assert!(+ NODEDATA where CAI_Hint, m_NodeData == 0x9d8);
+field_assert!(+ HINTMOVINGGROUNDENT where CAI_Hint, m_hintMovingGroundEnt == 0xa28);
+field_assert!(+ HINTGROUNDENT where CAI_Hint, m_hintGroundEnt == 0xa2c);
+field_assert!(+ HHINTOWNER where CAI_Hint, m_hHintOwner == 0xa30);
+field_assert!(+ FLNEXTUSETIME where CAI_Hint, m_flNextUseTime == 0xa34);
+field_assert!(+ NODEFOV where CAI_Hint, m_nodeFOV == 0xa38);
+field_assert!(+ NODEFOVCOS where CAI_Hint, m_nodeFOVcos == 0xa3c);
+field_assert!(+ VECFORWARD where CAI_Hint, m_vecForward == 0xa40);
+field_assert!(+ NPCIDEALYAWALIGN where CAI_Hint, m_npcIdealYawAlign == 0xa4c);
+field_assert!(+ ADVANCEFROMCOVERSCALAR where CAI_Hint, m_advanceFromCoverScalar == 0xa50);
+field_assert!(+ HINTDISABLED where CAI_Hint, m_hintDisabled == 0xa54);
+field_assert!(+ AINDATA where CAI_Hint, ainData == 0xa56);
+field_assert!(+ POLYATTACHEDTO where CAI_Hint, polyAttachedTo == 0xa58);
+field_assert!(+ HINTONSAMEPOLY_NEXT where CAI_Hint, hintOnSamePoly_next == 0xa60);
+field_assert!(+ HINTONSAMEPOLY_PREV where CAI_Hint, hintOnSamePoly_prev == 0xa68);
 
 impl DerefMut for CAI_Hint {
     fn deref_mut(&mut self) -> &mut Self::Target {
