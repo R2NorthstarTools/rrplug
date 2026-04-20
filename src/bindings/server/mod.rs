@@ -65,7 +65,7 @@ pub mod csoundent;
 pub mod cstopwatch;
 pub mod cstopwatch_base;
 
-pub type EHandle = u32;
+pub type EHandle = i32;
 
 // TODO: add
 // CBaseGrenade and derivations
