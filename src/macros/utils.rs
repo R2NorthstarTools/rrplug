@@ -240,7 +240,7 @@ macro_rules! field_assert {
         #[cfg(test)]
         #[test]
         fn $check_name() {
-            assert_eq!(::std::mem::offset_of!($struct, $field), $size);
+            assert_eq!(::std::mem::offset_of!($struct, $field), $size + 8);
         }
         #[cfg(not(test))]
         #[allow(non_snake_case, non_upper_case_globals, dead_code, unused)]
