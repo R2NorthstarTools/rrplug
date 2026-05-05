@@ -22,7 +22,9 @@ use super::{
 use crate::{
     bindings::{
         squirrelclasstypes::{CompileBufferState, SQRESULT},
-        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject, SQObjectType},
+        squirreldatatypes::{
+            CSquirrelVM, HSquirrelVM, SQArray, SQClosure, SQObject, SQObjectType, SQObjectValue,
+        },
         squirrelfunctions::SquirrelFunctions,
     },
     errors::{CallError, SQCompileError},
@@ -624,7 +626,87 @@ unsafe fn resume_thread(thread_sqvm: NonNull<HSquirrelVM>, sqfunctions: &Squirre
     }
 }
 
-// not possible rn
+/// a struct that encapsulates the logic of a fake out parameter for native squirrel functions using arrays
+pub struct SQOutParam<T>(Option<SQHandle<'static, SQArray>>, PhantomData<T>);
+
+impl<T: SQVMName> SQVMName for SQOutParam<T> {
+    fn get_sqvm_name() -> String {
+        format!("array< {} >", T::get_sqvm_name())
+    }
+}
+
+impl<T> GetFromSquirrelVm for SQOutParam<T> {
+    fn get_from_sqvm(
+        sqvm: std::ptr::NonNull<HSquirrelVM>,
+        sqfunctions: &'static SquirrelFunctions,
+        stack_pos: i32,
+    ) -> Self {
+        let object = SQObject::get_from_sqvm(sqvm, sqfunctions, stack_pos);
+        match object._Type {
+            SQObjectType::OT_ARRAY => SQOutParam(
+                Some(unsafe { SQHandle::new_unchecked(object) }),
+                PhantomData,
+            ),
+            SQObjectType::OT_NULL => SQOutParam(None, PhantomData),
+            _ => panic!("SQOutParam: how did an non array type get in here"),
+        }
+    }
+}
+
+impl<T: PushToSquirrelVm> SQOutParam<T> {
+    /// pushes the out value into the array as an out parameter if it exists
+    ///
+    /// will return
+    pub fn set_out_var(
+        self,
+        out: T,
+        mut sqvm: std::ptr::NonNull<HSquirrelVM>,
+        sqfunctions: &'static SquirrelFunctions,
+    ) -> Option<()> {
+        let mut null_object = SQObject {
+            _Type: SQObjectType::OT_NULL,
+            structNumber: 0,
+            _VAL: SQObjectValue {
+                asString: std::ptr::null_mut(),
+            },
+        };
+        if let SQOutParam(Some(mut array), _) = self {
+            let array = array.get_mut();
+            if array._allocated < 1 {
+                unsafe {
+                    (sqfunctions.sq_object_vector_resize)(array, 1, &null_object);
+                }
+            }
+
+            out.push_to_sqvm(sqvm, sqfunctions);
+
+            unsafe {
+                let sqvm = sqvm.as_mut();
+                let top = sqvm
+                    ._stack
+                    .add(sqvm._top as usize - 1)
+                    .as_mut()
+                    .unwrap_unchecked();
+
+                sqvm._top -= 1; // manually pop the stack
+
+                // put pushed object into the array
+                std::mem::swap(top, array._values.as_mut().unwrap_unchecked());
+
+                // make sure the pushed slot is null
+                std::mem::swap(top, &mut null_object);
+            };
+            array._usedSlots = array._usedSlots.max(1);
+
+            Some(())
+        } else {
+            None
+        }
+    }
+}
+
+// not possible rn; just use Default or iirc squirrel will handle this so could add this to the macro tbh
+// TODO: this
 // pub struct DefaultValue<T, const default: T> {
 //     inner: T,
 // }
