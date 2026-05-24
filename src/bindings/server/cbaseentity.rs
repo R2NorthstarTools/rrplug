@@ -272,6 +272,7 @@ size_assert!(SIZE_BASE where CBaseEntity == 0x9E0);
 // recheck this
 impl_vmethods! {
     impl CBaseEntity {
+        pub fn is_titan() -> bool where offset(84);
         pub fn some_get_origin_varient_02(vector: *mut Vector3) -> *mut Vector3 where offset(133);
         pub fn some_get_origin_varient_01(vector: *mut Vector3) -> *mut Vector3 where offset(134);
         pub fn eye_angles(vector: *mut Vector3) -> *mut Vector3 where offset(135);

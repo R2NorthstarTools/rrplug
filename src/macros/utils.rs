@@ -145,6 +145,7 @@ macro_rules! impl_vmethods {
 ///     unsafe { EngineFunctions::try_init(dll_ptr, &ENGINE_FUNCTIONS) };
 /// }
 /// ```
+// TODO: allow users to implement debug
 #[macro_export]
 macro_rules! offset_functions {
     ( $static_name:ident + $struct_name:ident for $dll:expr => { $($name:ident = $t:ty where offset($addr:literal);)* } ) => {
