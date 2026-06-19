@@ -114,8 +114,6 @@ dependencies = [
 [[package]]
 name = "rrplug_proc"
 version = "4.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3741d76b03887997b76d8066a9ba484941a4b04fa0877f72d9b151089c79924"
 dependencies = [
  "proc-macro2",
  "quote",

@@ -339,7 +339,7 @@ fn bindgen_test_layout_SQObject() {
     );
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct SQString {
     pub vftable: *mut ::std::os::raw::c_void,
     pub uiRef: ::std::os::raw::c_int,

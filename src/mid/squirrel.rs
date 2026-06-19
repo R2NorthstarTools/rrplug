@@ -16,7 +16,7 @@ use once_cell::sync::OnceCell;
 use crate::{
     bindings::{
         squirrelclasstypes::{eSQReturnType, SQFuncRegistration, SQFunction, ScriptContext},
-        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject},
+        squirreldatatypes::{CSquirrelVM, HSquirrelVM, SQClosure, SQObject, SQString},
         squirrelfunctions::{
             ClientSQFunctions, ServerSQFunctions, SquirrelFunctions, SQUIRREL_CLIENT_FUNCS,
             SQUIRREL_SERVER_FUNCS,
@@ -532,4 +532,17 @@ pub fn get_calling_file(
         ));
     // Some(path.normalize_lexically().unwrap_or(path))
     Some(path)
+}
+
+impl SQString {
+    /// returns the sq string as normal [[str]]
+    ///
+    /// # Fails
+    /// if the string isn't utf8 which is not likely since squirrel strings are utf8
+    pub fn as_str(&self) -> Option<&str> {
+        str::from_utf8(unsafe {
+            std::slice::from_raw_parts(self._val.as_ptr().cast(), self.length as usize)
+        })
+        .ok()
+    }
 }
