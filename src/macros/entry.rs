@@ -131,10 +131,12 @@ macro_rules! entry {
                         panic!("PLUGIN failed initialization")
                     }
 
+                    // TODO: have a better system for this
                     if reloaded {
                         const ENGINE: &CStr = c"engine.dll";
                         const SERVER: &CStr = c"server.dll";
                         const CLIENT: &CStr = c"client.dll";
+                        const FILSYSTEM: &CStr = c"filesystem_stdio.dll";
                         unsafe {
                             _ = self.OnLibraryLoaded(
                                 GetModuleHandleA(PCSTR(ENGINE.as_ptr().cast()))
@@ -148,6 +150,11 @@ macro_rules! entry {
                                 GetModuleHandleA(PCSTR(SERVER.as_ptr().cast()))
                                     .expect("server.dll should exists if called for reload"),
                                 SERVER.as_ptr(),
+                            );
+                            self.OnLibraryLoaded(
+                                GetModuleHandleA(PCSTR(FILSYSTEM.as_ptr().cast()))
+                                    .expect("filesystem_stdio.dll should exists if called for reload"),
+                                FILSYSTEM.as_ptr(),
                             );
                         }
                     }
