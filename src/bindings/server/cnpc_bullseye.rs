@@ -8,7 +8,7 @@ use crate::{
 
 #[repr(C)]
 #[derive(Debug)]
-struct CNPC_Bullseye {
+pub struct CNPC_Bullseye {
     base: CAI_BaseNPC,
     m_hPainPartner: EHandle, // +0x20b0 size: 0x4 (0x1 * 0x4) type 13
     gap_20b4: [u8; 4],

@@ -1,13 +1,8 @@
 #![allow(non_camel_case_types, non_snake_case)]
 use std::ffi::{c_char, c_void};
 
-use super::{cplayer::CPlayer, cplayerdecoy::CPlayerDecoy, cweaponx::CWeaponX, EHandle};
-use crate::{
-    bindings::{cvar::convar::Color, DynamicCast},
-    impl_vmethods,
-    prelude::Vector3,
-    size_assert,
-};
+use super::EHandle;
+use crate::{bindings::cvar::convar::Color, impl_vmethods, prelude::Vector3, size_assert};
 
 #[repr(C)]
 #[derive(Debug)]
@@ -281,53 +276,5 @@ impl_vmethods! {
         pub fn get_center_position(vector: *mut Vector3) -> *mut Vector3 where offset(138);
         pub fn get_origin(vector: *mut Vector3) -> *mut Vector3 where offset(139);
         pub fn get_forward_vector(vector: *mut Vector3, unk1: *const c_void, unk2: *const c_void) -> () where offset(140);
-    }
-}
-
-impl DynamicCast<CPlayer> for CBaseEntity {
-    fn dynamic_cast(&self) -> Option<&CPlayer> {
-        crate::mid::server::ENTITY_CLASS_VTABLE
-            .get()
-            .filter(|vtable| std::ptr::addr_eq(vtable.cplayer, self.vftable))
-            .and_then(|_| unsafe { std::ptr::from_ref(self).cast::<CPlayer>().as_ref() })
-    }
-
-    fn dynamic_cast_mut(&mut self) -> Option<&mut CPlayer> {
-        crate::mid::server::ENTITY_CLASS_VTABLE
-            .get()
-            .filter(|vtable| std::ptr::addr_eq(vtable.cplayer, self.vftable))
-            .and_then(|_| unsafe { std::ptr::from_mut(self).cast::<CPlayer>().as_mut() })
-    }
-}
-
-impl DynamicCast<CWeaponX> for CBaseEntity {
-    fn dynamic_cast(&self) -> Option<&CWeaponX> {
-        crate::mid::server::ENTITY_CLASS_VTABLE
-            .get()
-            .filter(|vtable| std::ptr::addr_eq(vtable.weaponx, self.vftable))
-            .and_then(|_| unsafe { std::ptr::from_ref(self).cast::<CWeaponX>().as_ref() })
-    }
-
-    fn dynamic_cast_mut(&mut self) -> Option<&mut CWeaponX> {
-        crate::mid::server::ENTITY_CLASS_VTABLE
-            .get()
-            .filter(|vtable| std::ptr::addr_eq(vtable.weaponx, self.vftable))
-            .and_then(|_| unsafe { std::ptr::from_mut(self).cast::<CWeaponX>().as_mut() })
-    }
-}
-
-impl DynamicCast<CPlayerDecoy> for CBaseEntity {
-    fn dynamic_cast(&self) -> Option<&CPlayerDecoy> {
-        crate::mid::server::ENTITY_CLASS_VTABLE
-            .get()
-            .filter(|vtable| std::ptr::addr_eq(vtable.cplayerdecoy, self.vftable))
-            .and_then(|_| unsafe { std::ptr::from_ref(self).cast::<CPlayerDecoy>().as_ref() })
-    }
-
-    fn dynamic_cast_mut(&mut self) -> Option<&mut CPlayerDecoy> {
-        crate::mid::server::ENTITY_CLASS_VTABLE
-            .get()
-            .filter(|vtable| std::ptr::addr_eq(vtable.cplayerdecoy, self.vftable))
-            .and_then(|_| unsafe { std::ptr::from_mut(self).cast::<CPlayerDecoy>().as_mut() })
     }
 }
